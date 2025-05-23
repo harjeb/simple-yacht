@@ -1,0 +1,77 @@
+{
+  "@@locale": "en",
+  "appTitle": "Yahtzee Game",
+  "startGame": "Start New Game",
+  "leaderboard": "Leaderboard",
+  "settings": "Settings",
+  "personalBest": "Personal Best: {score}",
+  "@personalBest": {
+    "description": "Displays the player's personal best score",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "player": "Player: {playerName}",
+  "@player": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "round": "Round: {currentRound}/{totalRounds}",
+  "@round": {
+    "placeholders": {
+      "currentRound": {
+        "type": "int"
+      },
+      "totalRounds": {
+        "type": "int",
+        "example": "13"
+      }
+    }
+  },
+  "rollsLeft": "Rolls Left: {rolls}",
+  "@rollsLeft": {
+    "placeholders": {
+      "rolls": {
+        "type": "int"
+      }
+    }
+  },
+  "gameOver": "GAME OVER",
+  "rollDice": "Roll Dice",
+  "scoreboard": "Scoreboard",
+  "resetGame": "Reset Game",
+  "nextTurn": "Next Turn (Select Score First!)",
+  "exitToHome": "Exit to Home",
+  "aces": "Aces",
+  "twos": "Twos",
+  "threes": "Threes",
+  "fours": "Fours",
+  "fives": "Fives",
+  "sixes": "Sixes",
+  "threeOfAKind": "Three of a Kind",
+  "fourOfAKind": "Four of a Kind",
+  "fullHouse": "Full House",
+  "smallStraight": "Small Straight",
+  "largeStraight": "Large Straight",
+  "yahtzee": "Yahtzee",
+  "chance": "Chance",
+  "upperBonus": "Upper Bonus (if >= 63)",
+  "upperSubtotal": "Upper Subtotal",
+  "upperTotal": "Upper Total",
+  "lowerTotal": "Lower Total",
+  "yahtzeeBonusScore": "Yahtzee Bonus Score",
+  "grandTotal": "Grand Total",
+  "dice": "Dice",
+  "selectScoreCategoryPrompt": "Turn Advanced. Select a score category.",
+  "leaderboardComingSoon": "Leaderboard (Coming Soon)",
+  "settingsComingSoon": "Settings (Coming Soon)",
+  "upperSectionTitle": "Upper Section",
+  "lowerSectionTitle": "Lower Section",
+  "continueGame": "Continue Game",
+  "exitGameConfirmation": "Are you sure you want to exit the current game?"
+}

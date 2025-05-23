@@ -1,0 +1,77 @@
+{
+  "@@locale": "zh",
+  "appTitle": "快艇骰子",
+  "startGame": "开始新游戏",
+  "leaderboard": "排行榜",
+  "settings": "设置",
+  "personalBest": "个人最佳: {score}",
+  "@personalBest": {
+    "description": "显示玩家的个人最佳成绩",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "player": "玩家: {playerName}",
+  "@player": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "round": "回合: {currentRound}/{totalRounds}",
+  "@round": {
+    "placeholders": {
+      "currentRound": {
+        "type": "int"
+      },
+      "totalRounds": {
+        "type": "int",
+        "example": "13"
+      }
+    }
+  },
+  "rollsLeft": "剩余投掷次数: {rolls}",
+  "@rollsLeft": {
+    "placeholders": {
+      "rolls": {
+        "type": "int"
+      }
+    }
+  },
+  "gameOver": "游戏结束",
+  "rollDice": "掷骰子",
+  "scoreboard": "计分板",
+  "resetGame": "重置游戏",
+  "nextTurn": "下一回合 (请先选择计分项!)",
+  "exitToHome": "退出到主页",
+  "aces": "一点",
+  "twos": "二点",
+  "threes": "三点",
+  "fours": "四点",
+  "fives": "五点",
+  "sixes": "六点",
+  "threeOfAKind": "三条",
+  "fourOfAKind": "四条",
+  "fullHouse": "葫芦",
+  "smallStraight": "小顺子",
+  "largeStraight": "大顺子",
+  "yahtzee": "Yahtzee (快艇)",
+  "chance": "机会",
+  "upperBonus": "上区奖励 (如果 >= 63)",
+  "upperSubtotal": "上区小计",
+  "upperTotal": "上区总计",
+  "lowerTotal": "下区总计",
+  "yahtzeeBonusScore": "Yahtzee 奖励分",
+  "grandTotal": "总计",
+  "dice": "骰子",
+  "selectScoreCategoryPrompt": "回合结束。请选择一个计分项。",
+  "leaderboardComingSoon": "排行榜 (敬请期待)",
+  "settingsComingSoon": "设置 (敬请期待)",
+  "upperSectionTitle": "上部得分",
+  "lowerSectionTitle": "下部得分",
+  "continueGame": "继续游戏",
+  "exitGameConfirmation": "您确定要退出当前游戏吗？"
+}

@@ -1,0 +1,77 @@
+{
+  "@@locale": "ru",
+  "appTitle": "Игра Яхтзы",
+  "startGame": "Начать Новую Игру",
+  "leaderboard": "Таблица Лидеров",
+  "settings": "Настройки",
+  "personalBest": "Личный Рекорд: {score}",
+  "@personalBest": {
+    "description": "Отображает личный рекорд игрока",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "player": "Игрок: {playerName}",
+  "@player": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "round": "Раунд: {currentRound}/{totalRounds}",
+  "@round": {
+    "placeholders": {
+      "currentRound": {
+        "type": "int"
+      },
+      "totalRounds": {
+        "type": "int",
+        "example": "13"
+      }
+    }
+  },
+  "rollsLeft": "Осталось Бросков: {rolls}",
+  "@rollsLeft": {
+    "placeholders": {
+      "rolls": {
+        "type": "int"
+      }
+    }
+  },
+  "gameOver": "ИГРА ОКОНЧЕНА",
+  "rollDice": "Бросить Кости",
+  "scoreboard": "Таблица Очков",
+  "resetGame": "Сбросить Игру",
+  "nextTurn": "Следующий Ход (Сначала выберите категорию!)",
+  "exitToHome": "Выход в Главное Меню",
+  "aces": "Единицы",
+  "twos": "Двойки",
+  "threes": "Тройки",
+  "fours": "Четверки",
+  "fives": "Пятерки",
+  "sixes": "Шестерки",
+  "threeOfAKind": "Три одинаковых",
+  "fourOfAKind": "Каре",
+  "fullHouse": "Фулл-хаус",
+  "smallStraight": "Малый Стрейт",
+  "largeStraight": "Большой Стрейт",
+  "yahtzee": "Яхтзы",
+  "chance": "Шанс",
+  "upperBonus": "Верхний Бонус (если >= 63)",
+  "upperSubtotal": "Верхняя Промежуточная Сумма",
+  "upperTotal": "Верхний Итог",
+  "lowerTotal": "Нижний Итог",
+  "yahtzeeBonusScore": "Бонусные Очки Яхтзы",
+  "grandTotal": "Общий Итог",
+  "dice": "Кости",
+  "selectScoreCategoryPrompt": "Ход завершен. Выберите категорию для записи очков.",
+  "leaderboardComingSoon": "Таблица Лидеров (Скоро)",
+  "settingsComingSoon": "Настройки (Скоро)",
+  "upperSectionTitle": "Верхняя Секция",
+  "lowerSectionTitle": "Нижняя Секция",
+  "continueGame": "Продолжить игру",
+  "exitGameConfirmation": "Вы уверены, что хотите выйти из текущей игры?"
+}

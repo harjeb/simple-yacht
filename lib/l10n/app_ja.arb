@@ -1,0 +1,77 @@
+{
+  "@@locale": "ja",
+  "appTitle": "ヤッツィーゲーム",
+  "startGame": "新しいゲームを開始",
+  "leaderboard": "リーダーボード",
+  "settings": "設定",
+  "personalBest": "自己ベスト: {score}",
+  "@personalBest": {
+    "description": "プレイヤーの自己ベストスコアを表示します",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "player": "プレイヤー: {playerName}",
+  "@player": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "round": "ラウンド: {currentRound}/{totalRounds}",
+  "@round": {
+    "placeholders": {
+      "currentRound": {
+        "type": "int"
+      },
+      "totalRounds": {
+        "type": "int",
+        "example": "13"
+      }
+    }
+  },
+  "rollsLeft": "残りロール数: {rolls}",
+  "@rollsLeft": {
+    "placeholders": {
+      "rolls": {
+        "type": "int"
+      }
+    }
+  },
+  "gameOver": "ゲームオーバー",
+  "rollDice": "サイコロを振る",
+  "scoreboard": "スコアボード",
+  "resetGame": "ゲームをリセット",
+  "nextTurn": "次のターン (最初にスコアカテゴリを選択してください!)",
+  "exitToHome": "ホームに戻る",
+  "aces": "エース (1の目)",
+  "twos": "2の目",
+  "threes": "3の目",
+  "fours": "4の目",
+  "fives": "5の目",
+  "sixes": "6の目",
+  "threeOfAKind": "スリーカード",
+  "fourOfAKind": "フォーカード",
+  "fullHouse": "フルハウス",
+  "smallStraight": "スモールストレート",
+  "largeStraight": "ラージストレート",
+  "yahtzee": "ヤッツィー",
+  "chance": "チャンス",
+  "upperBonus": "アッパーセクションボーナス (63点以上の場合)",
+  "upperSubtotal": "アッパーセクション小計",
+  "upperTotal": "アッパーセクション合計",
+  "lowerTotal": "ロワーセクション合計",
+  "yahtzeeBonusScore": "ヤッツィーボーナススコア",
+  "grandTotal": "総計",
+  "dice": "サイコロ",
+  "selectScoreCategoryPrompt": "ターンが進みました。スコアカテゴリを選択してください。",
+  "leaderboardComingSoon": "リーダーボード (近日公開)",
+  "settingsComingSoon": "設定 (近日公開)",
+  "upperSectionTitle": "上部セクション",
+  "lowerSectionTitle": "下部セクション",
+  "continueGame": "ゲームを続ける",
+  "exitGameConfirmation": "現在のゲームを終了してもよろしいですか？"
+}

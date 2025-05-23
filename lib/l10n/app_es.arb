@@ -1,0 +1,77 @@
+{
+  "@@locale": "es",
+  "appTitle": "Juego de Yahtzee",
+  "startGame": "Empezar Nuevo Juego",
+  "leaderboard": "Tabla de Líderes",
+  "settings": "Ajustes",
+  "personalBest": "Mejor Personal: {score}",
+  "@personalBest": {
+    "description": "Muestra la mejor puntuación personal del jugador",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "player": "Jugador: {playerName}",
+  "@player": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "round": "Ronda: {currentRound}/{totalRounds}",
+  "@round": {
+    "placeholders": {
+      "currentRound": {
+        "type": "int"
+      },
+      "totalRounds": {
+        "type": "int",
+        "example": "13"
+      }
+    }
+  },
+  "rollsLeft": "Tiradas Restantes: {rolls}",
+  "@rollsLeft": {
+    "placeholders": {
+      "rolls": {
+        "type": "int"
+      }
+    }
+  },
+  "gameOver": "JUEGO TERMINADO",
+  "rollDice": "Lanzar Dados",
+  "scoreboard": "Tabla de Puntuación",
+  "resetGame": "Reiniciar Juego",
+  "nextTurn": "Siguiente Turno (¡Selecciona Puntuación Primero!)",
+  "exitToHome": "Salir al Inicio",
+  "aces": "Ases",
+  "twos": "Doses",
+  "threes": "Treses",
+  "fours": "Cuatros",
+  "fives": "Cincos",
+  "sixes": "Seises",
+  "threeOfAKind": "Trío",
+  "fourOfAKind": "Póker",
+  "fullHouse": "Full House",
+  "smallStraight": "Escalera Pequeña",
+  "largeStraight": "Escalera Grande",
+  "yahtzee": "Yahtzee",
+  "chance": "Chance",
+  "upperBonus": "Bonificación Superior (si >= 63)",
+  "upperSubtotal": "Subtotal Superior",
+  "upperTotal": "Total Superior",
+  "lowerTotal": "Total Inferior",
+  "yahtzeeBonusScore": "Puntuación de Bonificación Yahtzee",
+  "grandTotal": "Total General",
+  "dice": "Dados",
+  "selectScoreCategoryPrompt": "Turno Avanzado. Selecciona una categoría de puntuación.",
+  "leaderboardComingSoon": "Tabla de Líderes (Próximamente)",
+  "settingsComingSoon": "Ajustes (Próximamente)",
+  "upperSectionTitle": "Sección Superior",
+  "lowerSectionTitle": "Sección Inferior",
+  "continueGame": "Continuar Juego",
+  "exitGameConfirmation": "¿Estás seguro de que quieres salir del juego actual?"
+}

@@ -1,0 +1,77 @@
+{
+  "@@locale": "de",
+  "appTitle": "Yahtzee Spiel",
+  "startGame": "Neues Spiel Starten",
+  "leaderboard": "Bestenliste",
+  "settings": "Einstellungen",
+  "personalBest": "Persönliche Bestleistung: {score}",
+  "@personalBest": {
+    "description": "Zeigt die persönliche Bestleistung des Spielers an",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "player": "Spieler: {playerName}",
+  "@player": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "round": "Runde: {currentRound}/{totalRounds}",
+  "@round": {
+    "placeholders": {
+      "currentRound": {
+        "type": "int"
+      },
+      "totalRounds": {
+        "type": "int",
+        "example": "13"
+      }
+    }
+  },
+  "rollsLeft": "Verbleibende Würfe: {rolls}",
+  "@rollsLeft": {
+    "placeholders": {
+      "rolls": {
+        "type": "int"
+      }
+    }
+  },
+  "gameOver": "SPIEL BEENDET",
+  "rollDice": "Würfeln",
+  "scoreboard": "Punktetabelle",
+  "resetGame": "Spiel Zurücksetzen",
+  "nextTurn": "Nächster Zug (Wähle zuerst eine Kategorie!)",
+  "exitToHome": "Verlassen zum Startbildschirm",
+  "aces": "Einser",
+  "twos": "Zweier",
+  "threes": "Dreier",
+  "fours": "Vierer",
+  "fives": "Fünfer",
+  "sixes": "Sechser",
+  "threeOfAKind": "Drilling",
+  "fourOfAKind": "Vierling",
+  "fullHouse": "Full House",
+  "smallStraight": "Kleine Straße",
+  "largeStraight": "Große Straße",
+  "yahtzee": "Yahtzee",
+  "chance": "Chance",
+  "upperBonus": "Bonus Oberer Teil (wenn >= 63)",
+  "upperSubtotal": "Zwischensumme Oberer Teil",
+  "upperTotal": "Gesamt Oberer Teil",
+  "lowerTotal": "Gesamt Unterer Teil",
+  "yahtzeeBonusScore": "Yahtzee Bonus Punkte",
+  "grandTotal": "Gesamtsumme",
+  "dice": "Würfel",
+  "selectScoreCategoryPrompt": "Zug fortgeschritten. Wähle eine Punktekategorie.",
+  "leaderboardComingSoon": "Bestenliste (Demnächst verfügbar)",
+  "settingsComingSoon": "Einstellungen (Demnächst verfügbar)",
+  "upperSectionTitle": "Oberer Bereich",
+  "lowerSectionTitle": "Unterer Bereich",
+  "continueGame": "Spiel fortsetzen",
+  "exitGameConfirmation": "Sind Sie sicher, dass Sie das aktuelle Spiel verlassen möchten?"
+}

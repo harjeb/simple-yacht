@@ -1,0 +1,77 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Jeu de Yahtzee",
+  "startGame": "Commencer une Nouvelle Partie",
+  "leaderboard": "Classement",
+  "settings": "Paramètres",
+  "personalBest": "Meilleur Score Personnel : {score}",
+  "@personalBest": {
+    "description": "Affiche le meilleur score personnel du joueur",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "player": "Joueur : {playerName}",
+  "@player": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "round": "Manche : {currentRound}/{totalRounds}",
+  "@round": {
+    "placeholders": {
+      "currentRound": {
+        "type": "int"
+      },
+      "totalRounds": {
+        "type": "int",
+        "example": "13"
+      }
+    }
+  },
+  "rollsLeft": "Lancers Restants : {rolls}",
+  "@rollsLeft": {
+    "placeholders": {
+      "rolls": {
+        "type": "int"
+      }
+    }
+  },
+  "gameOver": "PARTIE TERMINÉE",
+  "rollDice": "Lancer les Dés",
+  "scoreboard": "Tableau des Scores",
+  "resetGame": "Réinitialiser la Partie",
+  "nextTurn": "Tour Suivant (Sélectionnez d'abord une catégorie !)",
+  "exitToHome": "Quitter vers l'Accueil",
+  "aces": "As",
+  "twos": "Deux",
+  "threes": "Trois",
+  "fours": "Quatre",
+  "fives": "Cinq",
+  "sixes": "Six",
+  "threeOfAKind": "Brelan",
+  "fourOfAKind": "Carré",
+  "fullHouse": "Full",
+  "smallStraight": "Petite Suite",
+  "largeStraight": "Grande Suite",
+  "yahtzee": "Yahtzee",
+  "chance": "Chance",
+  "upperBonus": "Bonus Supérieur (si >= 63)",
+  "upperSubtotal": "Sous-total Supérieur",
+  "upperTotal": "Total Supérieur",
+  "lowerTotal": "Total Inférieur",
+  "yahtzeeBonusScore": "Score Bonus Yahtzee",
+  "grandTotal": "Total Général",
+  "dice": "Dés",
+  "selectScoreCategoryPrompt": "Tour avancé. Sélectionnez une catégorie de score.",
+  "leaderboardComingSoon": "Classement (Bientôt disponible)",
+  "settingsComingSoon": "Paramètres (Bientôt disponible)",
+  "upperSectionTitle": "Section Supérieure",
+  "lowerSectionTitle": "Section Inférieure",
+  "continueGame": "Continuer la partie",
+  "exitGameConfirmation": "Êtes-vous sûr de vouloir quitter la partie en cours ?"
+}
