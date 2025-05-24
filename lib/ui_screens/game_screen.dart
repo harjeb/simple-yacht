@@ -5,16 +5,72 @@ import 'package:myapp/widgets/dice_widget.dart';
 import 'package:myapp/widgets/scoreboard_widget.dart';
 import 'package:myapp/state_management/providers/game_providers.dart';
 import 'package:myapp/generated/app_localizations.dart'; // Import generated localizations from new path
+import 'package:myapp/widgets/game_over_dialog.dart'; // Import the GameOverDialog
+// ADD: import 'package:myapp/state_management/providers/leaderboard_providers.dart';
+// ADD: import 'package:myapp/state_management/providers/user_providers.dart';
+import 'package:myapp/state_management/providers/leaderboard_providers.dart';
+import 'package:myapp/state_management/providers/user_providers.dart';
 
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final diceValues = ref.watch(diceValuesProvider); // No longer needed here as DiceWidget handles it
-    // final heldDice = ref.watch(heldDiceProvider); // No longer needed here
     final rollsLeft = ref.watch(rollsLeftProvider);
     final currentRound = ref.watch(currentRoundProvider);
+    final grandTotal = ref.watch(grandTotalProvider); // Get grand total for the dialog
+
+    // Listen to game over state to show the dialog
+    ref.listen<bool>(isGameOverProvider, (previous, isGameOver) {
+      final isGameInProgress = ref.read(isGameInProgressProvider);
+      if (isGameOver && !isGameInProgress) {
+        // Ensure dialog is shown only once and after build phase
+        WidgetsBinding.instance.addPostFrameCallback((_) async { // ADD async
+          if (ModalRoute.of(context)?.isCurrent ?? false) { // Check if the screen is still active
+            // --- BEGIN MODIFICATION ---
+            // 1. Get current username
+            final username = ref.read(usernameProvider); // From user_providers.dart
+            
+            // 2. Get LeaderboardService instance
+            final leaderboardService = ref.read(leaderboardServiceProvider); // From leaderboard_providers.dart
+
+            // 3. Check if username is available (it should be, due to mandatory setup)
+            if (username != null && username.isNotEmpty) {
+              // 4. Add score to leaderboard
+              //    grandTotal is already available in this scope
+              try {
+                await leaderboardService.addScore(username, grandTotal);
+                // 5. Refresh leaderboard data so UI updates if user navigates there
+                ref.refresh(leaderboardProvider);
+                // Optional: Show a success message (e.g., SnackBar)
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(content: Text('Score saved to leaderboard!')),
+                // );
+              } catch (e) {
+                // Optional: Handle error during score saving (e.g., log or show error message)
+                print('Error saving score to leaderboard: $e');
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(content: Text('Failed to save score: $e')),
+                // );
+              }
+            } else {
+              // Optional: Handle case where username is somehow null or empty
+              // This shouldn't happen if username setup is enforced correctly.
+              print('Username not available, score not saved.');
+              // ScaffoldMessenger.of(context).showSnackBar(
+              //   SnackBar(content: Text('Username not found. Score not saved.')),
+              // );
+            }
+            // --- END MODIFICATION ---
+
+            // Show the game over dialog (existing logic)
+            showGameOverDialog(context, grandTotal);
+          }
+        });
+      }
+    });
+
+    // Watch isGameOver for UI elements that depend on it directly
     final isGameOver = ref.watch(isGameOverProvider);
 
     return Scaffold(
@@ -107,18 +163,7 @@ class GameScreen extends ConsumerWidget {
             const ScoreboardWidget(), // Will be updated to use providers
             const SizedBox(height: 20),
 
-            // Reset Game Button (for testing)
-            if (isGameOver)
-              ElevatedButton(
-                onPressed: () {
-                  ref.read(gameStateProvider.notifier).resetGame();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(AppLocalizations.of(context)!.resetGame, style: const TextStyle(fontSize: 18, color: Colors.white)),
-              ),
+            // Reset Game Button (for testing) - REMOVED as GameOverDialog handles reset
             // Placeholder for "Next Turn" or "Submit Score" button
             // This will be more complex depending on game flow (e.g., after 3 rolls or score selection)
             // For now, if rolls are 0 and game not over, show a "Next Turn" button if no category selected yet
@@ -128,16 +173,28 @@ class GameScreen extends ConsumerWidget {
                   // This button should ideally only appear after a score category is selected.
                   // For now, it just advances the turn.
                   // A more robust implementation would involve checking if a score was selected for the current turn.
-                  ref.read(gameStateProvider.notifier).nextTurn();
+                  // Consider if nextTurn() is still the right action or if it should be tied to score selection.
+                  // For now, we assume a score must be selected to advance.
+                  // If no score is selected, this button might be confusing.
+                  // The ScoreboardWidget handles advancing the turn upon score selection.
+                  // This button might be redundant if the user MUST select a score.
+                  // Let's keep it for now but add a prompt if it's clicked without a score being ready.
+                  // Actually, the ScoreboardWidget's onTap for a category calls assignScore,
+                  // which then calls nextTurn or handles game over. So this button is likely not needed
+                  // if the user understands they must click a score category.
+                  // Removing this button to simplify flow, user must select a score.
+                  // If they don't, they can re-roll (if rolls left) or are stuck.
+                  // This matches Yahtzee flow better.
+                  // ref.read(gameStateProvider.notifier).nextTurn();
                    ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocalizations.of(context)!.selectScoreCategoryPrompt)),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.selectScoreCategoryPrompt)), // Use existing prompt
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: Text(AppLocalizations.of(context)!.nextTurn, style: const TextStyle(fontSize: 18, color: Colors.white)),
+                child: Text(AppLocalizations.of(context)!.selectScoreCategoryPrompt, style: const TextStyle(fontSize: 18, color: Colors.white)), // Use existing prompt
               )
           ],
           ),

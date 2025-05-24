@@ -19,6 +19,7 @@ class MyApp extends ConsumerWidget { // Changed to ConsumerWidget
   @override
   Widget build(BuildContext context, WidgetRef ref) { // Added WidgetRef
     final currentLocale = ref.watch(localeProvider);
+    final router = AppRouter.createRouter(ref); // Create router instance here
 
     return MaterialApp.router(
       title: 'Yahtzee Game', // This will be localized by MaterialApp if AppLocalizations.delegate is first and has appTitle
@@ -26,7 +27,7 @@ class MyApp extends ConsumerWidget { // Changed to ConsumerWidget
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      routerConfig: AppRouter.router,
+      routerConfig: router, // Use the created router instance
       locale: currentLocale, // Set the locale from the provider
       localizationsDelegates: const [
         AppLocalizations.delegate,

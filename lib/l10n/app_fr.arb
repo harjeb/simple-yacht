@@ -73,5 +73,25 @@
   "upperSectionTitle": "Section Supérieure",
   "lowerSectionTitle": "Section Inférieure",
   "continueGame": "Continuer la partie",
-  "exitGameConfirmation": "Êtes-vous sûr de vouloir quitter la partie en cours ?"
+  "exitGameConfirmation": "Êtes-vous sûr de vouloir quitter la partie en cours ?",
+  "highScoreDisplay": "Meilleur Score",
+  "@highScoreDisplay": {
+    "description": "Étiquette pour la section d'affichage du meilleur score sur l'écran d'accueil"
+  },
+  "yourPersonalBestScoreLabel": "Votre Meilleur Score Personnel",
+  "@yourPersonalBestScoreLabel": {
+    "description": "Étiquette pour l'affichage du meilleur score personnel"
+  },
+  "noPersonalBestScore": "Pas encore de meilleur score personnel. Jouez une partie !",
+  "@noPersonalBestScore": {
+    "description": "Message affiché lorsqu'il n'y a pas de meilleur score personnel"
+  },
+  "scoreLabel": "Score",
+  "@scoreLabel": {
+    "description": "Étiquette pour la valeur du score"
+  },
+  "dateTimeLabel": "Date/Heure",
+  "@dateTimeLabel": {
+    "description": "Étiquette pour la date et l'heure du score"
+  }
 }

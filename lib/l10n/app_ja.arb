@@ -73,5 +73,25 @@
   "upperSectionTitle": "上部セクション",
   "lowerSectionTitle": "下部セクション",
   "continueGame": "ゲームを続ける",
-  "exitGameConfirmation": "現在のゲームを終了してもよろしいですか？"
+  "exitGameConfirmation": "現在のゲームを終了してもよろしいですか？",
+  "highScoreDisplay": "最高スコア",
+  "@highScoreDisplay": {
+    "description": "ホーム画面の最高スコア表示セクションのラベル"
+  },
+  "yourPersonalBestScoreLabel": "あなたの自己ベスト",
+  "@yourPersonalBestScoreLabel": {
+    "description": "自己ベストスコア表示のラベル"
+  },
+  "noPersonalBestScore": "自己ベストスコアはまだありません。ゲームをプレイしましょう！",
+  "@noPersonalBestScore": {
+    "description": "自己ベストスコアがない場合に表示されるメッセージ"
+  },
+  "scoreLabel": "スコア",
+  "@scoreLabel": {
+    "description": "スコア値のラベル"
+  },
+  "dateTimeLabel": "日時",
+  "@dateTimeLabel": {
+    "description": "スコアの日時のラベル"
+  }
 }

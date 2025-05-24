@@ -73,5 +73,25 @@
   "upperSectionTitle": "Верхняя Секция",
   "lowerSectionTitle": "Нижняя Секция",
   "continueGame": "Продолжить игру",
-  "exitGameConfirmation": "Вы уверены, что хотите выйти из текущей игры?"
+  "exitGameConfirmation": "Вы уверены, что хотите выйти из текущей игры?",
+  "highScoreDisplay": "Лучший Результат",
+  "@highScoreDisplay": {
+    "description": "Метка для раздела отображения лучшего результата на главном экране"
+  },
+  "yourPersonalBestScoreLabel": "Ваш Личный Рекорд",
+  "@yourPersonalBestScoreLabel": {
+    "description": "Метка для отображения личного рекорда"
+  },
+  "noPersonalBestScore": "Личного рекорда пока нет. Сыграйте игру!",
+  "@noPersonalBestScore": {
+    "description": "Сообщение, отображаемое при отсутствии личного рекорда"
+  },
+  "scoreLabel": "Счет",
+  "@scoreLabel": {
+    "description": "Метка для значения счета"
+  },
+  "dateTimeLabel": "Дата/Время",
+  "@dateTimeLabel": {
+    "description": "Метка для даты и времени счета"
+  }
 }

@@ -19,8 +19,11 @@ This file provides a high-level overview of the project and the expected product
     *   High score leaderboards:
         *   Personal best scores.
         *   Global high scores.
+        *   Detailed local leaderboard: Stores and displays the top 10 personal scores with usernames.
 *   **Gameplay Features:**
     *   Dice rolling animation on reset/roll.
+*   **User Identification:**
+    *   Mandatory username setup on first application launch for personalization and leaderboard display.
 *   **Two-Player Mode Details:**
     *   Random matchmaking.
     *   Friend battle mode.
@@ -32,6 +35,8 @@ This file provides a high-level overview of the project and the expected product
     *   Scores from friend battles do *not* affect ELO or ladder ranking.
 *   **Networking:**
     *   Network capabilities for 2-player modes and global leaderboards.
+*   **Removed Features:**
+    *   Third-party login functionality has been explicitly removed from the project scope to simplify user authentication.
 
 ## Overall Architecture
 

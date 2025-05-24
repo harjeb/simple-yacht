@@ -138,4 +138,70 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get exitGameConfirmation => '您确定要退出当前游戏吗？';
+
+  @override
+  String get leaderboardTitle => '排行榜';
+
+  @override
+  String get leaderboardEmpty => '排行榜当前为空。进行一场游戏来上榜吧！';
+
+  @override
+  String leaderboardScoreDate(String score, String date) {
+    return '分数: $score\n日期: $date';
+  }
+
+  @override
+  String leaderboardScorePoints(String score) {
+    return '$score 分';
+  }
+
+  @override
+  String leaderboardError(String errorDetails) {
+    return '加载排行榜错误: $errorDetails';
+  }
+
+  @override
+  String get leaderboardRefreshTooltip => '刷新排行榜';
+
+  @override
+  String get usernameSetupTitle => '设置您的用户名';
+
+  @override
+  String get usernameSetupPrompt => '请输入一个用户名，它将显示在排行榜上。';
+
+  @override
+  String get usernameLabel => '用户名';
+
+  @override
+  String get usernameHint => '输入您想要的用户名';
+
+  @override
+  String get usernameCannotBeEmpty => '用户名不能为空。';
+
+  @override
+  String get usernameValidationError => '请输入用户名。';
+
+  @override
+  String get usernameTooShortError => '用户名长度至少为3个字符。';
+
+  @override
+  String get usernameTooLongError => '用户名长度不能超过15个字符。';
+
+  @override
+  String get saveButtonLabel => '保存';
+
+  @override
+  String get highScoreDisplay => '最高分';
+
+  @override
+  String get yourPersonalBestScoreLabel => '您的个人最佳';
+
+  @override
+  String get noPersonalBestScore => '暂无个人最佳成绩，快来玩一局吧！';
+
+  @override
+  String get scoreLabel => '分数';
+
+  @override
+  String get dateTimeLabel => '日期/时间';
 }

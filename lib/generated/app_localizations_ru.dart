@@ -138,4 +138,70 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get exitGameConfirmation => 'Вы уверены, что хотите выйти из текущей игры?';
+
+  @override
+  String get leaderboardTitle => 'Leaderboard';
+
+  @override
+  String get leaderboardEmpty => 'The leaderboard is currently empty. Play a game to get on the board!';
+
+  @override
+  String leaderboardScoreDate(String score, String date) {
+    return 'Score: $score\nDate: $date';
+  }
+
+  @override
+  String leaderboardScorePoints(String score) {
+    return '$score pts';
+  }
+
+  @override
+  String leaderboardError(String errorDetails) {
+    return 'Error loading leaderboard: $errorDetails';
+  }
+
+  @override
+  String get leaderboardRefreshTooltip => 'Refresh Leaderboard';
+
+  @override
+  String get usernameSetupTitle => 'Set Your Username';
+
+  @override
+  String get usernameSetupPrompt => 'Please enter a username to be displayed on the leaderboard.';
+
+  @override
+  String get usernameLabel => 'Username';
+
+  @override
+  String get usernameHint => 'Enter your desired username';
+
+  @override
+  String get usernameCannotBeEmpty => 'Username cannot be empty.';
+
+  @override
+  String get usernameValidationError => 'Please enter a username.';
+
+  @override
+  String get usernameTooShortError => 'Username must be at least 3 characters long.';
+
+  @override
+  String get usernameTooLongError => 'Username cannot be more than 15 characters long.';
+
+  @override
+  String get saveButtonLabel => 'Save';
+
+  @override
+  String get highScoreDisplay => 'Лучший Результат';
+
+  @override
+  String get yourPersonalBestScoreLabel => 'Ваш Личный Рекорд';
+
+  @override
+  String get noPersonalBestScore => 'Личного рекорда пока нет. Сыграйте игру!';
+
+  @override
+  String get scoreLabel => 'Счет';
+
+  @override
+  String get dateTimeLabel => 'Дата/Время';
 }

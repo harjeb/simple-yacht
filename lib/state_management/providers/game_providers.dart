@@ -1,32 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:myapp/core_logic/game_state.dart';
 import 'package:myapp/core_logic/scoring_rules.dart'; // Required for calculateScore
-import 'package:myapp/services/local_storage_service.dart'; // Added for high score
+// import 'package:myapp/services/local_storage_service.dart'; // No longer directly used here for high score
 
 // Notifier for the game state
 class GameStateNotifier extends StateNotifier<GameState> {
-  final LocalStorageService _localStorageService = LocalStorageService();
+  // final LocalStorageService _localStorageService = LocalStorageService(); // Removed
   int _rollCounter = 0; // Internal counter for unique RollEvent IDs
 
-  GameStateNotifier() : super(GameState()) {
-    // When the notifier is created, and a game is not already in progress from a previous session (if persistence was added)
-    // we can trigger the initial roll. For simplicity, we always do it here.
-    // If GameState's constructor set isGameInProgress to true, this would be a new game's first roll.
-    // If GameState loaded a game in progress, this logic might need adjustment or be conditional.
-    _performInitialRollAndUpdateState(isNewGame: true);
-  }
+  GameStateNotifier() : super(GameState()); // GameState constructor sets isGameInProgress = false
 
-  void _performInitialRollAndUpdateState({bool isNewGame = false, GameState? existingState}) {
-    final currentState = existingState ?? state;
+  // This method is now called explicitly when a new game starts or a turn starts.
+  void _performInitialRollAndUpdateState({bool isNewGame = false, required GameState baseState}) {
     // Use copyWith to ensure we're working with a new instance for modification,
     // preserving other properties not directly related to the roll.
-    final workingState = currentState.copyWith(
-      dice: currentState.dice.map((d) => Die(value: d.value, isHeld: d.isHeld)).toList(), // Deep copy
-      scores: Map.from(currentState.scores), // Deep copy
-      isGameInProgress: isNewGame ? true : currentState.isGameInProgress, // Ensure game is in progress if new
-      rollsLeft: isNewGame ? 3 : currentState.rollsLeft, // Initial rolls for a new game
-      currentRound: isNewGame ? 1 : currentState.currentRound,
-      yahtzeeBonusCount: isNewGame ? 0 : currentState.yahtzeeBonusCount,
+    final workingState = baseState.copyWith(
+      dice: baseState.dice.map((d) => Die(value: d.value, isHeld: d.isHeld)).toList(), // Deep copy
+      scores: Map.from(baseState.scores), // Deep copy
+      isGameInProgress: true, // Explicitly set to true as a game is starting/continuing
+      rollsLeft: 3, // Initial rolls for a new game/turn before auto-roll
+      currentRound: isNewGame ? 1 : baseState.currentRound,
+      yahtzeeBonusCount: isNewGame ? 0 : baseState.yahtzeeBonusCount,
       // lastRollEvent will be set below
     );
 
@@ -86,7 +80,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
       if (scoreAssigned) {
         if (workingState.isGameOver) {
-          _localStorageService.saveHighScore(workingState.grandTotal);
+          // _localStorageService.saveHighScore(workingState.grandTotal); // Removed: LeaderboardService will handle this
           // Game is over, no new turn or roll event.
           state = workingState.copyWith(isGameInProgress: false); // Ensure game is marked not in progress
         } else {
@@ -125,21 +119,21 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   // Resets the entire game
   void resetGame() {
-    if (state.isGameOver && state.isGameInProgress) { // Only save if game was actually played and over
-      _localStorageService.saveHighScore(state.grandTotal);
-    }
+    // if (state.isGameOver && state.isGameInProgress) { // Only save if game was actually played and over
+    //   _localStorageService.saveHighScore(state.grandTotal); // Removed: LeaderboardService will handle this
+    // }
     _rollCounter = 0;
-    // Create a new GameState instance. The constructor sets defaults.
-    // Then, _performInitialRollAndUpdateState will handle the first roll and set isGameInProgress.
-    state = GameState(); // This sets isGameInProgress to false initially
-    _performInitialRollAndUpdateState(isNewGame: true); // This will set isGameInProgress to true
+    // Create a new GameState instance. The constructor sets defaults (isGameInProgress = false).
+    final newCleanState = GameState();
+    // Then, _performInitialRollAndUpdateState will handle the first roll and set isGameInProgress to true.
+    _performInitialRollAndUpdateState(isNewGame: true, baseState: newCleanState);
   }
 
   // Resets the game to a completely fresh state, where no game is in progress.
   void setToInitialState() {
-    if (state.isGameOver && state.isGameInProgress) {
-        _localStorageService.saveHighScore(state.grandTotal);
-    }
+    // if (state.isGameOver && state.isGameInProgress) {
+    //     _localStorageService.saveHighScore(state.grandTotal); // Removed: LeaderboardService will handle this
+    // }
     _rollCounter = 0;
     state = GameState(); // This creates a new GameState with isGameInProgress = false and null lastRollEvent
   }

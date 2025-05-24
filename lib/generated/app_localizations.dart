@@ -350,6 +350,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to exit the current game?'**
   String get exitGameConfirmation;
+
+  /// No description provided for @leaderboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard'**
+  String get leaderboardTitle;
+
+  /// No description provided for @leaderboardEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The leaderboard is currently empty. Play a game to get on the board!'**
+  String get leaderboardEmpty;
+
+  /// Displays score and date for a leaderboard entry
+  ///
+  /// In en, this message translates to:
+  /// **'Score: {score}\nDate: {date}'**
+  String leaderboardScoreDate(String score, String date);
+
+  /// Displays score in points format for a leaderboard entry
+  ///
+  /// In en, this message translates to:
+  /// **'{score} pts'**
+  String leaderboardScorePoints(String score);
+
+  /// Error message when leaderboard fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading leaderboard: {errorDetails}'**
+  String leaderboardError(String errorDetails);
+
+  /// No description provided for @leaderboardRefreshTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Leaderboard'**
+  String get leaderboardRefreshTooltip;
+
+  /// No description provided for @usernameSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Your Username'**
+  String get usernameSetupTitle;
+
+  /// No description provided for @usernameSetupPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a username to be displayed on the leaderboard.'**
+  String get usernameSetupPrompt;
+
+  /// No description provided for @usernameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get usernameLabel;
+
+  /// No description provided for @usernameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your desired username'**
+  String get usernameHint;
+
+  /// No description provided for @usernameCannotBeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Username cannot be empty.'**
+  String get usernameCannotBeEmpty;
+
+  /// No description provided for @usernameValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a username.'**
+  String get usernameValidationError;
+
+  /// No description provided for @usernameTooShortError.
+  ///
+  /// In en, this message translates to:
+  /// **'Username must be at least 3 characters long.'**
+  String get usernameTooShortError;
+
+  /// No description provided for @usernameTooLongError.
+  ///
+  /// In en, this message translates to:
+  /// **'Username cannot be more than 15 characters long.'**
+  String get usernameTooLongError;
+
+  /// No description provided for @saveButtonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveButtonLabel;
+
+  /// Label for the high score display section on the home screen
+  ///
+  /// In en, this message translates to:
+  /// **'High Score'**
+  String get highScoreDisplay;
+
+  /// Label for the personal best score display
+  ///
+  /// In en, this message translates to:
+  /// **'Your Personal Best'**
+  String get yourPersonalBestScoreLabel;
+
+  /// Message displayed when there is no personal best score
+  ///
+  /// In en, this message translates to:
+  /// **'No personal best score yet. Play a game!'**
+  String get noPersonalBestScore;
+
+  /// Label for the score value
+  ///
+  /// In en, this message translates to:
+  /// **'Score'**
+  String get scoreLabel;
+
+  /// Label for the date and time of the score
+  ///
+  /// In en, this message translates to:
+  /// **'Date/Time'**
+  String get dateTimeLabel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

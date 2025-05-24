@@ -73,5 +73,67 @@
   "upperSectionTitle": "Upper Section",
   "lowerSectionTitle": "Lower Section",
   "continueGame": "Continue Game",
-  "exitGameConfirmation": "Are you sure you want to exit the current game?"
+  "exitGameConfirmation": "Are you sure you want to exit the current game?",
+  "leaderboardTitle": "Leaderboard",
+  "leaderboardEmpty": "The leaderboard is currently empty. Play a game to get on the board!",
+  "leaderboardScoreDate": "Score: {score}\nDate: {date}",
+  "@leaderboardScoreDate": {
+    "description": "Displays score and date for a leaderboard entry",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardScorePoints": "{score} pts",
+  "@leaderboardScorePoints": {
+    "description": "Displays score in points format for a leaderboard entry",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardError": "Error loading leaderboard: {errorDetails}",
+  "@leaderboardError": {
+    "description": "Error message when leaderboard fails to load",
+    "placeholders": {
+      "errorDetails": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardRefreshTooltip": "Refresh Leaderboard",
+  "usernameSetupTitle": "Set Your Username",
+  "usernameSetupPrompt": "Please enter a username to be displayed on the leaderboard.",
+  "usernameLabel": "Username",
+  "usernameHint": "Enter your desired username",
+  "usernameCannotBeEmpty": "Username cannot be empty.",
+  "usernameValidationError": "Please enter a username.",
+  "usernameTooShortError": "Username must be at least 3 characters long.",
+  "usernameTooLongError": "Username cannot be more than 15 characters long.",
+  "saveButtonLabel": "Save",
+  "highScoreDisplay": "High Score",
+  "@highScoreDisplay": {
+    "description": "Label for the high score display section on the home screen"
+  },
+  "yourPersonalBestScoreLabel": "Your Personal Best",
+  "@yourPersonalBestScoreLabel": {
+    "description": "Label for the personal best score display"
+  },
+  "noPersonalBestScore": "No personal best score yet. Play a game!",
+  "@noPersonalBestScore": {
+    "description": "Message displayed when there is no personal best score"
+  },
+  "scoreLabel": "Score",
+  "@scoreLabel": {
+    "description": "Label for the score value"
+  },
+  "dateTimeLabel": "Date/Time",
+  "@dateTimeLabel": {
+    "description": "Label for the date and time of the score"
+  }
 }

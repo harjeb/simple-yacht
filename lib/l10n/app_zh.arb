@@ -73,5 +73,67 @@
   "upperSectionTitle": "上部得分",
   "lowerSectionTitle": "下部得分",
   "continueGame": "继续游戏",
-  "exitGameConfirmation": "您确定要退出当前游戏吗？"
+  "exitGameConfirmation": "您确定要退出当前游戏吗？",
+  "leaderboardTitle": "排行榜",
+  "leaderboardEmpty": "排行榜当前为空。进行一场游戏来上榜吧！",
+  "leaderboardScoreDate": "分数: {score}\n日期: {date}",
+  "@leaderboardScoreDate": {
+    "description": "显示排行榜条目的分数和日期",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardScorePoints": "{score} 分",
+  "@leaderboardScorePoints": {
+    "description": "以分数格式显示排行榜条目的分数",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardError": "加载排行榜错误: {errorDetails}",
+  "@leaderboardError": {
+    "description": "排行榜加载失败时的错误消息",
+    "placeholders": {
+      "errorDetails": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardRefreshTooltip": "刷新排行榜",
+  "usernameSetupTitle": "设置您的用户名",
+  "usernameSetupPrompt": "请输入一个用户名，它将显示在排行榜上。",
+  "usernameLabel": "用户名",
+  "usernameHint": "输入您想要的用户名",
+  "usernameCannotBeEmpty": "用户名不能为空。",
+  "usernameValidationError": "请输入用户名。",
+  "usernameTooShortError": "用户名长度至少为3个字符。",
+  "usernameTooLongError": "用户名长度不能超过15个字符。",
+  "saveButtonLabel": "保存",
+  "highScoreDisplay": "最高分",
+  "@highScoreDisplay": {
+    "description": "主屏幕上最高分显示区域的标签"
+  },
+  "yourPersonalBestScoreLabel": "您的个人最佳",
+  "@yourPersonalBestScoreLabel": {
+    "description": "个人最高分显示标签"
+  },
+  "noPersonalBestScore": "暂无个人最佳成绩，快来玩一局吧！",
+  "@noPersonalBestScore": {
+    "description": "没有个人最高分时显示的消息"
+  },
+  "scoreLabel": "分数",
+  "@scoreLabel": {
+    "description": "分数标签"
+  },
+  "dateTimeLabel": "日期/时间",
+  "@dateTimeLabel": {
+    "description": "得分日期和时间标签"
+  }
 }

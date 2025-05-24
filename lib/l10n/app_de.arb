@@ -73,5 +73,25 @@
   "upperSectionTitle": "Oberer Bereich",
   "lowerSectionTitle": "Unterer Bereich",
   "continueGame": "Spiel fortsetzen",
-  "exitGameConfirmation": "Sind Sie sicher, dass Sie das aktuelle Spiel verlassen möchten?"
+  "exitGameConfirmation": "Sind Sie sicher, dass Sie das aktuelle Spiel verlassen möchten?",
+  "highScoreDisplay": "Höchstpunktzahl",
+  "@highScoreDisplay": {
+    "description": "Beschriftung für den Highscore-Anzeigebereich auf dem Startbildschirm"
+  },
+  "yourPersonalBestScoreLabel": "Deine Persönliche Bestleistung",
+  "@yourPersonalBestScoreLabel": {
+    "description": "Beschriftung für die Anzeige der persönlichen Bestleistung"
+  },
+  "noPersonalBestScore": "Noch keine persönliche Bestleistung. Spiel ein Spiel!",
+  "@noPersonalBestScore": {
+    "description": "Nachricht, die angezeigt wird, wenn keine persönliche Bestleistung vorhanden ist"
+  },
+  "scoreLabel": "Punktzahl",
+  "@scoreLabel": {
+    "description": "Beschriftung für den Punktwert"
+  },
+  "dateTimeLabel": "Datum/Zeit",
+  "@dateTimeLabel": {
+    "description": "Beschriftung für Datum und Uhrzeit der Punktzahl"
+  }
 }

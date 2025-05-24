@@ -7,8 +7,13 @@
 
 ## Current Focus
 
-* [2025-05-23 06:03:58] - Implemented internationalization (i18n) with English/Chinese support and language switching via settings. Single-player mode is now polished and localized. Next: Implement Firebase backend and online features.
-
+* [2025-05-24 12:28:15] - Core local features (Game Over, Leaderboard, Username Setup, Login Removal) implemented. Next: Implement Firebase backend and online features.
+* [2025-05-24 12:40:17] - Generating specifications for: 1. Bug fix: "Continue Game" button incorrectly shown for new users. 2. Enhancement: Display username on home screen.
+* [2025-05-24 12:44:07] - Defined architecture and updated Memory Bank for: 1. Bug fix: "Continue Game" button incorrectly shown for new users. 2. Enhancement: Display username on home screen.
+* [{{TIMESTAMP}}] - TDD: Skipped unit and widget tests for GameOverDialog, Leaderboard, and Username Setup features as per user instruction.
+* [2025-05-24 13:29:07] - Defining architecture and updating Memory Bank for displaying personal best score on the home screen.
+* [2025-05-24 13:34:29] - Implemented feature to display personal best score on the home screen.
+* [2025-05-24 13:38:37] - 审查了在主屏幕右上角使用 `Stack` 和 `Positioned` 显示用户名的伪代码架构。
 ## Recent Changes
 
 * [2025-05-23 02:56:59] - Memory Bank initialized with core files.
@@ -44,9 +49,26 @@
 * [2025-05-23 08:22:59] - Fixed issue where automatic dice rolls (on new game/new turn) were not occurring after the dice selection logic change. Modified `_performInitialRoll()` in `lib/core_logic/game_state.dart` to directly set dice values and ensure `isHeld` is `false` for all dice, aligning with the new "select to discard" logic.
 * [2025-05-23 08:28:16] - Implemented feature: After a manual dice roll (`Roll Dice` button), all dice selections (for discarding) are cleared. This was achieved by setting `die.isHeld = false` for all dice at the end of the `rollDice()` method in `lib/core_logic/game_state.dart`.
 * [2025-05-23 08:38:42] - Fixed dice rolling animation. Replaced `rollId` with a `RollEvent` object (containing `id`, `rolledIndices`, `isInitialRoll`) in `GameState` and relevant providers. Updated `DiceWidget` to use `RollEvent` to correctly trigger animations for dice that were part of the roll. Files changed: `lib/core_logic/game_state.dart`, `lib/state_management/providers/game_providers.dart`, `lib/widgets/dice_widget.dart`.
+* [2025-05-24 10:59:00] - Defined specifications and pseudocode for: game over UI with reset, enhanced local leaderboard (top 10 scores), mandatory username setup on first launch, and removal of all third-party login functionalities.
+* [2025-05-24 11:03:53] - Completed system architecture design for game over UI, leaderboard, username setup, and third-party login removal. Updated relevant Memory Bank files ([`memory-bank/architecture.md`](memory-bank/architecture.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)).
+* [2025-05-24 12:28:15] - Implemented core features: Game Over UI, local leaderboard (top 10 with username via `shared_preferences`), mandatory username setup on first launch, and verified removal of third-party login elements. Created/updated files: [`lib/widgets/game_over_dialog.dart`](lib/widgets/game_over_dialog.dart:1), [`lib/core_logic/score_entry.dart`](lib/core_logic/score_entry.dart:1), [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:1), [`lib/services/leaderboard_service.dart`](lib/services/leaderboard_service.dart:1), [`lib/state_management/providers/leaderboard_providers.dart`](lib/state_management/providers/leaderboard_providers.dart:1), [`lib/ui_screens/leaderboard_screen.dart`](lib/ui_screens/leaderboard_screen.dart:1), [`lib/services/user_service.dart`](lib/services/user_service.dart:1), [`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1), [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1). Updated [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1), [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1), [`lib/main.dart`](lib/main.dart:1), and relevant localization files.
+* [2025-05-24 12:49:21] - Applied bug fix and enhancement:
+    * **Bug Fix (Continue Game Button):** Modified [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1) to call `setToInitialState()` on `gameStateProvider` after new user setup. Updated [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1) "Continue Game" button visibility logic to `isGameInProgress && (currentRound > 1 || (currentRound == 1 && rollsLeft < 2) || scores.values.any((s) => s != null))`.
+    * **Enhancement (Display Username):** Modified [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1) AppBar to display username from `usernameProvider`, with loading (username null) and empty string handling. Imported `GameState` class into `home_screen.dart`.
+* [2025-05-24 13:22:42] - Updated home screen UI text for high score display from "Leaderboard" to "High Score" (or equivalent translations). This involved:
+    * Adding new key `highScoreDisplay` to all `.arb` localization files ([`lib/l10n/app_en.arb`](lib/l10n/app_en.arb), [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb), [`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)).
+    * Regenerating localization classes using `flutter gen-l10n`.
+    * Updating the `Text` widget in [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart) to use `localizations.highScoreDisplay`.
 ## Open Questions/Issues
 
 *
 * [2025-05-23 08:08:27] - Updated home screen to show "Continue Game" button if a game is in progress. Updated game screen exit button to 'X' icon and added a confirmation dialog before exiting a game. Updated relevant localization files.
 * [2025-05-23 08:12:11] - Fixed bug where "Continue Game" button was still shown after exiting a game. Implemented `setToInitialState` in `GameStateNotifier` to correctly reset `isGameInProgress` to false when exiting.
 * [2025-05-23 08:51:29] - Updated localization files (de, es, ja, ru, fr) with new entries for 'continueGame' and 'exitGameConfirmation'.
+* [2025-05-24 13:07:00] - 审查并确认了“游戏结束后排行榜未显示成绩”问题的规范和伪代码。解决方案与现有架构一致，准备实施。
+* [2025-05-24 13:08:59] - Modified `lib/ui_screens/game_screen.dart` to save score to leaderboard when game is over. Added calls to `leaderboardService.addScore` and `ref.refresh(leaderboardProvider)` within the `isGameOverProvider` listener.
+* [2025-05-24 13:34:29] - Updated [`lib/services/leaderboard_service.dart`](lib/services/leaderboard_service.dart) to add `getPersonalBestScore` method.
+* [2025-05-24 13:34:29] - Created [`lib/state_management/providers/personal_best_score_provider.dart`](lib/state_management/providers/personal_best_score_provider.dart) for personal best score.
+* [2025-05-24 13:34:29] - Updated [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart) to display personal best score using the new provider and `intl` for date formatting.
+* [2025-05-24 13:34:29] - Added new localization keys (`yourPersonalBestScoreLabel`, `noPersonalBestScore`, `scoreLabel`, `dateTimeLabel`) to all `.arb` files ([`lib/l10n/app_en.arb`](lib/l10n/app_en.arb), [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb), [`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)) and ran `flutter gen-l10n`.
+* [2025-05-24 13:41:30] - Implemented username display on the home screen's top-right corner using Stack, Positioned, and Chip widgets. Modified user_providers.dart to add `usernameAsyncProvider` (FutureProvider) to correctly use `AsyncValue.when()` for loading/error/data states as per pseudocode. Updated home_screen.dart to use the new provider.
