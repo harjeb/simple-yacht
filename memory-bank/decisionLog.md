@@ -345,3 +345,19 @@ The `flutter gen-l10n` command, despite successful execution and seemingly corre
     *   [`lib/generated/app_localizations_ru.dart`](lib/generated/app_localizations_ru.dart)
     *   [`lib/generated/app_localizations_zh.dart`](lib/generated/app_localizations_zh.dart)
     The values for these implementations were taken from their respective `.arb` files. This manual intervention aims to unblock the build process.
+---
+### Decision
+[2025-05-25 11:33:28] - Adopted solution for SplashScreen卡顿及路由循环问题：在SplashScreen中认证成功后使用显式导航替换 `GoRouter.refresh()`。
+
+**Rationale:**
+规范编写器模式分析指出，[`SplashScreen`](lib/ui_screens/splash_screen.dart:1) 中 `GoRouter.refresh()` 调用与 [`AppRouter`](lib/navigation/app_router.dart:1) 的重定向逻辑可能形成循环，导致界面卡顿和组件反复重建。改用显式导航 (如 `context.go('/home')`) 将导航控制权清晰地移交给 [`AppRouter`](lib/navigation/app_router.dart:1) 的 `redirect` 逻辑，从而打破潜在循环。此方案更直接，减少了因路由全局刷新带来的不可预测性。
+
+**Implications/Details:**
+- **修改 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1):**
+    - 在 `ref.listen` 回调中，当 `anonymousSignInNotifierProvider` 指示匿名登录成功时：
+        - 移除 `GoRouter.of(context).refresh()` 调用。
+        - 替换为 `context.go('/home')` (或 `context.replace('/home')`)。
+- **审查 [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1):**
+    - 确保其 `redirect` 逻辑能够正确处理从 `/splash` 导航到 `/home` 后的情况，并根据用户是否需要设置用户名（`needsSetup`）等状态，最终将用户导向正确的页面（如 `/username_setup` 或 `/home`）。
+    - 确保 `redirect` 逻辑在用户已登录且设置完成后，若当前路径为 `/splash` 或 `/username_setup`，会正确导航到 `/home`。
+- 此更改旨在提高启动流程的稳定性和可预测性。
