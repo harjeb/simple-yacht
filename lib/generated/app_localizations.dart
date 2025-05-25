@@ -644,6 +644,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error: {details}'**
   String genericErrorWithDetails(String details);
+
+  /// Text shown when content is loading
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get loadingLabel;
+
+  /// Text shown when an error occurs
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorLabel;
+
+  /// Label for a button to retry an action
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryButtonLabel;
+
+  /// Generic message for sign-in failure
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed. Please try again.'**
+  String get signInFailedGeneric;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

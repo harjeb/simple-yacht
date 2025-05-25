@@ -8,35 +8,59 @@ import 'package:myapp/ui_screens/settings_screen.dart';
 import 'package:myapp/ui_screens/leaderboard_screen.dart';
 import 'package:myapp/ui_screens/username_setup_screen.dart';
 import 'package:myapp/state_management/providers/user_providers.dart'; // Import user providers
+import 'package:myapp/ui_screens/splash_screen.dart'; // Import SplashScreen
+import 'package:myapp/services/auth_service.dart'; // Import for authStateChangesProvider
 
 class AppRouter {
   static GoRouter createRouter(WidgetRef ref) {
     return GoRouter(
-      initialLocation: '/',
+      initialLocation: '/splash', // Start with splash screen
       // refreshListenable: No longer using userServiceProvider directly here.
       // GoRouter will re-evaluate redirect on navigation.
       // If explicit refresh is needed based on usernameProvider state changes,
       // a more complex setup might be required, but typically redirect handles it.
       redirect: (BuildContext context, GoRouterState state) async { // Make redirect async
-        // It's generally better to watch providers that might change during the app's lifecycle
-        // in a widget, but for redirect, reading the future once per navigation is common.
-        // For a more reactive redirect, one might listen to usernameProvider.
-        final String? username = await ref.read(usernameProvider.future);
-        final bool hasUsernameValue = username != null && username.isNotEmpty;
-        final String location = state.uri.toString();
+        final authState = ref.watch(authStateChangesProvider); // Watch auth state for reactivity
+        final location = state.uri.toString();
 
-        // If user has no username and is not trying to access setup, redirect to setup.
+        // If still on splash screen, or auth state is loading, no redirect yet.
+        if (location == '/splash' || authState.isLoading || (!authState.hasValue && !authState.hasError)) {
+          // If auth is loading and we are not on splash, redirect to splash.
+          // This handles cases where deep linking might occur before auth is ready.
+          if (location != '/splash' && (authState.isLoading || (!authState.hasValue && !authState.hasError))) {
+            return '/splash';
+          }
+          return null; // Stay on splash or current if auth is loading
+        }
+
+        // Auth state is resolved (hasValue or hasError)
+        final firebaseUser = authState.asData?.value;
+
+        if (firebaseUser == null) {
+          // If no Firebase user (sign-in failed or not yet attempted and we are past splash)
+          // and not already on splash, redirect to splash to attempt sign-in.
+          // This shouldn't happen if SplashScreen logic is correct, but as a safeguard.
+          if (location != '/splash') {
+            return '/splash';
+          }
+          return null; // Stay on splash if sign-in failed
+        }
+
+        // Firebase user exists, now check for app-level username
+        final String? username = await ref.read(usernameProvider.future); // Check username after Firebase user confirmed
+        final bool hasUsernameValue = username != null && username.isNotEmpty;
+
+        // If on splash screen and Firebase user exists, proceed to username check / main app
+        if (location == '/splash') {
+          return hasUsernameValue ? '/' : '/username_setup';
+        }
+
+        // If user has no app username and is not trying to access setup, redirect to setup.
         if (!hasUsernameValue && location != '/username_setup') {
           return '/username_setup';
         }
-        // If user has a username and is trying to access setup, redirect to home.
+        // If user has an app username and is trying to access setup, redirect to home.
         if (hasUsernameValue && location == '/username_setup') {
-          // User has just set up their username (or already had one and tried to go to setup).
-          // Reset game state if they are coming from setup to ensure a clean start.
-          // This specific condition might need refinement based on exact flow from UsernameSetupScreen.
-          // For now, if they land on /username_setup with a username, they go to home.
-          // The actual saving of username and creation of user profile in Firestore
-          // should happen in UsernameSetupScreen.
           ref.read(gameStateProvider.notifier).setToInitialState();
           return '/';
         }
@@ -44,6 +68,12 @@ class AppRouter {
         return null;
       },
       routes: <RouteBase>[
+        GoRoute(
+          path: '/splash', // Add splash screen route
+          builder: (BuildContext context, GoRouterState state) {
+            return const SplashScreen();
+          },
+        ),
         GoRoute(
           path: '/',
           builder: (BuildContext context, GoRouterState state) {

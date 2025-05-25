@@ -293,5 +293,21 @@
   "saveButtonLabel": "Save",
   "@saveButtonLabel": {
     "description": "Label for the save button (NEEDS TRANSLATION)"
+  },
+  "loadingLabel": "読み込み中...",
+  "@loadingLabel": {
+    "description": "Text shown when content is loading"
+  },
+  "errorLabel": "エラー",
+  "@errorLabel": {
+    "description": "Text shown when an error occurs"
+  },
+  "retryButtonLabel": "再試行",
+  "@retryButtonLabel": {
+    "description": "Label for a button to retry an action"
+  },
+  "signInFailedGeneric": "サインインに失敗しました。接続を確認して再試行してください。",
+  "@signInFailedGeneric": {
+    "description": "Generic message for sign-in failure"
   }
 }

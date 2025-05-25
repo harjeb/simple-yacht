@@ -293,5 +293,21 @@
   "saveButtonLabel": "Save",
   "@saveButtonLabel": {
     "description": "Label for the save button (NEEDS TRANSLATION)"
+  },
+  "loadingLabel": "Загрузка...",
+  "@loadingLabel": {
+    "description": "Text shown when content is loading"
+  },
+  "errorLabel": "Ошибка",
+  "@errorLabel": {
+    "description": "Text shown when an error occurs"
+  },
+  "retryButtonLabel": "Повторить",
+  "@retryButtonLabel": {
+    "description": "Label for a button to retry an action"
+  },
+  "signInFailedGeneric": "Ошибка входа. Проверьте подключение и попробуйте снова.",
+  "@signInFailedGeneric": {
+    "description": "Generic message for sign-in failure"
   }
 }

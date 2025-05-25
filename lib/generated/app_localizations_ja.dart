@@ -293,4 +293,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String genericErrorWithDetails(String details) {
     return 'Error: $details';
   }
+
+  @override
+  String get loadingLabel => '読み込み中...';
+
+  @override
+  String get errorLabel => 'エラー';
+
+  @override
+  String get retryButtonLabel => '再試行';
+
+  @override
+  String get signInFailedGeneric => 'サインインに失敗しました。接続を確認して再試行してください。';
 }

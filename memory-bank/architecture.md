@@ -377,3 +377,5 @@ graph TD
 ```
 
 2025-05-24 14:02:00 - Added Firebase Backend Integration and Transfer Code System architecture.
+
+2025-05-25 05:42:00 - Updated [`lib/main.dart`](lib/main.dart:1) description in section 5 to reflect the implementation of Firebase anonymous sign-in on app startup. This ensures `currentUser` is available before critical operations needing authentication.

@@ -293,4 +293,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String genericErrorWithDetails(String details) {
     return 'Error: $details';
   }
+
+  @override
+  String get loadingLabel => 'Загрузка...';
+
+  @override
+  String get errorLabel => 'Ошибка';
+
+  @override
+  String get retryButtonLabel => 'Повторить';
+
+  @override
+  String get signInFailedGeneric => 'Ошибка входа. Проверьте подключение и попробуйте снова.';
 }

@@ -293,5 +293,21 @@
   "saveButtonLabel": "Save",
   "@saveButtonLabel": {
     "description": "Label for the save button (NEEDS TRANSLATION)"
+  },
+  "loadingLabel": "Wird geladen...",
+  "@loadingLabel": {
+    "description": "Text shown when content is loading"
+  },
+  "errorLabel": "Fehler",
+  "@errorLabel": {
+    "description": "Text shown when an error occurs"
+  },
+  "retryButtonLabel": "Wiederholen",
+  "@retryButtonLabel": {
+    "description": "Label for a button to retry an action"
+  },
+  "signInFailedGeneric": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "@signInFailedGeneric": {
+    "description": "Generic message for sign-in failure"
   }
 }

@@ -293,4 +293,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String genericErrorWithDetails(String details) {
     return 'Error: $details';
   }
+
+  @override
+  String get loadingLabel => 'Cargando...';
+
+  @override
+  String get errorLabel => 'Error';
+
+  @override
+  String get retryButtonLabel => 'Reintentar';
+
+  @override
+  String get signInFailedGeneric => 'Falló el inicio de sesión. Por favor, comprueba tu conexión e inténtalo de nuevo.';
 }

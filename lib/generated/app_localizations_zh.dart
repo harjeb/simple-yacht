@@ -293,4 +293,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String genericErrorWithDetails(String details) {
     return '错误：$details';
   }
+
+  @override
+  String get loadingLabel => '加载中...';
+
+  @override
+  String get errorLabel => '错误';
+
+  @override
+  String get retryButtonLabel => '重试';
+
+  @override
+  String get signInFailedGeneric => '登录失败，请检查您的网络连接并稍后重试。';
 }

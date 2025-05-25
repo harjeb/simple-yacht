@@ -256,5 +256,21 @@
         "type": "String"
       }
     }
+  },
+  "loadingLabel": "加载中...",
+  "@loadingLabel": {
+    "description": "Text shown when content is loading"
+  },
+  "errorLabel": "错误",
+  "@errorLabel": {
+    "description": "Text shown when an error occurs"
+  },
+  "retryButtonLabel": "重试",
+  "@retryButtonLabel": {
+    "description": "Label for a button to retry an action"
+  },
+  "signInFailedGeneric": "登录失败，请检查您的网络连接并稍后重试。",
+  "@signInFailedGeneric": {
+    "description": "Generic message for sign-in failure"
   }
 }

@@ -293,4 +293,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String genericErrorWithDetails(String details) {
     return 'Error: $details';
   }
+
+  @override
+  String get loadingLabel => 'Chargement...';
+
+  @override
+  String get errorLabel => 'Erreur';
+
+  @override
+  String get retryButtonLabel => 'Réessayer';
+
+  @override
+  String get signInFailedGeneric => 'La connexion a échoué. Veuillez vérifier votre connexion et réessayer.';
 }

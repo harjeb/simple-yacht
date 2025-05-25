@@ -7,6 +7,8 @@
 
 ## Current Focus
 
+* [2025-05-25 06:32:15] - 为 Firebase 匿名登录流程添加详细日志，以帮助诊断 Firebase 不再记录匿名登录的问题。涉及文件：[`lib/services/auth_service.dart`](lib/services/auth_service.dart:1), [`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1), [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1).
+* [2025-05-25 06:26:18] - 更新 Memory Bank 以反映 Firebase 匿名用户创建后 UI 按钮持续加载问题的修复。重点是新的启动流程 (`SplashScreen`) 和状态管理 (`AnonymousSignInNotifier`)。
 * [2025-05-24 12:28:15] - Core local features (Game Over, Leaderboard, Username Setup, Login Removal) implemented. Next: Implement Firebase backend and online features.
 * [2025-05-24 12:40:17] - Generating specifications for: 1. Bug fix: "Continue Game" button incorrectly shown for new users. 2. Enhancement: Display username on home screen.
 * [2025-05-24 12:44:07] - Defined architecture and updated Memory Bank for: 1. Bug fix: "Continue Game" button incorrectly shown for new users. 2. Enhancement: Display username on home screen.
@@ -15,7 +17,12 @@
 * [2025-05-24 13:34:29] - Implemented feature to display personal best score on the home screen.
 * [2025-05-24 13:38:37] - 审查了在主屏幕右上角使用 `Stack` 和 `Positioned` 显示用户名的伪代码架构。
 * [2025-05-24 14:03:00] - Designing and documenting the detailed architecture for Firebase backend integration (Firebase Authentication, Cloud Firestore, Cloud Functions) and the transfer code system for account persistence and recovery.
+* [2025-05-25 06:15:00] - 诊断 Flutter 应用中 Firebase 匿名认证后 UI 加载状态持续存在的问题，并制定解决方案架构。
 ## Recent Changes
+* [2025-05-25 06:32:15] - **代码实现 (日志添加):** 在以下文件中添加了 `developer.log` 语句以追踪匿名登录流程：[`lib/services/auth_service.dart`](lib/services/auth_service.dart:1), [`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1) (AnonymousSignInNotifier), [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1).
+* [2025-05-25 06:26:18] - **代码实现:** 修复了 Firebase 匿名用户创建后 UI 按钮持续加载的问题。引入了 `AnonymousSignInNotifier` ([`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1)) 和 `SplashScreen` ([`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1))。更新了 [`lib/main.dart`](lib/main.dart:1) 和 [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1) 以及相关的本地化文件。
+* [2025-05-25 06:15:00] - **架构更新:** 针对 Flutter 应用中 Firebase 匿名认证后 UI 加载状态持续存在的问题，更新了 Memory Bank ([`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md), [`memory-bank/systemPatterns.md`](memory-bank/systemPatterns.md), [`memory-bank/activeContext.md`](memory-bank/activeContext.md)).
+* [2025-05-25 05:42:31] - **Bug Fix:** Implemented Firebase anonymous sign-in on app startup in [`lib/main.dart`](lib/main.dart:1) to resolve "认证失败，请重启应用" error. This ensures `currentUser` is not null during username setup. Updated [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1) and [`memory-bank/architecture.md`](memory-bank/architecture.md:1).
 * [2025-05-25 05:10:02] - Updated [`.gitignore`](.gitignore) to include `node_modules/`.
 * [2025-05-24 15:06:27] - **翻译文件准备完成:** 为德语 (de), 西班牙语 (es), 法语 (fr), 日语 (ja), 俄语 (ru) 更新了 `.arb` 文件。添加了缺失的键，并确保需要翻译的键已标记 `(NEEDS TRANSLATION)`。执行了 `flutter gen-l10n`。
 * [2025-05-24 14:55:00] - 评估项目中未完成的翻译任务。此任务主要影响本地化文件，对整体架构影响较小。
@@ -79,3 +86,7 @@
 * [2025-05-24 14:03:00] - Completed detailed architecture design for Firebase backend integration and transfer code system. Updated [`memory-bank/architecture.md`](memory-bank/architecture.md:1), [`memory-bank/productContext.md`](memory-bank/productContext.md:1), and [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1) accordingly.
 * [2025-05-24 {{HH:MM:SS}}] - **本地化字符串补充完成:** 为 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) 和 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 中因 Firebase 和引继码功能新增的文本元素补充了本地化支持。所有相关键已在 `.arb` 文件中验证/添加，并重新生成了本地化类。
 * [2025-05-25 04:58:34] - Firebase Cloud Functions successfully migrated from TypeScript to JavaScript. Related configurations and documentation updated.
+* [2025-05-25 05:27:56] - [Debug Status Update: Resolved] Build failure due to missing `lib/firebase_options.dart` resolved by running `flutterfire configure --project=yacht-f816d -y`.
+* [2025-05-25 05:39:35] - [Debug Status Update: Issue Identified] Identified root cause of "认证失败，请重启应用" error: Missing Firebase anonymous sign-in call during app startup in `lib/main.dart`. This leads to `currentUser` being null in `UsernameSetupScreen`.
+* [2025-05-25 10:17:12] - 修复了因 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart) 中本地化键 (`loadingLabel`, `errorLabel`, `retryButtonLabel`, `signInFailedGeneric`) 缺失或值不正确导致的 Flutter 构建错误。更新了 [`lib/l10n/app_en.arb`](lib/l10n/app_en.arb) 中的 `signInFailedGeneric` 值。检查并确认了其他语言文件 ([`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)) 中的键已存在且已正确翻译。清理了 [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb) 中的重复条目并修复了其 JSON 格式问题。成功执行了 `flutter gen-l10n`。
+* [2025-05-25 10:31:24] - 手动修复生成的本地化文件 ([`lib/generated/app_localizations.dart`](lib/generated/app_localizations.dart) 及各语言版本如 [`lib/generated/app_localizations_en.dart`](lib/generated/app_localizations_en.dart))，以包含缺失的 `loadingLabel`, `errorLabel`, `retryButtonLabel`, `signInFailedGeneric` 的抽象声明和具体实现。此前 `flutter gen-l10n` 未能正确生成这些键，尽管 `.arb` 文件看起来配置正确。

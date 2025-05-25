@@ -293,4 +293,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String genericErrorWithDetails(String details) {
     return 'Error: $details';
   }
+
+  @override
+  String get loadingLabel => 'Wird geladen...';
+
+  @override
+  String get errorLabel => 'Fehler';
+
+  @override
+  String get retryButtonLabel => 'Wiederholen';
+
+  @override
+  String get signInFailedGeneric => 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.';
 }
