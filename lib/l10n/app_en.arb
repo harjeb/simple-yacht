@@ -135,5 +135,126 @@
   "dateTimeLabel": "Date/Time",
   "@dateTimeLabel": {
     "description": "Label for the date and time of the score"
+  },
+  "authenticationError": "Authentication error. Please restart the app.",
+  "@authenticationError": {
+    "description": "Error message shown when user authentication fails during username setup."
+  },
+  "failedToSaveUsername": "Failed to save username. Please try again.",
+  "@failedToSaveUsername": {
+    "description": "Error message shown when saving username to backend fails."
+  },
+  "genericError": "An unexpected error occurred. Please try again.",
+  "@genericError": {
+    "description": "Generic error message for unexpected issues."
+  },
+  "recoveryCodeInvalid": "Invalid or expired recovery code.",
+  "@recoveryCodeInvalid": {
+    "description": "Error message for invalid recovery code."
+  },
+  "recoveryFailedError": "Account recovery failed.",
+  "@recoveryFailedError": {
+    "description": "Generic error message for account recovery failure."
+  },
+  "recoverySignInFailed": "Failed to sign in after recovery.",
+  "@recoverySignInFailed": {
+    "description": "Error message when sign-in after recovery fails."
+  },
+  "accountRecoveryTitle": "Recover Account",
+  "@accountRecoveryTitle": {
+    "description": "Title for the account recovery screen."
+  },
+  "enterRecoveryCodePrompt": "Enter your 18-character recovery code.",
+  "@enterRecoveryCodePrompt": {
+    "description": "Prompt for user to enter their recovery code."
+  },
+  "recoveryCodeLabel": "Recovery Code",
+  "@recoveryCodeLabel": {
+    "description": "Label for the recovery code input field."
+  },
+  "recoveryCodeHint": "e.g., ABCDE12345FGHIJ678",
+  "@recoveryCodeHint": {
+    "description": "Hint text for the recovery code input field."
+  },
+  "recoveryCodeCannotBeEmpty": "Recovery code cannot be empty.",
+  "@recoveryCodeCannotBeEmpty": {
+    "description": "Validation error for empty recovery code."
+  },
+  "recoveryCodeInvalidLength": "Recovery code must be 18 characters.",
+  "@recoveryCodeInvalidLength": {
+    "description": "Validation error for incorrect recovery code length."
+  },
+  "recoverAccountButtonLabel": "Recover Account",
+  "@recoverAccountButtonLabel": {
+    "description": "Label for the recover account button."
+  },
+  "switchToRecoverAccountLabel": "Have a recovery code? Recover account.",
+  "@switchToRecoverAccountLabel": {
+    "description": "Label for the button to switch to recovery mode."
+  },
+  "switchToCreateAccountLabel": "New user? Create an account.",
+  "@switchToCreateAccountLabel": {
+    "description": "Label for the button to switch to create account mode."
+  },
+  "languageSettingsLabel": "Language Settings",
+  "@languageSettingsLabel": {
+    "description": "Label for the language settings section title."
+  },
+  "selectLanguageLabel": "Select Language",
+  "@selectLanguageLabel": {
+    "description": "Label for the language selection dropdown."
+  },
+  "accountSectionTitle": "Account Management",
+  "@accountSectionTitle": {
+    "description": "Title for the account management section."
+  },
+  "recoveryCodeNotAvailable": "Recovery code not available. Please ensure your account is set up.",
+  "@recoveryCodeNotAvailable": {
+    "description": "Message shown when recovery code is not available."
+  },
+  "yourRecoveryCode": "Your Recovery Code:",
+  "@yourRecoveryCode": {
+    "description": "Label for displaying the user's recovery code."
+  },
+  "copyRecoveryCode": "Copy Code",
+  "@copyRecoveryCode": {
+    "description": "Label for the copy recovery code button."
+  },
+  "recoveryCodeCopied": "Recovery code copied to clipboard!",
+  "@recoveryCodeCopied": {
+    "description": "Snackbar message when recovery code is copied."
+  },
+  "deleteAccountButtonLabel": "Delete Account",
+  "@deleteAccountButtonLabel": {
+    "description": "Label for the delete account button."
+  },
+  "deleteAccountDialogTitle": "Delete Account?",
+  "@deleteAccountDialogTitle": {
+    "description": "Title for the delete account confirmation dialog."
+  },
+  "deleteAccountDialogContent": "Are you sure you want to delete your account? This action is irreversible and all your data (username, scores, etc.) will be lost.",
+  "@deleteAccountDialogContent": {
+    "description": "Content/warning message for the delete account confirmation dialog."
+  },
+  "confirmButtonLabel": "Confirm",
+  "@confirmButtonLabel": {
+    "description": "Label for the confirm button in dialogs."
+  },
+  "deleteAccountSuccess": "Account deleted successfully.",
+  "@deleteAccountSuccess": {
+    "description": "Snackbar message when account deletion is successful."
+  },
+  "deleteAccountError": "Failed to delete account. Please try again.",
+  "@deleteAccountError": {
+    "description": "Snackbar message when account deletion fails."
+  },
+  "genericErrorWithDetails": "Error: {details}",
+  "@genericErrorWithDetails": {
+    "description": "Generic error message that includes details.",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
   }
 }

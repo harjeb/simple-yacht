@@ -10,27 +10,33 @@ import 'package:myapp/ui_screens/username_setup_screen.dart';
 import 'package:myapp/state_management/providers/user_providers.dart'; // Import user providers
 
 class AppRouter {
-  static GoRouter createRouter(WidgetRef ref) { // Changed to a method taking WidgetRef
-    // Initial check for username. This might run before UserService is fully initialized from storage.
-    // The redirect logic will handle the dynamic state.
-    // We need to ensure UserService is loaded before first redirect check if possible,
-    // or handle loading state within redirect. For simplicity, UserService loads eagerly.
-
+  static GoRouter createRouter(WidgetRef ref) {
     return GoRouter(
       initialLocation: '/',
-      // refreshListenable: ref.watch(userServiceProvider), // Optional: To re-evaluate routes if username changes during app lifecycle
-      redirect: (BuildContext context, GoRouterState state) {
-        final userService = ref.read(userServiceProvider); // Read the provider
-        final bool hasUsername = userService.hasUsername;
+      // refreshListenable: No longer using userServiceProvider directly here.
+      // GoRouter will re-evaluate redirect on navigation.
+      // If explicit refresh is needed based on usernameProvider state changes,
+      // a more complex setup might be required, but typically redirect handles it.
+      redirect: (BuildContext context, GoRouterState state) async { // Make redirect async
+        // It's generally better to watch providers that might change during the app's lifecycle
+        // in a widget, but for redirect, reading the future once per navigation is common.
+        // For a more reactive redirect, one might listen to usernameProvider.
+        final String? username = await ref.read(usernameProvider.future);
+        final bool hasUsernameValue = username != null && username.isNotEmpty;
         final String location = state.uri.toString();
 
         // If user has no username and is not trying to access setup, redirect to setup.
-        if (!hasUsername && location != '/username_setup') {
+        if (!hasUsernameValue && location != '/username_setup') {
           return '/username_setup';
         }
         // If user has a username and is trying to access setup, redirect to home.
-        if (hasUsername && location == '/username_setup') {
-          // User has just set up their username, reset game state before redirecting to home
+        if (hasUsernameValue && location == '/username_setup') {
+          // User has just set up their username (or already had one and tried to go to setup).
+          // Reset game state if they are coming from setup to ensure a clean start.
+          // This specific condition might need refinement based on exact flow from UsernameSetupScreen.
+          // For now, if they land on /username_setup with a username, they go to home.
+          // The actual saving of username and creation of user profile in Firestore
+          // should happen in UsernameSetupScreen.
           ref.read(gameStateProvider.notifier).setToInitialState();
           return '/';
         }

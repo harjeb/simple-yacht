@@ -44,7 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> { // Changed to Consume
             (gameState.currentRound == 1 && gameState.rollsLeft < 2) || // Max rolls is 2 after initial auto-roll (3 total, 1 auto, 2 manual)
             gameState.scores.values.any((score) => score != null));
 
-    final usernameAsyncValue = ref.watch(usernameAsyncProvider); // Changed to use usernameAsyncProvider
+    final usernameAsyncValue = ref.watch(usernameProvider); // Changed to use usernameProvider
     final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(

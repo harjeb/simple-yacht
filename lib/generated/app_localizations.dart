@@ -470,6 +470,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Date/Time'**
   String get dateTimeLabel;
+
+  /// Error message shown when user authentication fails during username setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication error. Please restart the app.'**
+  String get authenticationError;
+
+  /// Error message shown when saving username to backend fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save username. Please try again.'**
+  String get failedToSaveUsername;
+
+  /// Generic error message for unexpected issues.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred. Please try again.'**
+  String get genericError;
+
+  /// Error message for invalid recovery code.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid or expired recovery code.'**
+  String get recoveryCodeInvalid;
+
+  /// Generic error message for account recovery failure.
+  ///
+  /// In en, this message translates to:
+  /// **'Account recovery failed.'**
+  String get recoveryFailedError;
+
+  /// Error message when sign-in after recovery fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to sign in after recovery.'**
+  String get recoverySignInFailed;
+
+  /// Title for the account recovery screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover Account'**
+  String get accountRecoveryTitle;
+
+  /// Prompt for user to enter their recovery code.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your 18-character recovery code.'**
+  String get enterRecoveryCodePrompt;
+
+  /// Label for the recovery code input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery Code'**
+  String get recoveryCodeLabel;
+
+  /// Hint text for the recovery code input field.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., ABCDE12345FGHIJ678'**
+  String get recoveryCodeHint;
+
+  /// Validation error for empty recovery code.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code cannot be empty.'**
+  String get recoveryCodeCannotBeEmpty;
+
+  /// Validation error for incorrect recovery code length.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code must be 18 characters.'**
+  String get recoveryCodeInvalidLength;
+
+  /// Label for the recover account button.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover Account'**
+  String get recoverAccountButtonLabel;
+
+  /// Label for the button to switch to recovery mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Have a recovery code? Recover account.'**
+  String get switchToRecoverAccountLabel;
+
+  /// Label for the button to switch to create account mode.
+  ///
+  /// In en, this message translates to:
+  /// **'New user? Create an account.'**
+  String get switchToCreateAccountLabel;
+
+  /// Label for the language settings section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Language Settings'**
+  String get languageSettingsLabel;
+
+  /// Label for the language selection dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get selectLanguageLabel;
+
+  /// Title for the account management section.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Management'**
+  String get accountSectionTitle;
+
+  /// Message shown when recovery code is not available.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code not available. Please ensure your account is set up.'**
+  String get recoveryCodeNotAvailable;
+
+  /// Label for displaying the user's recovery code.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Recovery Code:'**
+  String get yourRecoveryCode;
+
+  /// Label for the copy recovery code button.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Code'**
+  String get copyRecoveryCode;
+
+  /// Snackbar message when recovery code is copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code copied to clipboard!'**
+  String get recoveryCodeCopied;
+
+  /// Label for the delete account button.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccountButtonLabel;
+
+  /// Title for the delete account confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account?'**
+  String get deleteAccountDialogTitle;
+
+  /// Content/warning message for the delete account confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete your account? This action is irreversible and all your data (username, scores, etc.) will be lost.'**
+  String get deleteAccountDialogContent;
+
+  /// Label for the confirm button in dialogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirmButtonLabel;
+
+  /// Snackbar message when account deletion is successful.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted successfully.'**
+  String get deleteAccountSuccess;
+
+  /// Snackbar message when account deletion fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete account. Please try again.'**
+  String get deleteAccountError;
+
+  /// Generic error message that includes details.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {details}'**
+  String genericErrorWithDetails(String details);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -40,6 +40,10 @@ dependencies:
   go_router: ^15.1.2
   flutter_riverpod: ^2.6.1
   shared_preferences: ^2.2.3 # 我添加了 shared_preferences 依赖
+  firebase_core: ^3.0.0 # Firebase 核心
+  firebase_auth: ^5.0.0 # Firebase 身份验证
+  cloud_firestore: ^5.0.0 # Cloud Firestore
+  cloud_functions: ^5.0.0 # Cloud Functions
 
 dev_dependencies:
   flutter_test:

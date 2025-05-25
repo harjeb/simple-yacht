@@ -135,5 +135,126 @@
   "dateTimeLabel": "日期/时间",
   "@dateTimeLabel": {
     "description": "得分日期和时间标签"
+  },
+  "authenticationError": "认证失败，请重启应用。",
+  "@authenticationError": {
+    "description": "用户认证在用户名设置过程中失败时显示的错误信息。"
+  },
+  "failedToSaveUsername": "保存用户名失败，请重试。",
+  "@failedToSaveUsername": {
+    "description": "保存用户名到后端失败时显示的错误信息。"
+  },
+  "genericError": "发生未知错误，请重试。",
+  "@genericError": {
+    "description": "发生未知问题时显示的通用错误信息。"
+  },
+  "recoveryCodeInvalid": "无效或已过期的引继码。",
+  "@recoveryCodeInvalid": {
+    "description": "引继码无效时的错误信息。"
+  },
+  "recoveryFailedError": "账户恢复失败。",
+  "@recoveryFailedError": {
+    "description": "账户恢复失败时的通用错误信息。"
+  },
+  "recoverySignInFailed": "恢复后登录失败。",
+  "@recoverySignInFailed": {
+    "description": "账户恢复后登录失败时的错误信息。"
+  },
+  "accountRecoveryTitle": "恢复账户",
+  "@accountRecoveryTitle": {
+    "description": "账户恢复界面的标题。"
+  },
+  "enterRecoveryCodePrompt": "请输入您的18位引继码。",
+  "@enterRecoveryCodePrompt": {
+    "description": "提示用户输入引继码。"
+  },
+  "recoveryCodeLabel": "引继码",
+  "@recoveryCodeLabel": {
+    "description": "引继码输入框的标签。"
+  },
+  "recoveryCodeHint": "例如：ABCDE12345FGHIJ678",
+  "@recoveryCodeHint": {
+    "description": "引继码输入框的提示文本。"
+  },
+  "recoveryCodeCannotBeEmpty": "引继码不能为空。",
+  "@recoveryCodeCannotBeEmpty": {
+    "description": "引继码为空时的验证错误。"
+  },
+  "recoveryCodeInvalidLength": "引继码必须是18位字符。",
+  "@recoveryCodeInvalidLength": {
+    "description": "引继码长度不正确时的验证错误。"
+  },
+  "recoverAccountButtonLabel": "恢复账户",
+  "@recoverAccountButtonLabel": {
+    "description": "恢复账户按钮的标签。"
+  },
+  "switchToRecoverAccountLabel": "已有引继码？恢复账户。",
+  "@switchToRecoverAccountLabel": {
+    "description": "切换到恢复账户模式按钮的标签。"
+  },
+  "switchToCreateAccountLabel": "新用户？创建账户。",
+  "@switchToCreateAccountLabel": {
+    "description": "切换到创建账户模式按钮的标签。"
+  },
+  "languageSettingsLabel": "语言设置",
+  "@languageSettingsLabel": {
+    "description": "语言设置区域的标题。"
+  },
+  "selectLanguageLabel": "选择语言",
+  "@selectLanguageLabel": {
+    "description": "选择语言下拉菜单的标签。"
+  },
+  "accountSectionTitle": "账户管理",
+  "@accountSectionTitle": {
+    "description": "账户管理区域的标题。"
+  },
+  "recoveryCodeNotAvailable": "引继码不可用。请确保您的账户已设置。",
+  "@recoveryCodeNotAvailable": {
+    "description": "引继码不可用时显示的消息。"
+  },
+  "yourRecoveryCode": "您的引继码：",
+  "@yourRecoveryCode": {
+    "description": "显示用户引继码的标签。"
+  },
+  "copyRecoveryCode": "复制引继码",
+  "@copyRecoveryCode": {
+    "description": "复制引继码按钮的标签。"
+  },
+  "recoveryCodeCopied": "引继码已复制到剪贴板！",
+  "@recoveryCodeCopied": {
+    "description": "引继码复制成功后的提示消息。"
+  },
+  "deleteAccountButtonLabel": "删除账户",
+  "@deleteAccountButtonLabel": {
+    "description": "删除账户按钮的标签。"
+  },
+  "deleteAccountDialogTitle": "删除账户？",
+  "@deleteAccountDialogTitle": {
+    "description": "删除账户确认对话框的标题。"
+  },
+  "deleteAccountDialogContent": "您确定要删除您的账户吗？此操作不可逆，您的所有数据（用户名、分数等）都将丢失。",
+  "@deleteAccountDialogContent": {
+    "description": "删除账户确认对话框的内容/警告消息。"
+  },
+  "confirmButtonLabel": "确认",
+  "@confirmButtonLabel": {
+    "description": "对话框中确认按钮的标签。"
+  },
+  "deleteAccountSuccess": "账户删除成功。",
+  "@deleteAccountSuccess": {
+    "description": "账户删除成功后的提示消息。"
+  },
+  "deleteAccountError": "删除账户失败，请重试。",
+  "@deleteAccountError": {
+    "description": "账户删除失败时的提示消息。"
+  },
+  "genericErrorWithDetails": "错误：{details}",
+  "@genericErrorWithDetails": {
+    "description": "包含详细信息的通用错误消息。",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
   }
 }

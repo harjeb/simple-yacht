@@ -14,7 +14,11 @@
 * [2025-05-24 13:29:07] - Defining architecture and updating Memory Bank for displaying personal best score on the home screen.
 * [2025-05-24 13:34:29] - Implemented feature to display personal best score on the home screen.
 * [2025-05-24 13:38:37] - 审查了在主屏幕右上角使用 `Stack` 和 `Positioned` 显示用户名的伪代码架构。
+* [2025-05-24 14:03:00] - Designing and documenting the detailed architecture for Firebase backend integration (Firebase Authentication, Cloud Firestore, Cloud Functions) and the transfer code system for account persistence and recovery.
 ## Recent Changes
+* [2025-05-25 05:10:02] - Updated [`.gitignore`](.gitignore) to include `node_modules/`.
+* [2025-05-24 15:06:27] - **翻译文件准备完成:** 为德语 (de), 西班牙语 (es), 法语 (fr), 日语 (ja), 俄语 (ru) 更新了 `.arb` 文件。添加了缺失的键，并确保需要翻译的键已标记 `(NEEDS TRANSLATION)`。执行了 `flutter gen-l10n`。
+* [2025-05-24 14:55:00] - 评估项目中未完成的翻译任务。此任务主要影响本地化文件，对整体架构影响较小。
 
 * [2025-05-23 02:56:59] - Memory Bank initialized with core files.
 * [2025-05-23 03:12:51] - Implemented core game logic (`game_state.dart`, `dice_roller.dart`, `scoring_rules.dart`).
@@ -72,3 +76,6 @@
 * [2025-05-24 13:34:29] - Updated [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart) to display personal best score using the new provider and `intl` for date formatting.
 * [2025-05-24 13:34:29] - Added new localization keys (`yourPersonalBestScoreLabel`, `noPersonalBestScore`, `scoreLabel`, `dateTimeLabel`) to all `.arb` files ([`lib/l10n/app_en.arb`](lib/l10n/app_en.arb), [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb), [`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)) and ran `flutter gen-l10n`.
 * [2025-05-24 13:41:30] - Implemented username display on the home screen's top-right corner using Stack, Positioned, and Chip widgets. Modified user_providers.dart to add `usernameAsyncProvider` (FutureProvider) to correctly use `AsyncValue.when()` for loading/error/data states as per pseudocode. Updated home_screen.dart to use the new provider.
+* [2025-05-24 14:03:00] - Completed detailed architecture design for Firebase backend integration and transfer code system. Updated [`memory-bank/architecture.md`](memory-bank/architecture.md:1), [`memory-bank/productContext.md`](memory-bank/productContext.md:1), and [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1) accordingly.
+* [2025-05-24 {{HH:MM:SS}}] - **本地化字符串补充完成:** 为 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) 和 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 中因 Firebase 和引继码功能新增的文本元素补充了本地化支持。所有相关键已在 `.arb` 文件中验证/添加，并重新生成了本地化类。
+* [2025-05-25 04:58:34] - Firebase Cloud Functions successfully migrated from TypeScript to JavaScript. Related configurations and documentation updated.

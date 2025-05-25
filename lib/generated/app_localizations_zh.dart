@@ -204,4 +204,93 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dateTimeLabel => '日期/时间';
+
+  @override
+  String get authenticationError => '认证失败，请重启应用。';
+
+  @override
+  String get failedToSaveUsername => '保存用户名失败，请重试。';
+
+  @override
+  String get genericError => '发生未知错误，请重试。';
+
+  @override
+  String get recoveryCodeInvalid => '无效或已过期的引继码。';
+
+  @override
+  String get recoveryFailedError => '账户恢复失败。';
+
+  @override
+  String get recoverySignInFailed => '恢复后登录失败。';
+
+  @override
+  String get accountRecoveryTitle => '恢复账户';
+
+  @override
+  String get enterRecoveryCodePrompt => '请输入您的18位引继码。';
+
+  @override
+  String get recoveryCodeLabel => '引继码';
+
+  @override
+  String get recoveryCodeHint => '例如：ABCDE12345FGHIJ678';
+
+  @override
+  String get recoveryCodeCannotBeEmpty => '引继码不能为空。';
+
+  @override
+  String get recoveryCodeInvalidLength => '引继码必须是18位字符。';
+
+  @override
+  String get recoverAccountButtonLabel => '恢复账户';
+
+  @override
+  String get switchToRecoverAccountLabel => '已有引继码？恢复账户。';
+
+  @override
+  String get switchToCreateAccountLabel => '新用户？创建账户。';
+
+  @override
+  String get languageSettingsLabel => '语言设置';
+
+  @override
+  String get selectLanguageLabel => '选择语言';
+
+  @override
+  String get accountSectionTitle => '账户管理';
+
+  @override
+  String get recoveryCodeNotAvailable => '引继码不可用。请确保您的账户已设置。';
+
+  @override
+  String get yourRecoveryCode => '您的引继码：';
+
+  @override
+  String get copyRecoveryCode => '复制引继码';
+
+  @override
+  String get recoveryCodeCopied => '引继码已复制到剪贴板！';
+
+  @override
+  String get deleteAccountButtonLabel => '删除账户';
+
+  @override
+  String get deleteAccountDialogTitle => '删除账户？';
+
+  @override
+  String get deleteAccountDialogContent => '您确定要删除您的账户吗？此操作不可逆，您的所有数据（用户名、分数等）都将丢失。';
+
+  @override
+  String get confirmButtonLabel => '确认';
+
+  @override
+  String get deleteAccountSuccess => '账户删除成功。';
+
+  @override
+  String get deleteAccountError => '删除账户失败，请重试。';
+
+  @override
+  String genericErrorWithDetails(String details) {
+    return '错误：$details';
+  }
 }

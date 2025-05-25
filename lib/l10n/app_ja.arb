@@ -93,5 +93,205 @@
   "dateTimeLabel": "日時",
   "@dateTimeLabel": {
     "description": "スコアの日時のラベル"
+  },
+  "authenticationError": "Authentication error. Please restart the app.",
+  "@authenticationError": {
+    "description": "Error message shown when user authentication fails during username setup. (NEEDS TRANSLATION)"
+  },
+  "failedToSaveUsername": "Failed to save username. Please try again.",
+  "@failedToSaveUsername": {
+    "description": "Error message shown when saving username to backend fails. (NEEDS TRANSLATION)"
+  },
+  "genericError": "An unexpected error occurred. Please try again.",
+  "@genericError": {
+    "description": "Generic error message for unexpected issues. (NEEDS TRANSLATION)"
+  },
+  "recoveryCodeInvalid": "Invalid or expired recovery code.",
+  "@recoveryCodeInvalid": {
+    "description": "Error message for invalid recovery code. (NEEDS TRANSLATION)"
+  },
+  "recoveryFailedError": "Account recovery failed.",
+  "@recoveryFailedError": {
+    "description": "Generic error message for account recovery failure. (NEEDS TRANSLATION)"
+  },
+  "recoverySignInFailed": "Failed to sign in after recovery.",
+  "@recoverySignInFailed": {
+    "description": "Error message when sign-in after recovery fails. (NEEDS TRANSLATION)"
+  },
+  "accountRecoveryTitle": "Recover Account",
+  "@accountRecoveryTitle": {
+    "description": "Title for the account recovery screen. (NEEDS TRANSLATION)"
+  },
+  "enterRecoveryCodePrompt": "Enter your 18-character recovery code.",
+  "@enterRecoveryCodePrompt": {
+    "description": "Prompt for user to enter their recovery code. (NEEDS TRANSLATION)"
+  },
+  "recoveryCodeLabel": "Recovery Code",
+  "@recoveryCodeLabel": {
+    "description": "Label for the recovery code input field. (NEEDS TRANSLATION)"
+  },
+  "recoveryCodeHint": "e.g., ABCDE12345FGHIJ678",
+  "@recoveryCodeHint": {
+    "description": "Hint text for the recovery code input field. (NEEDS TRANSLATION)"
+  },
+  "recoveryCodeCannotBeEmpty": "Recovery code cannot be empty.",
+  "@recoveryCodeCannotBeEmpty": {
+    "description": "Validation error for empty recovery code. (NEEDS TRANSLATION)"
+  },
+  "recoveryCodeInvalidLength": "Recovery code must be 18 characters.",
+  "@recoveryCodeInvalidLength": {
+    "description": "Validation error for incorrect recovery code length. (NEEDS TRANSLATION)"
+  },
+  "recoverAccountButtonLabel": "Recover Account",
+  "@recoverAccountButtonLabel": {
+    "description": "Label for the recover account button. (NEEDS TRANSLATION)"
+  },
+  "switchToRecoverAccountLabel": "Have a recovery code? Recover account.",
+  "@switchToRecoverAccountLabel": {
+    "description": "Label for the button to switch to recovery mode. (NEEDS TRANSLATION)"
+  },
+  "switchToCreateAccountLabel": "New user? Create an account.",
+  "@switchToCreateAccountLabel": {
+    "description": "Label for the button to switch to create account mode. (NEEDS TRANSLATION)"
+  },
+  "languageSettingsLabel": "Language Settings",
+  "@languageSettingsLabel": {
+    "description": "Label for the language settings section title. (NEEDS TRANSLATION)"
+  },
+  "selectLanguageLabel": "Select Language",
+  "@selectLanguageLabel": {
+    "description": "Label for the language selection dropdown. (NEEDS TRANSLATION)"
+  },
+  "accountSectionTitle": "Account Management",
+  "@accountSectionTitle": {
+    "description": "Title for the account management section. (NEEDS TRANSLATION)"
+  },
+  "recoveryCodeNotAvailable": "Recovery code not available. Please ensure your account is set up.",
+  "@recoveryCodeNotAvailable": {
+    "description": "Message shown when recovery code is not available. (NEEDS TRANSLATION)"
+  },
+  "yourRecoveryCode": "Your Recovery Code:",
+  "@yourRecoveryCode": {
+    "description": "Label for displaying the user's recovery code. (NEEDS TRANSLATION)"
+  },
+  "copyRecoveryCode": "Copy Code",
+  "@copyRecoveryCode": {
+    "description": "Label for the copy recovery code button. (NEEDS TRANSLATION)"
+  },
+  "recoveryCodeCopied": "Recovery code copied to clipboard!",
+  "@recoveryCodeCopied": {
+    "description": "Snackbar message when recovery code is copied. (NEEDS TRANSLATION)"
+  },
+  "deleteAccountButtonLabel": "Delete Account",
+  "@deleteAccountButtonLabel": {
+    "description": "Label for the delete account button. (NEEDS TRANSLATION)"
+  },
+  "deleteAccountDialogTitle": "Delete Account?",
+  "@deleteAccountDialogTitle": {
+    "description": "Title for the delete account confirmation dialog. (NEEDS TRANSLATION)"
+  },
+  "deleteAccountDialogContent": "Are you sure you want to delete your account? This action is irreversible and all your data (username, scores, etc.) will be lost.",
+  "@deleteAccountDialogContent": {
+    "description": "Content/warning message for the delete account confirmation dialog. (NEEDS TRANSLATION)"
+  },
+  "confirmButtonLabel": "Confirm",
+  "@confirmButtonLabel": {
+    "description": "Label for the confirm button in dialogs. (NEEDS TRANSLATION)"
+  },
+  "deleteAccountSuccess": "Account deleted successfully.",
+  "@deleteAccountSuccess": {
+    "description": "Snackbar message when account deletion is successful. (NEEDS TRANSLATION)"
+  },
+  "deleteAccountError": "Failed to delete account. Please try again.",
+  "@deleteAccountError": {
+    "description": "Snackbar message when account deletion fails. (NEEDS TRANSLATION)"
+  },
+  "genericErrorWithDetails": "Error: {details}",
+  "@genericErrorWithDetails": {
+    "description": "Generic error message that includes details. (NEEDS TRANSLATION)",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  }
+,
+  "leaderboardTitle": "Leaderboard",
+  "@leaderboardTitle": {
+    "description": "Title for the leaderboard screen (NEEDS TRANSLATION)"
+  },
+  "leaderboardEmpty": "The leaderboard is currently empty. Play a game to get on the board!",
+  "@leaderboardEmpty": {
+    "description": "Message shown when the leaderboard is empty (NEEDS TRANSLATION)"
+  },
+  "leaderboardScoreDate": "Score: {score}\nDate: {date}",
+  "@leaderboardScoreDate": {
+    "description": "Displays score and date for a leaderboard entry (NEEDS TRANSLATION)",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardScorePoints": "{score} pts",
+  "@leaderboardScorePoints": {
+    "description": "Displays score in points format for a leaderboard entry (NEEDS TRANSLATION)",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardError": "Error loading leaderboard: {errorDetails}",
+  "@leaderboardError": {
+    "description": "Error message when leaderboard fails to load (NEEDS TRANSLATION)",
+    "placeholders": {
+      "errorDetails": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderboardRefreshTooltip": "Refresh Leaderboard",
+  "@leaderboardRefreshTooltip": {
+    "description": "Tooltip for the refresh leaderboard button (NEEDS TRANSLATION)"
+  },
+  "usernameSetupTitle": "Set Your Username",
+  "@usernameSetupTitle": {
+    "description": "Title for the username setup screen (NEEDS TRANSLATION)"
+  },
+  "usernameSetupPrompt": "Please enter a username to be displayed on the leaderboard.",
+  "@usernameSetupPrompt": {
+    "description": "Prompt for the user to enter their username (NEEDS TRANSLATION)"
+  },
+  "usernameLabel": "Username",
+  "@usernameLabel": {
+    "description": "Label for the username input field (NEEDS TRANSLATION)"
+  },
+  "usernameHint": "Enter your desired username",
+  "@usernameHint": {
+    "description": "Hint text for the username input field (NEEDS TRANSLATION)"
+  },
+  "usernameCannotBeEmpty": "Username cannot be empty.",
+  "@usernameCannotBeEmpty": {
+    "description": "Validation error for empty username (NEEDS TRANSLATION)"
+  },
+  "usernameValidationError": "Please enter a username.",
+  "@usernameValidationError": {
+    "description": "Generic validation error for username (NEEDS TRANSLATION)"
+  },
+  "usernameTooShortError": "Username must be at least 3 characters long.",
+  "@usernameTooShortError": {
+    "description": "Validation error for username too short (NEEDS TRANSLATION)"
+  },
+  "usernameTooLongError": "Username cannot be more than 15 characters long.",
+  "@usernameTooLongError": {
+    "description": "Validation error for username too long (NEEDS TRANSLATION)"
+  },
+  "saveButtonLabel": "Save",
+  "@saveButtonLabel": {
+    "description": "Label for the save button (NEEDS TRANSLATION)"
   }
 }

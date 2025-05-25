@@ -204,4 +204,93 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get dateTimeLabel => '日時';
+
+  @override
+  String get authenticationError => 'Authentication error. Please restart the app.';
+
+  @override
+  String get failedToSaveUsername => 'Failed to save username. Please try again.';
+
+  @override
+  String get genericError => 'An unexpected error occurred. Please try again.';
+
+  @override
+  String get recoveryCodeInvalid => 'Invalid or expired recovery code.';
+
+  @override
+  String get recoveryFailedError => 'Account recovery failed.';
+
+  @override
+  String get recoverySignInFailed => 'Failed to sign in after recovery.';
+
+  @override
+  String get accountRecoveryTitle => 'Recover Account';
+
+  @override
+  String get enterRecoveryCodePrompt => 'Enter your 18-character recovery code.';
+
+  @override
+  String get recoveryCodeLabel => 'Recovery Code';
+
+  @override
+  String get recoveryCodeHint => 'e.g., ABCDE12345FGHIJ678';
+
+  @override
+  String get recoveryCodeCannotBeEmpty => 'Recovery code cannot be empty.';
+
+  @override
+  String get recoveryCodeInvalidLength => 'Recovery code must be 18 characters.';
+
+  @override
+  String get recoverAccountButtonLabel => 'Recover Account';
+
+  @override
+  String get switchToRecoverAccountLabel => 'Have a recovery code? Recover account.';
+
+  @override
+  String get switchToCreateAccountLabel => 'New user? Create an account.';
+
+  @override
+  String get languageSettingsLabel => 'Language Settings';
+
+  @override
+  String get selectLanguageLabel => 'Select Language';
+
+  @override
+  String get accountSectionTitle => 'Account Management';
+
+  @override
+  String get recoveryCodeNotAvailable => 'Recovery code not available. Please ensure your account is set up.';
+
+  @override
+  String get yourRecoveryCode => 'Your Recovery Code:';
+
+  @override
+  String get copyRecoveryCode => 'Copy Code';
+
+  @override
+  String get recoveryCodeCopied => 'Recovery code copied to clipboard!';
+
+  @override
+  String get deleteAccountButtonLabel => 'Delete Account';
+
+  @override
+  String get deleteAccountDialogTitle => 'Delete Account?';
+
+  @override
+  String get deleteAccountDialogContent => 'Are you sure you want to delete your account? This action is irreversible and all your data (username, scores, etc.) will be lost.';
+
+  @override
+  String get confirmButtonLabel => 'Confirm';
+
+  @override
+  String get deleteAccountSuccess => 'Account deleted successfully.';
+
+  @override
+  String get deleteAccountError => 'Failed to delete account. Please try again.';
+
+  @override
+  String genericErrorWithDetails(String details) {
+    return 'Error: $details';
+  }
 }

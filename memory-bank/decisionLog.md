@@ -163,3 +163,62 @@ The existing `usernameProvider` returned `String?`, which is not compatible with
 - Modified `userServiceProvider` to use `localStorageServiceProvider`.
 - Created `usernameAsyncProvider = FutureProvider<String?>((ref) async { ... });` which calls `localStorageService.getUsername()`.
 - Updated [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1) to watch `usernameAsyncProvider` instead of the old `usernameProvider` for the username display logic.
+
+---
+### Decision
+[2025-05-24 14:03:00] - 确认 Firebase Authentication (匿名认证 + 自定义令牌) 和 Cloud Firestore 作为引继码系统和在线数据存储的核心技术。
+
+**Rationale:**
+此方案满足了用户对引继码（唯一用户KEY）的需求，同时利用了 Firebase 的强大功能：
+*   **Firebase Authentication (Anonymous):** 为每个用户提供一个稳定的、唯一的 Firebase UID，作为后端数据关联的主键，而无需用户进行传统的邮箱/密码注册。
+*   **Cloud Firestore:** 灵活的 NoSQL 数据库，适合存储用户信息（包括引继码）、游戏进度、排行榜等结构化数据。其实时同步和离线支持特性对游戏应用友好。
+*   **Custom Token Authentication:** 通过 Cloud Function 生成自定义令牌，可以将用户输入的引继码安全地映射回其原始 Firebase UID，实现账户恢复，而无需暴露敏感的认证凭据。
+*   **Transfer Code:** 18位大写字母和数字组合提供了足够的唯一性和一定的防猜测能力。客户端生成，服务端（通过 Firestore 查询）校验唯一性。
+
+**Implications/Details:**
+*   **Firestore Data Structure:**
+    *   `users` 集合: 文档 ID 为 Firebase UID。包含 `username`, `transferCode` (indexed), `createdAt`, `gameData` (map for scores, ELO, etc.)。
+    *   `leaderboards` 集合: 包含 `scores` 子集合，存储 `userId`, `username`, `score`, `timestamp`。
+*   **Transfer Code Logic:**
+    *   **Generation:** Flutter 客户端生成18位代码，查询 Firestore 确保唯一性。
+    *   **Restoration:** 用户输入引继码 -> Flutter 查询 Firestore `users` by `transferCode` -> 获取对应 UID -> 调用 Cloud Function `generateCustomAuthToken(uid)` -> Flutter 使用返回的 token 调用 `signInWithCustomToken()`.
+    *   **Security:** 引继码本身不直接用于认证，而是用于查找 UID，实际认证通过安全的自定义令牌完成。Cloud Functions 调用将受 Firebase 安全规则和可能的速率限制保护。
+    *   **Persistence of Transfer Code:** 对于V1，引继码在账户删除前保持不变。未来可考虑引继成功后刷新引继码以增强安全性，但会增加用户管理复杂度。
+*   **Cloud Functions:**
+    *   `generateCustomAuthToken`: (Callable) 接收 UID, 返回自定义认证令牌。
+    *   `deleteUserData`: (Callable) 接收 UID, 删除 Firestore 用户数据和 Firebase Auth 用户。
+*   **Flutter Services:**
+    *   `AuthService`: 处理匿名登录、自定义令牌登录。
+    *   `UserAccountService`: 管理用户配置文件的创建、读取、引继码获取、账户删除请求。
+    *   `TransferCodeGenerator`: 客户端工具类，用于生成引继码。
+*   详细的流程图和数据模型见 [`memory-bank/architecture.md`](memory-bank/architecture.md:1)。
+
+---
+### Decision
+[2025-05-24 14:03:00] - 确定引继码生成规则和账户恢复流程中的安全考量。
+
+**Rationale:**
+引继码系统的安全性至关重要，以防止账户被盗用。
+*   **引继码格式:** 18位大写字母和数字的组合提供了 `(26+10)^18 = 36^18` 种可能性，这是一个非常大的数字，使得暴力猜测几乎不可能。
+*   **唯一性:** 在创建用户时，必须确保生成的引继码在系统中是唯一的。这通过在将引继码存入 `users` 集合前查询该集合的 `transferCode` 字段来实现。
+*   **恢复机制:** 账户恢复不直接依赖引继码进行认证。引继码仅用于查找用户的 Firebase UID。实际的“登录”操作是通过 Firebase 自定义认证令牌完成的，该令牌由安全的 Cloud Function 生成，并且生命周期较短。这避免了引继码本身作为长期有效凭证的风险。
+*   **数据删除:** 用户数据删除操作通过 Cloud Function 执行，确保从 Firebase Authentication 和 Cloud Firestore 中彻底移除用户数据。
+
+**Implications/Details:**
+*   **Client-Side Generation, Server-Side Uniqueness Check:** 引继码在 Flutter 客户端生成，然后通过查询 Firestore `users` 集合（在 `transferCode` 字段上建立索引）来验证其唯一性。如果冲突，则重新生成。
+*   **No Direct Auth with Transfer Code:** 强调引继码不是密码。它是一个查找键。
+*   **Cloud Function Security:** `generateCustomAuthToken` 和 `deleteUserData` Cloud Functions 将通过 Firebase 安全规则进行保护，确保只有授权的客户端（即应用本身）可以调用它们，并且可能根据需要实施速率限制。
+*   **Transfer Code Display:** 引继码应在应用内清晰展示给用户，并提供复制功能，但不应鼓励用户分享。
+*   **Consideration for Future Enhancement (Not in V1):**
+    *   **One-Time Use Transfer Codes:** 引继成功后，旧引继码失效，并为用户生成一个新的引继码。这能显著提高安全性，防止已泄露的旧码被重用。
+    *   **Rate Limiting on Restore Attempts:** 在 Cloud Function层面限制短时间内对特定引继码或来自同一IP的过多恢复尝试。
+    *   *当前决定 (V1): 引继码在账户删除前可重复使用，以简化用户体验。上述增强功能作为未来迭代的考虑点。*
+---
+### Decision
+[2025-05-25 04:44:52] - Decided to migrate Firebase Functions from TypeScript to JavaScript.
+
+**Rationale:**
+Simplify build process and align with user preference for JavaScript for Cloud Functions in this project.
+
+**Implications/Details:**
+This involves converting function logic, updating package.json, and cleaning up TS-specific artifacts.

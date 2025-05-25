@@ -22,8 +22,9 @@ This file provides a high-level overview of the project and the expected product
         *   Detailed local leaderboard: Stores and displays the top 10 personal scores with usernames.
 *   **Gameplay Features:**
     *   Dice rolling animation on reset/roll.
-*   **User Identification:**
+*   **User Identification & Data Persistence:**
     *   Mandatory username setup on first application launch for personalization and leaderboard display.
+    *   **Transfer Code System:** A unique 18-character alphanumeric code is generated for each user. This code allows users to restore their account, including username, high scores, ELO rating, and other game data, on a new device or after reinstalling the app. The transfer code is linked to an anonymous Firebase Authentication UID.
 *   **Two-Player Mode Details:**
     *   Random matchmaking.
     *   Friend battle mode.
@@ -40,5 +41,11 @@ This file provides a high-level overview of the project and the expected product
 
 ## Overall Architecture
 
-* Flutter application.
-* Backend for networking features (matchmaking, leaderboards, ELO).
+* Flutter application (Frontend).
+* **Firebase Backend:**
+    *   **Firebase Authentication:** Used for anonymous user identification (UID generation) and custom token-based account restoration via transfer codes.
+    *   **Cloud Firestore:** Primary database for storing user profiles (including transfer codes), game-specific data (high scores, ELO, match history), and global leaderboards.
+    *   **Cloud Functions:** Used for secure backend logic such as generating custom authentication tokens for account restoration and handling user data deletion requests.
+* Backend for networking features (matchmaking, leaderboards, ELO) is implemented using Firebase services.
+
+2025-05-24 14:03:00 - Updated Key Features and Overall Architecture to reflect Firebase integration and Transfer Code system.
