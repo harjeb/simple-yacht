@@ -309,5 +309,43 @@
   "signInFailedGeneric": "Ошибка входа. Проверьте подключение и попробуйте снова.",
   "@signInFailedGeneric": {
     "description": "Generic message for sign-in failure"
+  },
+  "firestoreDatabaseNotConfiguredError": "База данных бэкэнда не настроена. Пожалуйста, свяжитесь с администратором.",
+  "@firestoreDatabaseNotConfiguredError": {
+    "description": "Сообщение об ошибке, отображаемое, когда база данных Firestore не найдена или не настроена."
+,
+  "scoreSavedToLeaderboard": "Score saved to leaderboard! (NEEDS RU TRANSLATION)",
+  "@scoreSavedToLeaderboard": {
+    "description": "Snackbar message when score is successfully saved to the leaderboard. (NEEDS RU TRANSLATION)"
+  },
+  "failedToSaveScore": "Failed to save score (NEEDS RU TRANSLATION)",
+  "@failedToSaveScore": {
+    "description": "Part of a generic error message, indicating the action that failed. (NEEDS RU TRANSLATION)"
+  },
+  "fix": "Fix (NEEDS RU TRANSLATION)",
+  "@fix": {
+    "description": "Label for a button that offers to fix an issue, e.g., navigate to settings. (NEEDS RU TRANSLATION)"
+  },
+  "scoreSavedUsingLocallyStoredUsername": "Score saved using locally stored username. (NEEDS RU TRANSLATION)",
+  "@scoreSavedUsingLocallyStoredUsername": {
+    "description": "Snackbar message when score is saved using a username from local storage. (NEEDS RU TRANSLATION)"
+  },
+  "usernameNotFoundScoreNotSaved": "Username not found. Score not saved. (NEEDS RU TRANSLATION)",
+  "@usernameNotFoundScoreNotSaved": {
+    "description": "Snackbar message when username is not found locally and score cannot be saved. (NEEDS RU TRANSLATION)"
+  },
+  "errorRetrievingUsername": "Error retrieving username: {details} (NEEDS RU TRANSLATION)",
+  "@errorRetrievingUsername": {
+    "description": "Error message when retrieving username from local storage fails. (NEEDS RU TRANSLATION)",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingUsername": "Error fetching username (NEEDS RU TRANSLATION)",
+  "@errorFetchingUsername": {
+    "description": "Part of a generic error message, indicating the action that failed during username fetch from provider. (NEEDS RU TRANSLATION)"
+  }
   }
 }

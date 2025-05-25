@@ -272,5 +272,42 @@
   "signInFailedGeneric": "Sign-in failed. Please try again.",
   "@signInFailedGeneric": {
     "description": "Generic message for sign-in failure"
+  },
+  "firestoreDatabaseNotConfiguredError": "Backend database is not configured. Please contact administrator.",
+  "@firestoreDatabaseNotConfiguredError": {
+    "description": "Error message shown when the Firestore database is not found or not configured."
+  },
+  "scoreSavedToLeaderboard": "Score saved to leaderboard!",
+  "@scoreSavedToLeaderboard": {
+    "description": "Snackbar message when score is successfully saved to the leaderboard."
+  },
+  "failedToSaveScore": "Failed to save score",
+  "@failedToSaveScore": {
+    "description": "Part of a generic error message, indicating the action that failed."
+  },
+  "fix": "Fix",
+  "@fix": {
+    "description": "Label for a button that offers to fix an issue, e.g., navigate to settings."
+  },
+  "scoreSavedUsingLocallyStoredUsername": "Score saved using locally stored username.",
+  "@scoreSavedUsingLocallyStoredUsername": {
+    "description": "Snackbar message when score is saved using a username from local storage."
+  },
+  "usernameNotFoundScoreNotSaved": "Username not found. Score not saved.",
+  "@usernameNotFoundScoreNotSaved": {
+    "description": "Snackbar message when username is not found locally and score cannot be saved."
+  },
+  "errorRetrievingUsername": "Error retrieving username: {details}",
+  "@errorRetrievingUsername": {
+    "description": "Error message when retrieving username from local storage fails.",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingUsername": "Error fetching username",
+  "@errorFetchingUsername": {
+    "description": "Part of a generic error message, indicating the action that failed during username fetch from provider."
   }
 }

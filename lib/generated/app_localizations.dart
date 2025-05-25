@@ -668,6 +668,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign-in failed. Please try again.'**
   String get signInFailedGeneric;
+
+  /// Error message shown when the Firestore database is not found or not configured.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend database is not configured. Please contact administrator.'**
+  String get firestoreDatabaseNotConfiguredError;
+
+  /// Snackbar message when score is successfully saved to the leaderboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Score saved to leaderboard!'**
+  String get scoreSavedToLeaderboard;
+
+  /// Part of a generic error message, indicating the action that failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save score'**
+  String get failedToSaveScore;
+
+  /// Label for a button that offers to fix an issue, e.g., navigate to settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix'**
+  String get fix;
+
+  /// Snackbar message when score is saved using a username from local storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Score saved using locally stored username.'**
+  String get scoreSavedUsingLocallyStoredUsername;
+
+  /// Snackbar message when username is not found locally and score cannot be saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Username not found. Score not saved.'**
+  String get usernameNotFoundScoreNotSaved;
+
+  /// Error message when retrieving username from local storage fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error retrieving username: {details}'**
+  String errorRetrievingUsername(String details);
+
+  /// Part of a generic error message, indicating the action that failed during username fetch from provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Error fetching username'**
+  String get errorFetchingUsername;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

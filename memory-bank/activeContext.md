@@ -7,6 +7,10 @@
 
 ## Current Focus
 
+* [2025-05-25 13:53:23] - **代码修复 (语法错误):** 修复了 [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1) 中的语法错误，主要是添加了缺失的闭合括号。
+* [2025-05-25 12:50:00] - **架构设计 (用户名保存):** 正在为解决用户创建时保存用户名失败（提示“请重试”）的问题设计详细的架构方案。方案将涵盖用户输入验证、网络问题、后端服务错误（包括使用 Cloud Function 和 Firestore 事务确保用户名唯一性）、本地存储问题和并发问题。
+* [2025-05-25 12:42:36 UTC] - Firestore `PERMISSION_DENIED` 错误已通过部署新的安全规则解决。 (原记录时间: 2025-05-25 12:37:12)
+* [2025-05-25 11:58:51] - 实现 Firestore 数据库未找到 (`NOT_FOUND`) 错误的健壮处理。修改了 `UserService` 以在创建或获取用户配置时检测并抛出此特定错误。更新了 `AnonymousSignInNotifier` 和 `UsernameSetupScreen` 以捕获此错误并向用户显示友好的、本地化的错误消息。确保在异步操作中正确管理加载状态。
 * [2025-05-25 06:32:15] - 为 Firebase 匿名登录流程添加详细日志，以帮助诊断 Firebase 不再记录匿名登录的问题。涉及文件：[`lib/services/auth_service.dart`](lib/services/auth_service.dart:1), [`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1), [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1).
 * [2025-05-25 06:26:18] - 更新 Memory Bank 以反映 Firebase 匿名用户创建后 UI 按钮持续加载问题的修复。重点是新的启动流程 (`SplashScreen`) 和状态管理 (`AnonymousSignInNotifier`)。
 * [2025-05-24 12:28:15] - Core local features (Game Over, Leaderboard, Username Setup, Login Removal) implemented. Next: Implement Firebase backend and online features.
@@ -19,6 +23,19 @@
 * [2025-05-24 14:03:00] - Designing and documenting the detailed architecture for Firebase backend integration (Firebase Authentication, Cloud Firestore, Cloud Functions) and the transfer code system for account persistence and recovery.
 * [2025-05-25 06:15:00] - 诊断 Flutter 应用中 Firebase 匿名认证后 UI 加载状态持续存在的问题，并制定解决方案架构。
 ## Recent Changes
+* [2025-05-25 14:02:00] - **代码修复 (路由错误):** 修复了 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:49) 中的导航错误，将目标路径从 `/home` 更改为正确的 `/`。
+* [2025-05-25 12:50:00] - **架构更新 (用户名保存流程):**
+    *   更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 新增 "用户名创建与管理流程" 章节，详细描述了从前端验证到后端唯一性检查（推荐 Cloud Function + Firestore 事务）及错误处理的完整流程。
+    *   更新了 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1) 记录了采纳此综合架构方案的决策，包括对各故障点的具体策略。
+    *   更新了 [`memory-bank/systemPatterns.md`](memory-bank/systemPatterns.md:1) 新增 "使用 Cloud Function 和 Firestore 事务实现唯一性约束" 的架构模式。
+* [2025-05-25 12:11:12] - **架构更新 (Firestore 数据模型):** 为 `users` 和 `leaderboard` 集合设计了详细的数据模型，并更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以包含此设计。明确了模型与现有安全规则 ([`memory-bank/security_rules.md`](memory-bank/security_rules.md:1)) 的对应关系。
+* [2025-05-25 12:04:14] - **架构更新 (Firestore 安全规则):** 基于应用需求审查并设计了一套更安全的 Firestore 安全规则。新规则遵循最小权限原则，并考虑了用户认证和基本数据验证。将详细的安全规则及其设计原则记录在新的 Memory Bank 文件 [`memory-bank/security_rules.md`](memory-bank/security_rules.md:1) 中。同时，更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以包含对新安全规则文档的引用。指出了复杂唯一性约束（如用户名唯一性）应通过 Cloud Functions 实现。
+* [2025-05-25 11:58:51] - **代码实现 (Firestore NOT_FOUND 错误处理):**
+    *   修改了 [`lib/services/user_service.dart`](lib/services/user_service.dart:1) 中的 `createNewUser` 和 `getUserProfile` 方法，以捕获 `FirebaseException` (code `not-found`) 并重新抛出，以便调用方可以专门处理它。添加了对 `e.message` 的空值检查。
+    *   修改了 [`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1) 中的 `AnonymousSignInNotifier`，在其 `attemptAnonymousSignIn` 方法中，在匿名登录成功后尝试调用 `_userAccountService.getUserProfile`。如果此调用因 Firestore 数据库未找到而失败，则设置特定的错误消息 (`firestoreDatabaseNotConfiguredError`)。
+    *   修改了 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) 中的 `_createNewAccount` 方法，以捕获从 `createNewUser` 抛出的 `FirebaseException` (code `not-found`)，并显示本地化的 `firestoreDatabaseNotConfiguredError` 消息。
+    *   为所有 `.arb` 本地化文件 ([`lib/l10n/app_en.arb`](lib/l10n/app_en.arb:1) 等) 添加了新的本地化键 `firestoreDatabaseNotConfiguredError` 及其翻译。
+    *   运行了 `flutter gen-l10n` 以更新生成的本地化 Dart 文件。
 * [2025-05-25 11:39:30] - **代码实现 (SplashScreen 导航修复):** 修改了 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1) 中的导航逻辑。在匿名登录成功后，将 `GoRouter.of(context).refresh()` 替换为 `context.go('/home')`，以解决潜在的路由循环和卡顿问题。审查了 [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1) 的 `redirect` 逻辑，确认其能够正确处理新的导航流程。
 * [2025-05-25 06:32:15] - **代码实现 (日志添加):** 在以下文件中添加了 `developer.log` 语句以追踪匿名登录流程：[`lib/services/auth_service.dart`](lib/services/auth_service.dart:1), [`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1) (AnonymousSignInNotifier), [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1).
 * [2025-05-25 06:26:18] - **代码实现:** 修复了 Firebase 匿名用户创建后 UI 按钮持续加载的问题。引入了 `AnonymousSignInNotifier` ([`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1)) 和 `SplashScreen` ([`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1))。更新了 [`lib/main.dart`](lib/main.dart:1) 和 [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1) 以及相关的本地化文件。
@@ -72,6 +89,7 @@
     * Regenerating localization classes using `flutter gen-l10n`.
     * Updating the `Text` widget in [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart) to use `localizations.highScoreDisplay`.
 ## Open Questions/Issues
+* [2025-05-25 14:02:00] - [Debug Status Update: Issue Resolved] 解决了 "Error no routes for location：/home" 路由错误。通过修改 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:49) 将导航目标从 `/home` 更改为 `/`。
 
 *
 * [2025-05-23 08:08:27] - Updated home screen to show "Continue Game" button if a game is in progress. Updated game screen exit button to 'X' icon and added a confirmation dialog before exiting a game. Updated relevant localization files.
@@ -92,3 +110,4 @@
 * [2025-05-25 10:17:12] - 修复了因 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart) 中本地化键 (`loadingLabel`, `errorLabel`, `retryButtonLabel`, `signInFailedGeneric`) 缺失或值不正确导致的 Flutter 构建错误。更新了 [`lib/l10n/app_en.arb`](lib/l10n/app_en.arb) 中的 `signInFailedGeneric` 值。检查并确认了其他语言文件 ([`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)) 中的键已存在且已正确翻译。清理了 [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb) 中的重复条目并修复了其 JSON 格式问题。成功执行了 `flutter gen-l10n`。
 * [2025-05-25 10:31:24] - 手动修复生成的本地化文件 ([`lib/generated/app_localizations.dart`](lib/generated/app_localizations.dart) 及各语言版本如 [`lib/generated/app_localizations_en.dart`](lib/generated/app_localizations_en.dart))，以包含缺失的 `loadingLabel`, `errorLabel`, `retryButtonLabel`, `signInFailedGeneric` 的抽象声明和具体实现。此前 `flutter gen-l10n` 未能正确生成这些键，尽管 `.arb` 文件看起来配置正确。
 * [2025-05-25 11:34:07] - **架构决策:** 采纳了解决 SplashScreen 卡顿和路由循环问题的方案。核心是在 [`SplashScreen`](lib/ui_screens/splash_screen.dart:1) 中，当匿名登录成功后，使用显式导航（例如 `context.go('/home')`）替代 `GoRouter.refresh()`，以避免不必要的路由刷新和组件重建循环。相关决策已记录在 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1)。
+* [2025-05-25 13:05:00] - [Debug Status Update: Issue Investigation] 开始调查 "failedToSaveUsername" 错误。日志分析指出 `GoogleApiManager SecurityException: Unknown calling package name 'com.google.android.gms'` 和 `ProviderInstaller module load failure` 可能是根本原因。将优先排查 Google Play 服务集成和配置问题。

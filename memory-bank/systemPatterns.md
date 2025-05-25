@@ -51,6 +51,40 @@ It is optional, but recommended to be updated as the project evolves.
     *   **关键组件:** `UserService`, `user_providers` ([`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1)), `UsernameSetupScreen`, `GoRouter.redirect`。
 *
 ---
+### [使用 Cloud Function 和 Firestore 事务实现唯一性约束 (例如用户名)]
+[2025-05-25 12:50:00] - **模式描述:** 在分布式数据库如 Firestore 中强制跨文档的唯一性约束（例如，确保用户名在整个系统中是唯一的）通常需要服务器端逻辑。此模式利用 Firebase Cloud Functions 和 Firestore 事务来实现原子性的检查和写入操作。
+    *   **触发:** 需要创建或更新一个具有唯一性要求的字段时（例如，用户注册新用户名）。
+    *   **逻辑:**
+        1.  **客户端请求:** 客户端 (Flutter 应用) 调用一个可调用的 Cloud Function (例如 `callable_setUniqueUsername`)，传递需要设为唯一的字段值 (例如 `username`) 和相关标识符 (例如 `userId`)。
+        2.  **Cloud Function 执行:**
+            a.  **规范化 (可选但推荐):** 对输入值进行规范化处理（例如，转换为小写，去除多余空格）以确保一致的唯一性检查（例如，`NormalizedUsername = username.toLowerCase()`)。
+            b.  **Firestore 事务启动:** Cloud Function 启动一个 Firestore 事务。
+            c.  **唯一性检查 (事务内):**
+                *   读取一个专门用于跟踪唯一值的辅助集合中的文档 (例如，`db.collection('usernames').doc(NormalizedUsername)`)。
+                *   如果该文档存在：
+                    *   检查其关联的 `userId` (如果存储了) 是否与当前请求的 `userId` 相同。如果是，则用户尝试更新为自己已有的值，可视为成功或无操作。
+                    *   如果 `userId` 不同，则表示该值已被其他用户占用。事务中止，函数返回一个明确的错误 (例如 `ALREADY_EXISTS`)。
+            d.  **数据写入 (事务内):**
+                *   如果唯一性检查通过 (文档不存在或属于同一用户)：
+                    *   在辅助集合中创建/更新文档 (例如，`db.collection('usernames').doc(NormalizedUsername).set({ userId: currentUserId })`)。
+                    *   在主数据集合中创建/更新包含该唯一字段的文档 (例如，`db.collection('users').doc(currentUserId).update({ username: originalUsername, normalizedUsername: NormalizedUsername })`)。
+            e.  **事务提交:** 尝试提交事务。
+        3.  **响应客户端:** Cloud Function 根据事务的结果（成功或特定错误）向客户端返回响应。
+    *   **关键组件/概念:**
+        *   Firebase Cloud Functions (Callable).
+        *   Firestore Transactions (`admin.firestore().runTransaction(...)`).
+        *   辅助集合 (例如 `usernames`)，其文档 ID 为需要确保唯一的规范化值。
+        *   主数据集合 (例如 `users`)。
+        *   规范化逻辑。
+        *   明确的错误代码 (例如 `ALREADY_EXISTS`, `INTERNAL_ERROR`).
+    *   **示例场景:** 用户名注册、确保邮箱地址唯一、创建唯一的优惠券代码。
+    *   **重要性:**
+        *   **原子性:** 事务确保唯一性检查和数据写入要么全部成功，要么全部失败，防止数据不一致。
+        *   **并发安全:** Firestore 事务能够处理并发请求，确保数据完整性。
+        *   **服务器端逻辑:** 将关键的唯一性校验逻辑放在服务器端，更安全、更可靠。
+    *   **相关文件:** [`functions/src/index.ts`](functions/src/index.ts:1) (或 `.js`), [`memory-bank/architecture.md`](memory-bank/architecture.md:1) (用户名创建流程部分)。
+
+---
 ### [使用启动画面 (Splash Screen) 处理初始异步操作 (例如认证)]
 [2025-05-25 06:27:12] - **模式描述:** 为了在应用启动时提供流畅的用户体验并有效管理初始的异步操作（如用户认证、加载配置等），推荐使用启动画面 (Splash Screen)。此模式将耗时的启动任务与主 UI 分离，并提供明确的加载反馈。
     *   **触发:** 应用启动时。

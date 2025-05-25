@@ -8,6 +8,9 @@ import 'package:myapp/generated/app_localizations.dart'; // Import generated loc
 import 'package:myapp/widgets/game_over_dialog.dart'; // Import the GameOverDialog
 import 'package:myapp/state_management/providers/leaderboard_providers.dart';
 import 'package:myapp/state_management/providers/user_providers.dart';
+import 'package:myapp/services/local_storage_service.dart'; // Ensure this is imported
+import 'package:myapp/services/leaderboard_service.dart'; // Ensure this is imported
+
 
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
@@ -16,9 +19,9 @@ class GameScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rollsLeft = ref.watch(rollsLeftProvider);
     final currentRound = ref.watch(currentRoundProvider);
-    // final grandTotal = ref.watch(grandTotalProvider); // grandTotal will be read inside the listener
+    final bool isGameOverForUI = ref.watch(isGameOverProvider); // Watch the game over state for UI updates
 
-    // Listen to game over state to show the dialog
+    // Listen to game over state to show the dialog and save score
     ref.listen<bool>(isGameOverProvider, (previous, isGameOver) {
       final isGameInProgress = ref.read(isGameInProgressProvider); // Read current state
       if (isGameOver && !isGameInProgress) { // Check if game just ended
@@ -26,39 +29,105 @@ class GameScreen extends ConsumerWidget {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           // Check if the screen is still active before showing dialog or performing async operations
           if (ModalRoute.of(context)?.isCurrent ?? false) {
-            final String? actualUsername = await ref.read(usernameProvider.future);
-            final leaderboardService = ref.read(leaderboardServiceProvider);
             final grandTotalValue = ref.read(grandTotalProvider); // Read latest grandTotal
+            final leaderboardService = ref.read(leaderboardServiceProvider);
+            final localStorageService = ref.read(localStorageServiceProvider);
 
-            if (actualUsername != null && actualUsername.isNotEmpty) {
-              try {
-                await leaderboardService.addScore(actualUsername, grandTotalValue);
-                ref.refresh(leaderboardProvider);
-                // Optional: Show a success message (e.g., SnackBar)
-                // if (context.mounted) {
-                //   ScaffoldMessenger.of(context).showSnackBar(
-                //     SnackBar(content: Text(AppLocalizations.of(context)!.scoreSavedToLeaderboard)),
-                //   );
-                // }
-              } catch (e) {
-                print('Error saving score to leaderboard: $e');
-                // Optional: Handle error during score saving (e.g., log or show error message)
-                // if (context.mounted) {
-                //   ScaffoldMessenger.of(context).showSnackBar(
-                //     SnackBar(content: Text('${AppLocalizations.of(context)!.failedToSaveScore}: $e')),
-                //   );
-                // }
+            try {
+              final String? actualUsername = await ref.read(usernameProvider.future);
+              
+              if (actualUsername != null && actualUsername.isNotEmpty) {
+                try {
+                  // Try to save score to leaderboard
+                  await leaderboardService.addScore(actualUsername, grandTotalValue);
+                  ref.refresh(leaderboardProvider);
+                  
+                  // Show success message
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!.scoreSavedToLeaderboard),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print('Error saving score to leaderboard: $e');
+                  // Show error message
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!.genericErrorWithDetails(AppLocalizations.of(context)!.failedToSaveScore)),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                        action: SnackBarAction(
+                          label: AppLocalizations.of(context)!.fix,
+                          onPressed: () {
+                            // Potentially navigate to settings or show a dialog to fix username
+                            if (context.mounted) context.go('/settings');
+                          },
+                        ),
+                      ),
+                    );
+                  }
+                }
+              } else {
+                // Username is null or empty, try to use local storage
+                try {
+                  final localUsername = await localStorageService.getUsername();
+                  if (localUsername != null && localUsername.isNotEmpty) {
+                    await leaderboardService.addScore(localUsername, grandTotalValue);
+                    ref.refresh(leaderboardProvider);
+                     if (context.mounted) {
+                       ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(AppLocalizations.of(context)!.scoreSavedUsingLocallyStoredUsername),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } else {
+                     if (context.mounted) {
+                       ScaffoldMessenger.of(context).showSnackBar(
+                         SnackBar(
+                          content: Text(AppLocalizations.of(context)!.usernameNotFoundScoreNotSaved),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  print('Error retrieving or saving score with local username: $e');
+                   if (context.mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       SnackBar(
+                        content: Text(AppLocalizations.of(context)!.genericErrorWithDetails(AppLocalizations.of(context)!.errorRetrievingUsername('$e'))),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               }
-            } else {
-              print('Username not available, score not saved.');
-              // Optional: Handle case where username is somehow null or empty
-              // if (context.mounted) {
-              //   ScaffoldMessenger.of(context).showSnackBar(
-              //     SnackBar(content: Text(AppLocalizations.of(context)!.usernameNotFoundScoreNotSaved)),
-              //   );
-              // }
+            } catch (e) {
+              // This catch block handles errors from ref.read(usernameProvider.future)
+              print('Error fetching username: $e');
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.genericErrorWithDetails(AppLocalizations.of(context)!.errorFetchingUsername)),
+                    backgroundColor: Colors.red,
+                     action: SnackBarAction(
+                        label: AppLocalizations.of(context)!.fix,
+                        onPressed: () {
+                          if (context.mounted) context.go('/settings');
+                        },
+                      ),
+                  ),
+                );
+              }
             }
-            // Show the game over dialog (existing logic)
+
+            // Show game over dialog regardless of score saving outcome
             if (context.mounted) { // Check mounted again before showing dialog
               showGameOverDialog(context, grandTotalValue);
             }
@@ -66,9 +135,6 @@ class GameScreen extends ConsumerWidget {
         });
       }
     });
-
-    // Watch isGameOver for UI elements that depend on it directly
-    final bool isGameOverForUI = ref.watch(isGameOverProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -80,98 +146,33 @@ class GameScreen extends ConsumerWidget {
             onPressed: () async {
               final bool? shouldExit = await showDialog<bool>(
                 context: context,
-                builder: (BuildContext dialogContext) {
-                  return AlertDialog(
-                    title: Text(AppLocalizations.of(context)!.exitToHome),
-                    content: Text(AppLocalizations.of(context)!.exitGameConfirmation),
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop(false);
-                        },
-                      ),
-                      TextButton(
-                        child: Text(MaterialLocalizations.of(context).okButtonLabel),
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop(true);
-                        },
-                      ),
-                    ],
-                  );
-                },
+                builder: (BuildContext dialogContext) => AlertDialog(
+                  title: Text(AppLocalizations.of(context)!.exitToHome),
+                  content: Text(AppLocalizations.of(context)!.exitGameConfirmation),
+                  actions: <Widget>[
+                    TextButton(
+                      child: Text(MaterialLocalizations.of(dialogContext).cancelButtonLabel),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop(false);
+                      },
+                    ),
+                    TextButton(
+                      child: Text(MaterialLocalizations.of(dialogContext).okButtonLabel),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop(true);
+                      },
+                    ),
+                  ],
+                ),
               );
-
               if (shouldExit == true) {
                 ref.read(gameStateProvider.notifier).setToInitialState();
-                if (context.mounted) context.go('/');
-              }
-            },
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Column(
-                children: [
-                  Text(AppLocalizations.of(context)!.player("Player 1"), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text(AppLocalizations.of(context)!.round(currentRound, 13), style: const TextStyle(fontSize: 16)),
-                  Text(AppLocalizations.of(context)!.rollsLeft(rollsLeft), style: const TextStyle(fontSize: 16)),
-                  if (isGameOverForUI)
-                    Text(AppLocalizations.of(context)!.gameOver, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Text(AppLocalizations.of(context)!.dice, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            const DiceWidget(),
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: rollsLeft > 0 && !isGameOverForUI
-                  ? () {
-                      ref.read(gameStateProvider.notifier).rollDice();
-                    }
-                  : null,
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: Text(AppLocalizations.of(context)!.rollDice, style: const TextStyle(fontSize: 18)),
-            ),
-            const SizedBox(height: 20),
-
-            Text(AppLocalizations.of(context)!.scoreboard, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            const ScoreboardWidget(),
-            const SizedBox(height: 20),
-
-            if (rollsLeft == 0 && !isGameOverForUI)
-              ElevatedButton(
-                onPressed: () {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocalizations.of(context)!.selectScoreCategoryPrompt)),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(AppLocalizations.of(context)!.selectScoreCategoryPrompt, style: const TextStyle(fontSize: 18, color: Colors.white)),
-              )
-          ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+                if (context.mounted) context.go('/'); 
+} // 关闭 if (shouldExit == true) {
+            }, // 关闭 onPressed: () async {
+          ), // 关闭 IconButton(
+        ], // 关闭 actions: [
+      ), // 关闭 appBar: AppBar(
+    ); // 关闭 return Scaffold(
+  } // 关闭 build 方法 Widget build(...) {
+} // 关闭 class GameScreen extends ... {

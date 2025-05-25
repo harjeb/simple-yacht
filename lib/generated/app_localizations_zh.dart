@@ -305,4 +305,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get signInFailedGeneric => '登录失败，请检查您的网络连接并稍后重试。';
+
+  @override
+  String get firestoreDatabaseNotConfiguredError => '后端数据库未配置，请联系管理员。';
+
+  @override
+  String get scoreSavedToLeaderboard => 'Score saved to leaderboard!';
+
+  @override
+  String get failedToSaveScore => 'Failed to save score';
+
+  @override
+  String get fix => 'Fix';
+
+  @override
+  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username.';
+
+  @override
+  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved.';
+
+  @override
+  String errorRetrievingUsername(String details) {
+    return 'Error retrieving username: $details';
+  }
+
+  @override
+  String get errorFetchingUsername => 'Error fetching username';
 }

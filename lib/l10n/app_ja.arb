@@ -309,5 +309,43 @@
   "signInFailedGeneric": "サインインに失敗しました。接続を確認して再試行してください。",
   "@signInFailedGeneric": {
     "description": "Generic message for sign-in failure"
+  },
+  "firestoreDatabaseNotConfiguredError": "バックエンドデータベースが設定されていません。管理者に連絡してください。",
+  "@firestoreDatabaseNotConfiguredError": {
+    "description": "Firestoreデータベースが見つからないか、設定されていない場合に表示されるエラーメッセージ。"
+,
+  "scoreSavedToLeaderboard": "Score saved to leaderboard! (NEEDS JA TRANSLATION)",
+  "@scoreSavedToLeaderboard": {
+    "description": "Snackbar message when score is successfully saved to the leaderboard. (NEEDS JA TRANSLATION)"
+  },
+  "failedToSaveScore": "Failed to save score (NEEDS JA TRANSLATION)",
+  "@failedToSaveScore": {
+    "description": "Part of a generic error message, indicating the action that failed. (NEEDS JA TRANSLATION)"
+  },
+  "fix": "Fix (NEEDS JA TRANSLATION)",
+  "@fix": {
+    "description": "Label for a button that offers to fix an issue, e.g., navigate to settings. (NEEDS JA TRANSLATION)"
+  },
+  "scoreSavedUsingLocallyStoredUsername": "Score saved using locally stored username. (NEEDS JA TRANSLATION)",
+  "@scoreSavedUsingLocallyStoredUsername": {
+    "description": "Snackbar message when score is saved using a username from local storage. (NEEDS JA TRANSLATION)"
+  },
+  "usernameNotFoundScoreNotSaved": "Username not found. Score not saved. (NEEDS JA TRANSLATION)",
+  "@usernameNotFoundScoreNotSaved": {
+    "description": "Snackbar message when username is not found locally and score cannot be saved. (NEEDS JA TRANSLATION)"
+  },
+  "errorRetrievingUsername": "Error retrieving username: {details} (NEEDS JA TRANSLATION)",
+  "@errorRetrievingUsername": {
+    "description": "Error message when retrieving username from local storage fails. (NEEDS JA TRANSLATION)",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingUsername": "Error fetching username (NEEDS JA TRANSLATION)",
+  "@errorFetchingUsername": {
+    "description": "Part of a generic error message, indicating the action that failed during username fetch from provider. (NEEDS JA TRANSLATION)"
+  }
   }
 }

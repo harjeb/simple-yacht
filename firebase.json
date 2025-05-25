@@ -1,1 +1,41 @@
-{"functions":[{"source":"functions","codebase":"default","ignore":["node_modules",".git","firebase-debug.log","firebase-debug.*.log","*.local"],"predeploy":["npm --prefix \"$RESOURCE_DIR\" run lint"]}],"flutter":{"platforms":{"android":{"default":{"projectId":"yacht-f816d","appId":"1:60143534744:android:7944f8f59eb363877946ed","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"yacht-f816d","configurations":{"android":"1:60143534744:android:7944f8f59eb363877946ed","web":"1:60143534744:web:a7f3575b7da7f3217946ed"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ],
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "yacht-f816d",
+          "appId": "1:60143534744:android:7944f8f59eb363877946ed",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "yacht-f816d",
+          "configurations": {
+            "android": "1:60143534744:android:7944f8f59eb363877946ed",
+            "web": "1:60143534744:web:a7f3575b7da7f3217946ed"
+          }
+        }
+      }
+    }
+  }
+}

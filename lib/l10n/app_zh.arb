@@ -272,5 +272,43 @@
   "signInFailedGeneric": "登录失败，请检查您的网络连接并稍后重试。",
   "@signInFailedGeneric": {
     "description": "Generic message for sign-in failure"
+  },
+  "firestoreDatabaseNotConfiguredError": "后端数据库未配置，请联系管理员。",
+  "@firestoreDatabaseNotConfiguredError": {
+    "description": "当 Firestore 数据库未找到或未配置时显示的错误消息。"
+,
+  "scoreSavedToLeaderboard": "Score saved to leaderboard! (NEEDS ZH TRANSLATION)",
+  "@scoreSavedToLeaderboard": {
+    "description": "Snackbar message when score is successfully saved to the leaderboard. (NEEDS ZH TRANSLATION)"
+  },
+  "failedToSaveScore": "Failed to save score (NEEDS ZH TRANSLATION)",
+  "@failedToSaveScore": {
+    "description": "Part of a generic error message, indicating the action that failed. (NEEDS ZH TRANSLATION)"
+  },
+  "fix": "Fix (NEEDS ZH TRANSLATION)",
+  "@fix": {
+    "description": "Label for a button that offers to fix an issue, e.g., navigate to settings. (NEEDS ZH TRANSLATION)"
+  },
+  "scoreSavedUsingLocallyStoredUsername": "Score saved using locally stored username. (NEEDS ZH TRANSLATION)",
+  "@scoreSavedUsingLocallyStoredUsername": {
+    "description": "Snackbar message when score is saved using a username from local storage. (NEEDS ZH TRANSLATION)"
+  },
+  "usernameNotFoundScoreNotSaved": "Username not found. Score not saved. (NEEDS ZH TRANSLATION)",
+  "@usernameNotFoundScoreNotSaved": {
+    "description": "Snackbar message when username is not found locally and score cannot be saved. (NEEDS ZH TRANSLATION)"
+  },
+  "errorRetrievingUsername": "Error retrieving username: {details} (NEEDS ZH TRANSLATION)",
+  "@errorRetrievingUsername": {
+    "description": "Error message when retrieving username from local storage fails. (NEEDS ZH TRANSLATION)",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFetchingUsername": "Error fetching username (NEEDS ZH TRANSLATION)",
+  "@errorFetchingUsername": {
+    "description": "Part of a generic error message, indicating the action that failed during username fetch from provider. (NEEDS ZH TRANSLATION)"
+  }
   }
 }

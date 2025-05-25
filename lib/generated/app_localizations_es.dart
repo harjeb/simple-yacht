@@ -305,4 +305,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get signInFailedGeneric => 'Falló el inicio de sesión. Por favor, comprueba tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get firestoreDatabaseNotConfiguredError => 'La base de datos backend no está configurada. Por favor, contacte al administrador.';
+
+  @override
+  String get scoreSavedToLeaderboard => 'Score saved to leaderboard!';
+
+  @override
+  String get failedToSaveScore => 'Failed to save score';
+
+  @override
+  String get fix => 'Fix';
+
+  @override
+  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username.';
+
+  @override
+  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved.';
+
+  @override
+  String errorRetrievingUsername(String details) {
+    return 'Error retrieving username: $details';
+  }
+
+  @override
+  String get errorFetchingUsername => 'Error fetching username';
 }

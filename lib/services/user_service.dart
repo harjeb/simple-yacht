@@ -112,9 +112,17 @@ class UserAccountService {
       );
       await _usersCollection.doc(userId).set(userProfile.toFirestore());
       return userProfile;
+    } on FirebaseException catch (e) {
+      if (e.code == 'not-found' || (e.message?.contains('NOT_FOUND') ?? false) || (e.message?.contains('database does not exist') ?? false)) {
+        // Rethrow to be caught by the caller, allowing specific UI handling
+        print('Error creating new user: Firestore database not found. $e');
+        throw FirebaseException(plugin: 'Firestore', code: 'not-found', message: 'Firestore database not found during user creation.');
+      }
+      print('Error creating new user: $e');
+      rethrow; // Rethrow other FirebaseExceptions
     } catch (e) {
       print('Error creating new user: $e');
-      return null;
+      rethrow; // Rethrow other general exceptions
     }
   }
 
@@ -126,9 +134,18 @@ class UserAccountService {
         return UserProfile.fromFirestore(docSnapshot);
       }
       return null;
+    } on FirebaseException catch (e) {
+      if (e.code == 'not-found' || (e.message?.contains('NOT_FOUND') ?? false) || (e.message?.contains('database does not exist') ?? false)) {
+         print('Error getting user profile: Firestore database not found. $e');
+        // It's important that FutureProviders handle exceptions correctly.
+        // Throwing here will make the FutureProvider enter an error state.
+        throw FirebaseException(plugin: 'Firestore', code: 'not-found', message: 'Firestore database not found when getting user profile.');
+      }
+      print('Error getting user profile: $e');
+      rethrow; // Rethrow other FirebaseExceptions
     } catch (e) {
       print('Error getting user profile: $e');
-      return null;
+      rethrow; // Rethrow other general exceptions
     }
   }
   

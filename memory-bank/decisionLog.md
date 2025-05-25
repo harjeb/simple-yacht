@@ -7,6 +7,82 @@ This file records architectural and implementation decisions using a list format
 
 ---
 ### Decision
+[2025-05-25 12:50:00] - 采纳针对用户名保存失败问题的综合架构方案，重点解决用户输入验证、网络问题、后端服务错误、本地存储问题和并发问题。
+
+**Rationale:**
+用户报告在创建用户时保存用户名失败并提示“请重试”。为了系统性地解决此问题，需要一个覆盖前端验证、网络容错、后端健壮性、本地缓存策略和并发控制的综合架构。此方案旨在提高用户名创建流程的成功率和用户体验。
+
+**Implications/Details:**
+*   **用户输入验证 (前端):**
+    *   在 [`UsernameSetupScreen`](lib/ui_screens/username_setup_screen.dart:1) 中实现实时格式验证（长度、字符集）。
+    *   可选：通过 Cloud Function `checkUsernameAvailability` 进行异步唯一性预检查。
+    *   提供清晰、本地化的即时错误反馈。
+*   **网络问题处理 (前端):**
+    *   在 [`UserService`](lib/services/user_service.dart:1) 中实现网络连接检查、请求超时和带退避算法的重试机制。
+    *   向用户显示明确的网络错误提示。
+*   **后端服务错误处理 (Firebase & 前端):**
+    *   **用户名唯一性与原子写入:** 推荐使用 **Cloud Function + Firestore 事务**。
+        *   Cloud Function (例如 `callable_setUniqueUsername`) 接收用户名和 UID。
+        *   在 Firestore 事务中：
+            1.  检查规范化用户名是否已在 `usernames/{normalized_username}` 辅助集合中存在。
+            2.  若不存在，则创建 `usernames/{normalized_username}` 并更新 `users/{userId}` 中的用户名。
+            3.  若存在但 UID 不同，则返回 `ALREADY_EXISTS`。
+    *   Cloud Functions 返回标准化的错误代码。
+    *   [`UserService`](lib/services/user_service.dart:1) 解析 Firebase 异常，转换为应用特定错误。
+    *   UI 显示本地化的用户友好错误消息。
+*   **本地存储问题 (前端):**
+    *   [`LocalStorageService`](lib/services/local_storage_service.dart:1) 主要用于缓存已成功保存到后端的用户名，而非作为关键持久化步骤。
+    *   `shared_preferences` 操作包含 `try-catch`。
+*   **并发问题处理:**
+    *   UI 层通过禁用按钮和显示加载指示器来防止重复提交。
+    *   后端通过 Cloud Function + Firestore 事务确保用户名注册的原子性和唯一性。
+*   **错误处理和用户反馈策略:**
+    *   采用分层错误处理（服务层 -> 状态管理层 -> UI 层）。
+    *   使用本地化文件管理用户可见的错误消息。
+    *   严格管理加载状态。
+*   **鲁棒性与幂等性:**
+    *   通过上述机制增强鲁棒性。
+    *   Cloud Function 设计应考虑幂等性，确保重复调用同一成功注册操作不会产生副作用。
+*   **相关架构更新:** 详细流程已更新至 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 的 "用户名创建与管理流程" 章节。
+
+---
+### Decision
+[2025-05-25 12:37:12] - 设计 Firestore 安全规则以解决用户写入自身文档时的 `PERMISSION_DENIED` 错误。
+
+**Rationale:**
+错误日志显示用户 `wEAQEd58kkfpkqG6koO6jGEktV12` 在尝试写入路径 `users/wEAQEd58kkfpkqG6koO6jGEktV12` 时遇到权限不足的问题。`spec-pseudocode` 模式建议审查和更新安全规则。为了遵循最小权限原则并解决此问题，需要明确允许经过身份验证的用户写入其自己的用户文档。
+
+**Implications/Details:**
+*   **安全规则更新:**
+    *   在 `users/{userId}` 路径下，添加/修改规则为 `allow read, create, update: if request.auth != null && request.auth.uid == userId;`。
+    *   维持 `allow delete: if false;` 以防止客户端直接删除用户数据。
+*   **其他集合:** 审查并确保其他集合（如 `leaderboard`）的规则也遵循最小权限原则，例如允许创建排行榜条目但限制更新/删除。
+*   **影响:** 此更改将直接解决报告的 `PERMISSION_DENIED` 错误，允许用户创建和更新其个人资料。
+*   **相关文件:** Firestore 安全规则文件 (通常是 `firestore.rules`)。
+---
+### Decision
+[2025-05-25 11:51:14] - 明确 Cloud Firestore 数据库依赖性及缺失时的应用行为。
+
+**Rationale:**
+诊断结果 (`spec-pseudocode` 模式) 指出，由于 Firebase 项目 `yacht-f816d` 的 Cloud Firestore 数据库未配置，导致应用在创建新用户后卡在加载界面 (错误: `NOT_FOUND, The database (default) does not exist`)。Cloud Firestore 是存储用户账户、游戏数据和排行榜的核心。此依赖性缺失会严重影响应用功能。因此，必须明确记录此依赖，并定义应用在数据库不可用时的预期行为，以提高系统的健壮性和用户体验。
+
+**Implications/Details:**
+*   **依赖性确认:** Cloud Firestore 是应用核心功能的强制性依赖。
+*   **预期行为 (Firestore 不可用时):**
+    *   **错误检测:** 应用必须能够在启动或相关操作（如用户创建、数据读写）时检测到 Firestore 不可用的状态 (例如，通过捕获 `NOT_FOUND` 或类似的 gRPC 错误代码)。
+    *   **用户通知:** 向用户显示清晰、本地化的错误消息，例如：“数据库服务当前不可用，部分功能可能受限或无法使用。请稍后重试或联系支持。”
+    *   **功能限制:** 阻止用户执行依赖 Firestore 的操作（例如，创建新账户、开始在线游戏、查看排行榜）。如果可能，允许用户访问不依赖 Firestore 的本地功能（如果有）。
+    *   **加载状态管理:** 确保在检测到错误后，相关的加载指示器被清除，UI 不会卡在无限加载状态。
+    *   **日志记录:** 记录详细的错误信息到开发者控制台或日志系统，以便于诊断。
+*   **架构更新:**
+    *   在 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) (或相关产品文档) 中明确强调 Cloud Firestore 的关键作用及其配置的必要性。
+    *   服务层 (例如 `UserService`, `LeaderboardService`) 的错误处理逻辑需要增强，以捕获并适当地向上传播 Firestore相关的特定错误。
+    *   UI 层需要能够响应这些错误，并呈现上述的用户通知和功能限制。
+*   **后续行动:**
+    *   开发团队需要确保 Firebase 项目 `yacht-f816d` 中的 Cloud Firestore 数据库已正确创建和配置。
+    *   代码层面需要实现更健壮的错误处理逻辑，以应对此类后端依赖问题。
+---
+### Decision
 [2025-05-23 03:08:30] - 选择 Riverpod 作为 Flutter 应用的状态管理方案。
 
 **Rationale:**
@@ -361,3 +437,9 @@ The `flutter gen-l10n` command, despite successful execution and seemingly corre
     - 确保其 `redirect` 逻辑能够正确处理从 `/splash` 导航到 `/home` 后的情况，并根据用户是否需要设置用户名（`needsSetup`）等状态，最终将用户导向正确的页面（如 `/username_setup` 或 `/home`）。
     - 确保 `redirect` 逻辑在用户已登录且设置完成后，若当前路径为 `/splash` 或 `/username_setup`，会正确导航到 `/home`。
 - 此更改旨在提高启动流程的稳定性和可预测性。
+- [2025-05-25 12:42:47 UTC] 决定部署更新后的 Firestore 安全规则 ([`firestore.rules`](firestore.rules:1)) 以解决 `PERMISSION_DENIED` 错误。
+    - 操作：
+        - 确认 Firebase CLI 已安装。
+        - 更新 [`firebase.json`](firebase.json:1) 以包含正确的 Firestore 规则路径。
+        - 执行 `firebase deploy --only firestore:rules` 命令。
+    - 结果：部署成功。

@@ -46,7 +46,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             // If direct navigation is needed here, it would be context.go('/');
             // but usually, AppRouter's redirect based on auth state is preferred.
             // A simple way to trigger route re-evaluation if AppRouter depends on auth state:
-            context.go('/home'); // Navigate explicitly to home, AppRouter will handle redirect if needed
+            context.go('/'); // Navigate explicitly to home (which is '/'), AppRouter will handle redirect if needed
                                          // to authStateChangesProvider updates quickly enough
                                          // or if initial route is '/' and redirect handles it.
                                          // More robustly, AppRouter should listen to authStateChangesProvider.

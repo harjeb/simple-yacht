@@ -305,4 +305,30 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get signInFailedGeneric => 'Ошибка входа. Проверьте подключение и попробуйте снова.';
+
+  @override
+  String get firestoreDatabaseNotConfiguredError => 'База данных бэкэнда не настроена. Пожалуйста, свяжитесь с администратором.';
+
+  @override
+  String get scoreSavedToLeaderboard => 'Score saved to leaderboard!';
+
+  @override
+  String get failedToSaveScore => 'Failed to save score';
+
+  @override
+  String get fix => 'Fix';
+
+  @override
+  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username.';
+
+  @override
+  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved.';
+
+  @override
+  String errorRetrievingUsername(String details) {
+    return 'Error retrieving username: $details';
+  }
+
+  @override
+  String get errorFetchingUsername => 'Error fetching username';
 }

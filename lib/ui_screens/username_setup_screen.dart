@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:myapp/state_management/providers/user_providers.dart';
 import 'package:myapp/generated/app_localizations.dart'; // For localization
+import 'package:cloud_firestore/cloud_firestore.dart'; // For FirebaseException
 import 'package:myapp/services/auth_service.dart'; // For authServiceProvider
 import 'package:myapp/services/user_service.dart'; // For userAccountServiceProvider, functionsProvider
 import 'package:cloud_functions/cloud_functions.dart'; // For FirebaseFunctionsException, HttpsCallable
+import 'package:myapp/services/local_storage_service.dart'; // For local username storage
 
 enum SetupMode { create, recover }
 
@@ -13,7 +15,8 @@ class UsernameSetupScreen extends ConsumerStatefulWidget {
   const UsernameSetupScreen({super.key});
 
   @override
-  ConsumerState<UsernameSetupScreen> createState() => _UsernameSetupScreenState();
+  ConsumerState<UsernameSetupScreen> createState() =>
+      _UsernameSetupScreenState();
 }
 
 class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
@@ -22,7 +25,8 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
   final _recoveryCodeController = TextEditingController(); // For recovery code
   String? _errorText;
   bool _isLoading = false;
-  SetupMode _setupMode = SetupMode.create; // To toggle between create and recover
+  SetupMode _setupMode =
+      SetupMode.create; // To toggle between create and recover
 
   @override
   void dispose() {
@@ -66,12 +70,25 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
     }
 
     final userAccountService = ref.read(userAccountServiceProvider);
+    final localStorageService = LocalStorageService(); // Create local storage service
+    
     try {
+      // 1. Try to create user in Firebase
       final userProfile = await userAccountService.createNewUser(
         userId: currentUser.uid,
         username: enteredUsername,
       );
+      
       if (userProfile != null) {
+        // 2. Also save username to local storage as backup
+        try {
+          await localStorageService.saveUsername(enteredUsername);
+          print("Username saved to both Firebase and local storage: $enteredUsername");
+        } catch (localError) {
+          // Even if local storage fails, we continue since Firebase save succeeded
+          print("Warning: Username saved to Firebase but failed to save locally: $localError");
+        }
+        
         ref.refresh(usernameProvider);
         ref.refresh(userProfileProvider);
         // GoRouter redirect should handle navigation
@@ -81,7 +98,25 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
             _errorText = AppLocalizations.of(context)!.failedToSaveUsername;
           });
         }
+        print("Failed to save username to Firebase: userProfile is null");
       }
+    } on FirebaseException catch (e) {
+      if (mounted) {
+        setState(() {
+          if (e.code == 'not-found') {
+            _errorText =
+                AppLocalizations.of(
+                  context,
+                )!.firestoreDatabaseNotConfiguredError;
+          } else {
+            _errorText =
+                AppLocalizations.of(
+                  context,
+                )!.failedToSaveUsername; // Or a more specific error based on e.code
+          }
+        });
+      }
+      print("FirebaseException in _createNewAccount: ${e.code} - ${e.message}");
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -102,28 +137,42 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
     final recoveryCode = _recoveryCodeController.text.trim();
     final userAccountService = ref.read(userAccountServiceProvider);
     final authService = ref.read(authServiceProvider);
-    final functions = ref.read(functionsProvider); // Get FirebaseFunctions instance
+    final functions = ref.read(
+      functionsProvider,
+    ); // Get FirebaseFunctions instance
 
     try {
-      final userId = await userAccountService.getUserIdByTransferCode(recoveryCode);
+      final userId = await userAccountService.getUserIdByTransferCode(
+        recoveryCode,
+      );
       if (userId == null) {
         if (mounted) {
           setState(() {
-            _errorText = AppLocalizations.of(context)!.recoveryCodeInvalid; // Add this localization
+            _errorText =
+                AppLocalizations.of(
+                  context,
+                )!.recoveryCodeInvalid; // Add this localization
           });
         }
         return;
       }
 
       // Call Cloud Function to get custom token
-      final HttpsCallable callable = functions.httpsCallable('generateCustomAuthToken');
-      final response = await callable.call<Map<String, dynamic>>({'uid': userId});
+      final HttpsCallable callable = functions.httpsCallable(
+        'generateCustomAuthToken',
+      );
+      final response = await callable.call<Map<String, dynamic>>({
+        'uid': userId,
+      });
       final customToken = response.data['token'] as String?;
 
       if (customToken == null) {
         if (mounted) {
           setState(() {
-            _errorText = AppLocalizations.of(context)!.recoveryFailedError; // Add this localization
+            _errorText =
+                AppLocalizations.of(
+                  context,
+                )!.recoveryFailedError; // Add this localization
           });
         }
         return;
@@ -138,19 +187,24 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       } else {
         if (mounted) {
           setState(() {
-            _errorText = AppLocalizations.of(context)!.recoverySignInFailed; // Add this localization
+            _errorText =
+                AppLocalizations.of(
+                  context,
+                )!.recoverySignInFailed; // Add this localization
           });
         }
       }
     } on FirebaseFunctionsException catch (e) {
-       if (mounted) {
+      if (mounted) {
         setState(() {
-          _errorText = "${AppLocalizations.of(context)!.recoveryFailedError}: ${e.message}";
+          _errorText =
+              "${AppLocalizations.of(context)!.recoveryFailedError}: ${e.message}";
         });
       }
-      print("FirebaseFunctionsException in _recoverAccount: ${e.code} - ${e.message}");
-    } 
-    catch (e) {
+      print(
+        "FirebaseFunctionsException in _recoverAccount: ${e.code} - ${e.message}",
+      );
+    } catch (e) {
       if (mounted) {
         setState(() {
           _errorText = AppLocalizations.of(context)!.genericError;
@@ -172,9 +226,11 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_setupMode == SetupMode.create
-            ? localizations.usernameSetupTitle
-            : localizations.accountRecoveryTitle), // Add accountRecoveryTitle
+        title: Text(
+          _setupMode == SetupMode.create
+              ? localizations.usernameSetupTitle
+              : localizations.accountRecoveryTitle,
+        ), // Add accountRecoveryTitle
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -215,9 +271,11 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                     enabled: !_isLoading,
                   ),
-                ] else ...[ // Recovery Mode UI
+                ] else ...[
+                  // Recovery Mode UI
                   Text(
-                    localizations.enterRecoveryCodePrompt, // Add this localization
+                    localizations
+                        .enterRecoveryCodePrompt, // Add this localization
                     style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
@@ -225,16 +283,23 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                   TextFormField(
                     controller: _recoveryCodeController,
                     decoration: InputDecoration(
-                      labelText: localizations.recoveryCodeLabel, // Add this localization
-                      hintText: localizations.recoveryCodeHint,   // Add this localization (e.g., 18 alphanumeric characters)
+                      labelText:
+                          localizations
+                              .recoveryCodeLabel, // Add this localization
+                      hintText:
+                          localizations
+                              .recoveryCodeHint, // Add this localization (e.g., 18 alphanumeric characters)
                       border: const OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return localizations.recoveryCodeCannotBeEmpty; // Add this
+                        return localizations
+                            .recoveryCodeCannotBeEmpty; // Add this
                       }
-                      if (value.trim().length != 18) { // Basic length check
-                        return localizations.recoveryCodeInvalidLength; // Add this
+                      if (value.trim().length != 18) {
+                        // Basic length check
+                        return localizations
+                            .recoveryCodeInvalidLength; // Add this
                       }
                       // Add regex for alphanumeric if desired
                       return null;
@@ -247,7 +312,10 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                   const SizedBox(height: 16),
                   Text(
                     _errorText!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 14),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 14,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -257,26 +325,38 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          _setupMode == SetupMode.create
-                              ? localizations.saveButtonLabel
-                              : localizations.recoverAccountButtonLabel, // Add this
-                          style: const TextStyle(fontSize: 18)),
+                  child:
+                      _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                            _setupMode == SetupMode.create
+                                ? localizations.saveButtonLabel
+                                : localizations
+                                    .recoverAccountButtonLabel, // Add this
+                            style: const TextStyle(fontSize: 18),
+                          ),
                 ),
                 const SizedBox(height: 20),
                 TextButton(
-                  onPressed: _isLoading ? null : () {
-                    setState(() {
-                      _setupMode = _setupMode == SetupMode.create ? SetupMode.recover : SetupMode.create;
-                      _errorText = null; // Clear error when switching modes
-                      _formKey.currentState?.reset(); // Reset form validation state
-                    });
-                  },
+                  onPressed:
+                      _isLoading
+                          ? null
+                          : () {
+                            setState(() {
+                              _setupMode =
+                                  _setupMode == SetupMode.create
+                                      ? SetupMode.recover
+                                      : SetupMode.create;
+                              _errorText =
+                                  null; // Clear error when switching modes
+                              _formKey.currentState
+                                  ?.reset(); // Reset form validation state
+                            });
+                          },
                   child: Text(
                     _setupMode == SetupMode.create
-                        ? localizations.switchToRecoverAccountLabel // Add this
+                        ? localizations
+                            .switchToRecoverAccountLabel // Add this
                         : localizations.switchToCreateAccountLabel, // Add this
                   ),
                 ),
