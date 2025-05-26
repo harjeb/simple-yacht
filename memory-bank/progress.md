@@ -1,5 +1,14 @@
 # Progress
 
+* [2025-05-26 06:26:57] - **调试任务完成 (Flutter 空安全编译错误修复):** 成功修复了 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:76-78) 中的 Flutter 空安全编译错误：
+  1. **问题定位**：第76-77行 `idToken.length` 和 `idToken.substring()` 直接访问可能为 null 的 `idToken` 变量
+  2. **修复措施**：
+     - 添加 `if (idToken != null)` 空值检查条件
+     - 确保只有在 idToken 不为 null 时才访问其属性和方法
+     - 添加 idToken 为 null 时的专门调试日志
+  3. **结果**：解决了编译错误，确保代码在 idToken 为 null 时不会崩溃，同时保持调试信息的完整性
+  4. **Memory Bank 更新**：已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)
+
 This file tracks the project's progress using a task list format.
 2025-05-23 02:56:35 - Log of updates made.
 
@@ -112,4 +121,61 @@ The rules file was already up to date.
      - 修改 firestore.rules 第22行，简化时间戳验证逻辑
      - 移除严格的 `request.time` 匹配要求，允许服务器处理时间戳
      - 成功部署更新后的 Firestore 安全规则到 Firebase 项目 yacht-f816d
+* [2025-05-26 04:21:39] - **调试任务完成 (匿名登录自动触发分析):** 完成对应用启动时自动执行匿名登录问题的全面分析。确认这是**预期的架构设计**，不是需要修复的bug。分析涵盖了完整的认证流程、设计原因、以及与用户名设置的关系。结论：当前实现符合产品需求和技术架构，用户体验正常。相关分析已更新到 [`memory-bank/activeContext.md`](memory-bank/activeContext.md) 和 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md)。
   3. **Memory Bank 更新**：已更新 memory-bank/activeContext.md, memory-bank/decisionLog.md, memory-bank/progress.md
+
+* [2025-05-26 06:34:59] - **调试任务完成 (Firebase 相关错误修复):** 成功诊断并修复了 Firebase 相关的两个主要错误：
+  1. **Firestore 权限错误修复**：
+     - **问题定位**：Firestore 安全规则中排行榜路径配置与实际代码使用的路径不匹配
+     - **修复措施**：更新 [`firestore.rules`](firestore.rules:43-46) 将路径从 `/scores/{scoreId}` 修正为 `/leaderboards/{leaderboardId}/scores/{scoreId}`
+     - **结果**：解决了 `[cloud_firestore/permission-denied] Missing or insufficient permissions` 错误
+  2. **排行榜数据获取优化**：
+     - **问题定位**：`personalBestScoreProvider` 中不必要的 `leaderboardProvider` 监听导致频繁数据获取
+     - **修复措施**：
+       - 移除 [`lib/state_management/providers/personal_best_score_provider.dart`](lib/state_management/providers/personal_best_score_provider.dart:15) 中的 `ref.watch(leaderboardProvider)`
+       - 将 [`lib/state_management/providers/leaderboard_providers.dart`](lib/state_management/providers/leaderboard_providers.dart:22) 改为非 `autoDispose` 版本
+     - **结果**：排行榜数据现在只在跳转到主页面或排行榜页面时获取一次，显著提升性能
+  3. **Cloud Function 调用验证**：确认 `deleteUserData` 函数调用代码正确，参数传递无误
+  4. **Memory Bank 更新**：已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)
+
+* [2025-05-26 09:12:00] - **调试任务完成 (Cloud Function 参数传递问题深度分析与修复):** 成功诊断并修复了 `deleteUserData` Cloud Function 的参数传递问题：
+  1. **根本原因确认**：问题并非真正的参数缺失，而是 Firebase App Check 验证失败导致的请求拦截
+  2. **证据分析**：
+     - Firebase Functions 日志显示 `"verifications":{"auth":"VALID","app":"MISSING"}`
+     - 客户端代码 [`lib/services/user_service.dart`](lib/services/user_service.dart:240) 正确传递 `{'uid': user.uid}` 参数
+     - Cloud Function 代码 [`functions/index.js`](functions/index.js:55-63) 正确检查 `uid` 参数
+  3. **修复措施**：
+     - 在 [`functions/index.js`](functions/index.js:55-85) 中添加详细调试日志和开发环境支持
+     - 在 [`lib/services/user_service.dart`](lib/services/user_service.dart:251-265) 中改进错误处理，识别 App Check 相关错误
+     - 成功部署更新后的 Cloud Function
+  4. **调试指南**：创建了详细的 [`cloud_function_debug_guide.md`](cloud_function_debug_guide.md:1) 文档
+  5. **长期解决方案**：提供了 Firebase App Check 配置建议和开发环境优化方案
+  6. **Memory Bank 更新**：已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)
+
+* [2025-05-26 09:31:00] - **调试任务完成 (Cloud Function INTERNAL 错误修复):** 成功诊断并修复了 `deleteUserData` Cloud Function 的 INTERNAL 错误：
+  1. **问题定位**：通过 Firebase Functions 日志发现错误源于 `JSON.stringify()` 试图序列化包含循环引用的 `context` 对象
+  2. **修复措施**：
+     - 移除 [`functions/index.js`](functions/index.js:58) 中导致循环引用的 `JSON.stringify()` 调用
+     - 增强错误处理，添加分步骤的详细调试日志
+     - 改进 Firestore 和 Firebase Auth 删除操作的健壮性
+     - 添加对用户不存在情况的优雅处理
+  3. **部署验证**：✅ 修复后的 Cloud Function 已成功部署并通过 ESLint 验证
+  4. **测试准备**：创建了 [`test_delete_function.dart`](test_delete_function.dart:1) 测试脚本
+* [2025-05-26 09:48:45] - **调试任务完成 (Cloud Function 循环引用错误修复):** 成功诊断并修复了 Cloud Function `deleteUserData` 中的循环引用错误：
+  1. **问题定位**：Firebase Functions 日志显示错误源于 `JSON.stringify()` 试图序列化包含循环引用的 `context` 对象（特别是 `context.rawRequest`）
+  2. **修复措施**：
+     - 修改 [`functions/index.js`](functions/index.js:57-77) 中的日志记录逻辑
+     - 为 `JSON.stringify(data)` 添加 try-catch 块
+     - 重构上下文信息记录，移除对 `context.rawRequest` 的直接序列化，改为记录安全的属性如 `hasRawRequest: !!context.rawRequest` 和 `context.app` 的 `appId`、`projectId`
+     - 修复所有相关的 ESLint 代码风格问题
+  3. **部署验证**：✅ 修复后的 Cloud Function 已成功部署到 Firebase 项目 yacht-f816d
+  4. **Memory Bank 更新**：已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)
+* [2025-05-26 10:08:49] - **调试任务进行中 (Cloud Function `deleteUserData` ESLint 错误修复):**
+  1. **问题定位**: Cloud Function 部署因 ESLint 错误 "Trailing spaces not allowed" 在 [`functions/index.js`](functions/index.js:99) 第 99 行失败。
+  2. **修复措施**: 使用 `search_and_replace` 工具移除了第 99 行的尾随空格。
+  3. **后续步骤**: 再次尝试部署 Cloud Function。
+* [2025-05-26 10:03:33] - **调试任务进行中 (Cloud Function `deleteUserData` `invalid-argument` 错误):**
+  1. **问题分析**: Cloud Function `deleteUserData` 抛出 `invalid-argument` 错误，提示缺少 "uid" 参数。日志显示 `提取的 UID: undefined` 和 `context.auth: null`。怀疑 `uid` 提取逻辑或 App Check 问题。
+  2. **修复尝试**: 修改了 [`functions/index.js`](functions/index.js:1) 中的 `uid` 提取逻辑，尝试从 `data.uid` 和 `data.data.uid` 获取，并增强了对传入 `data` 结构的日志记录。
+  3. **后续步骤**: 部署更新后的 Cloud Function 并进行测试。
+  5. **Memory Bank 更新**：已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)

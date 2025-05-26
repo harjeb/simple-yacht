@@ -17,9 +17,9 @@ final leaderboardServiceProvider = Provider<LeaderboardService>((ref) {
 });
 
 // Provider to get the leaderboard list
-// Using FutureProvider.autoDispose as leaderboard data is fetched asynchronously
-// and can be refreshed.
-final leaderboardProvider = FutureProvider.autoDispose<List<ScoreEntry>>((ref) async {
+// 改为非 autoDispose 版本，避免频繁重新获取数据
+// 只在明确调用 ref.refresh() 时才重新获取
+final leaderboardProvider = FutureProvider<List<ScoreEntry>>((ref) async {
   final leaderboardService = ref.watch(leaderboardServiceProvider);
   return leaderboardService.getLeaderboard(); // Default limit is 10
 });

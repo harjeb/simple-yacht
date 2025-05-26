@@ -253,6 +253,14 @@ class UserAccountService {
       if (e is FirebaseFunctionsException) { // This type comes from cloud_functions package
         print('Functions Exception Details: ${e.details}');
         print('Functions Exception Message: ${e.message}');
+        print('Functions Exception Code: ${e.code}');
+        
+        // 检查是否是 App Check 相关的错误
+        if (e.code == 'invalid-argument' && e.message?.contains('uid') == true) {
+          print('=== 可能的 App Check 验证失败 ===');
+          print('这个错误可能是由于 Firebase App Check 验证失败导致的，而不是真正的参数缺失');
+          print('建议检查 Firebase 项目的 App Check 配置');
+        }
       }
       return false;
     }

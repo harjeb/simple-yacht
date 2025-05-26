@@ -40,10 +40,10 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // 排行榜集合 (scores/{scoreId})
-    match /scores/{scoreId} {
+    // 排行榜集合 - 修复路径匹配问题
+    match /leaderboards/{leaderboardId}/scores/{scoreId} {
       // 允许任何人读取排行榜数据
-      allow read: if true;
+      allow read: true;
 
       // 允许已认证用户创建新的分数条目
       allow create: if request.auth != null

@@ -73,8 +73,12 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
     if (currentUser != null) {
       try {
         final idToken = await currentUser.getIdToken();
-        print("DEBUG: 成功获取 ID token，长度: ${idToken.length}");
-        print("DEBUG: ID token 前50字符: ${idToken.substring(0, math.min(50, idToken.length))}...");
+        if (idToken != null) {
+          print("DEBUG: 成功获取 ID token，长度: ${idToken.length}");
+          print("DEBUG: ID token 前50字符: ${idToken.substring(0, math.min(50, idToken.length))}...");
+        } else {
+          print("DEBUG: ID token 为 null");
+        }
       } catch (e) {
         print("DEBUG: 获取 ID token 失败: $e");
       }

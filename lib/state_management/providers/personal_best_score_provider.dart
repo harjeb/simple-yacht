@@ -4,15 +4,14 @@ import 'package:myapp/services/leaderboard_service.dart';
 import 'package:myapp/state_management/providers/leaderboard_providers.dart';
 import 'package:myapp/state_management/providers/user_providers.dart';
 
-final personalBestScoreProvider = FutureProvider<ScoreEntry?>((ref) async {
+final personalBestScoreProvider = FutureProvider.autoDispose<ScoreEntry?>((ref) async {
   // Await the actual username string from the usernameProvider future
   final String? actualUsername = await ref.watch(usernameProvider.future);
   final leaderboardService = ref.watch(leaderboardServiceProvider);
 
-  // Watch leaderboardProvider to re-fetch when leaderboard changes.
-  // This ensures that if the leaderboard updates (e.g., new score added),
-  // this provider will re-evaluate and potentially fetch an updated personal best.
-  ref.watch(leaderboardProvider);
+  // 移除对 leaderboardProvider 的监听，避免不必要的排行榜数据获取
+  // 个人最佳分数从用户文档中获取，不需要依赖排行榜数据
+  // ref.watch(leaderboardProvider); // 已移除
 
   if (actualUsername == null || actualUsername.isEmpty) {
     return null; // No username, so no personal best score to fetch

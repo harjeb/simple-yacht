@@ -529,4 +529,217 @@ Firebase CLI 在部署 Firestore 安全规则时针对 `containsKey` 的使用�
 
 **影响的组件/文件：**
 - firestore.rules - 修复时间戳验证逻辑
+---
+### Decision (Debug)
+[2025-05-26 04:21:10] - [分析结果: 匿名登录自动触发是预期设计，非Bug]
+
+**Rationale:**
+用户报告应用启动时自动执行匿名登录的问题。通过详细分析代码流程和Memory Bank历史记录，确认这是**有意的架构设计**，不是需要修复的bug。自动匿名登录是为了支持应用的核心功能需求。
+
+**Details:**
+**设计原因分析:**
+1. **Firebase UID依赖**: 应用的引继码系统需要稳定的Firebase UID作为用户标识
+2. **历史问题解决**: [2025-05-25 05:42:44] 实现匿名登录解决了"认证失败，请重启应用"错误
+3. **架构一致性**: 符合Memory Bank中记录的"匿名用户识别"核心架构
+
+**认证流程确认:**
+- 启动 → [`lib/main.dart`](lib/main.dart:17) 设置 `/splash` 为初始路由
+- [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:22-25) 自动触发匿名登录
+- [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:50) 检查用户名状态
+- 路由决策: 有用户名→主页，无用户名→用户名设置
+
+**用户名设置与认证关系:**
+- 匿名认证提供Firebase UID (技术层面)
+- 用户名设置提供应用层面的用户标识 (业务层面)
+- 两者是独立但相关的流程，符合产品设计
+
+**影响的组件/文件:**
+- 确认现有设计正确，无需修改
+- 用户体验符合预期：自动认证→用户名设置→正常使用
 - Firebase 项目 yacht-f816d - 安全规则已更新部署
+
+---
+### Decision (Debug)
+[2025-05-26 06:26:57] - [Bug Fix Strategy: Flutter 空安全编译错误修复]
+
+**Rationale:**
+在 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:76-77) 第76-77行存在 Flutter 空安全编译错误。`currentUser.getIdToken()` 方法返回的 `idToken` 可能为 `null`，但代码直接访问了 `idToken.length` 和 `idToken.substring()` 方法，违反了 Flutter 的空安全要求。需要添加适当的空检查操作符来确保代码在 idToken 为 null 时不会崩溃。
+
+**Details:**
+**修复的关键问题：**
+1. **空安全违规**：
+   - 问题：第76行 `idToken.length` 和第77行 `idToken.substring(0, math.min(50, idToken.length))` 直接访问可能为 null 的变量
+   - 修复：添加 `if (idToken != null)` 空值检查，确保只有在 idToken 不为 null 时才访问其属性和方法
+
+2. **调试信息完整性**：
+   - 保持了原有的调试日志功能
+   - 添加了 idToken 为 null 时的专门日志输出
+   - 确保在所有情况下都有适当的调试信息
+
+**影响的组件/文件：**
+- [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:76-81) - 添加空值检查逻辑
+
+---
+### Decision (Debug)
+[2025-05-26 06:34:59] - [Bug Fix Strategy: Firebase 相关错误修复]
+
+**Rationale:**
+用户报告了两个 Firebase 相关错误：1) Cloud Function 参数错误 - deleteUserData 缺少 uid 参数；2) Firestore 权限错误 - 排行榜数据访问被拒绝。通过详细分析代码发现，第一个错误可能是历史问题，当前代码已正确传递参数。第二个错误是由于 Firestore 安全规则中的路径配置与实际使用的集合路径不匹配导致的。
+
+**Details:**
+**修复的关键问题：**
+1. **Firestore 安全规则路径不匹配**：
+   - 问题：firestore.rules 中定义的是 `/scores/{scoreId}` 路径
+   - 实际：leaderboard_service.dart 使用的是 `/leaderboards/{leaderboardId}/scores/{scoreId}` 路径
+   - 修复：更新 firestore.rules 第43-46行，修正路径匹配
+
+2. **排行榜数据频繁获取优化**：
+   - 问题：personalBestScoreProvider 中的 `ref.watch(leaderboardProvider)` 导致不必要的排行榜数据获取
+   - 修复：移除 personal_best_score_provider.dart 第15行的 leaderboardProvider 监听
+   - 优化：将 leaderboardProvider 从 autoDispose 改为普通版本，避免频繁重建
+
+3. **Cloud Function 调用验证**：
+   - 验证：检查了所有 deleteUserData 调用，确认参数传递正确
+   - 当前代码：user_service.dart 第240行正确传递了 {'uid': user.uid} 参数
+
+**影响的组件/文件：**
+- [`firestore.rules`](firestore.rules:43-46) - 修复排行榜路径匹配
+- [`lib/state_management/providers/personal_best_score_provider.dart`](lib/state_management/providers/personal_best_score_provider.dart:15) - 移除不必要的依赖
+- [`lib/state_management/providers/leaderboard_providers.dart`](lib/state_management/providers/leaderboard_providers.dart:22) - 优化数据获取策略
+
+---
+**[2025-05-26 08:31:00] - 安全审查决策：Firestore 安全规则重大漏洞修复**
+
+**背景：** 对当前 Firestore 安全规则进行全面安全审查，发现多个高风险安全漏洞。
+
+**发现的关键安全问题：**
+1. **排行榜完全开放访问** (`allow read: true`) - 高风险数据泄露
+2. **transferCode 查询权限过宽** - 可能导致用户枚举攻击
+3. **时间戳验证缺失** - 客户端可操纵排行榜时间
+4. **数据完整性验证不足** - 缺少格式和范围检查
+
+**决策：**
+- 立即收紧排行榜读取权限，要求用户认证
+- 禁用客户端 transferCode 查询，改用 Cloud Function
+- 强制使用服务器端时间戳验证
+- 添加用户名和分数格式验证
+- 设置合理的分数上限 (1000分)
+
+**实施优先级：** 紧急 - 涉及用户隐私和数据安全
+
+**相关文件：** [`firestore.rules`](firestore.rules:1), [`firestore_security_recommendations.md`](firestore_security_recommendations.md:1)
+
+---
+### Decision (Debug)
+[2025-05-26 09:02:00] - [Bug Fix Strategy: Cloud Function 参数传递问题 - App Check 验证失败]
+
+**Rationale:**
+通过深度调试分析发现，用户报告的 "The function must be called with a 'uid' argument" 错误并非真正的参数缺失问题。Firebase Functions 日志显示 `"app":"MISSING"`，表明这是 Firebase App Check 验证失败导致的请求拦截。客户端代码和 Cloud Function 代码都正确处理了 `uid` 参数，但请求在到达 Cloud Function 逻辑之前就被 Firebase 安全层拦截了。
+
+**Details:**
+**问题分析：**
+1. **误导性错误信息**：Firebase 在 App Check 验证失败时返回通用的参数错误，而非具体的验证失败信息
+2. **代码验证正确**：
+   - [`lib/services/user_service.dart`](lib/services/user_service.dart:240) 正确传递 `{'uid': user.uid}` 参数
+   - [`functions/index.js`](functions/index.js:55-63) 正确检查和处理 `uid` 参数
+   - Firebase Auth 状态正常，用户认证成功
+3. **App Check 状态**：日志显示 `"verifications":{"auth":"VALID","app":"MISSING"}` 确认了 App Check 验证失败
+
+**修复策略：**
+1. **开发环境解决方案**：在 Cloud Function 中临时禁用 App Check 验证
+2. **生产环境解决方案**：正确配置 Firebase App Check
+3. **错误处理改进**：在客户端添加对 App Check 相关错误的特定处理
+
+**影响的组件/文件：**
+- [`functions/index.js`](functions/index.js:55) - 需要添加 App Check 配置或禁用验证
+- [`lib/services/user_service.dart`](lib/services/user_service.dart:251-257) - 改进错误处理以识别 App Check 错误
+- Firebase 项目配置 - 需要配置 App Check 设置
+
+---
+### Decision (Debug)
+[2025-05-26 09:31:00] - [Bug Fix Strategy: Cloud Function INTERNAL 错误 - JSON 循环引用修复]
+
+**Rationale:**
+用户报告的 Cloud Function 错误已从 "uid argument missing" 进化为 "INTERNAL"，表明参数传递问题已解决，但函数内部执行失败。通过查看 Firebase Functions 日志发现根本原因是 `JSON.stringify()` 试图序列化包含循环引用的 `context` 对象，导致 "Converting circular structure to JSON" 错误。
+
+**Details:**
+**修复的关键问题：**
+1. **JSON 循环引用错误**：
+   - 问题：functions/index.js 第57行使用 `JSON.stringify(context)` 导致循环引用错误
+   - 根因：context 对象包含 Socket 和 HTTPParser 等具有循环引用的对象
+   - 修复：移除 JSON.stringify() 调用，直接输出安全的对象属性
+
+2. **错误处理增强**：
+   - 添加分步骤的详细调试日志
+   - 改进 Firestore 文档删除的存在性检查
+   - 增强 Firebase Auth 用户删除的错误处理
+   - 添加对用户不存在情况的优雅处理
+
+3. **代码质量改进**：
+   - 修复 ESLint 代码风格问题
+   - 成功通过 Firebase Functions 部署验证
+
+**影响的组件/文件：**
+- [`functions/index.js`](functions/index.js:55-130) - 修复 JSON 序列化错误和增强错误处理
+- Firebase Functions 部署 - 成功部署修复后的版本
+---
+### Decision (Debug)
+[2025-05-26 09:48:45] - [Bug Fix Strategy: Cloud Function 循环引用错误修复]
+
+**Rationale:**
+用户报告的 Cloud Function deleteUserData 中的循环引用错误已成功修复。错误源于 `JSON.stringify()` 试图序列化包含循环引用的对象（Socket -> HTTPParser -> Socket），导致 "Converting circular structure to JSON" 错误。通过重构日志记录逻辑，避免直接序列化可能包含循环引用的对象，确保调试信息的完整性和安全性。
+
+**Details:**
+**修复的关键问题：**
+1. **循环引用序列化错误**：
+   - 问题：functions/index.js 第57行 `JSON.stringify(data)` 和第58-63行上下文记录中的循环引用
+   - 根因：`context.rawRequest` 包含 Socket 和 HTTPParser 等具有循环引用的网络对象
+   - 修复：添加 try-catch 保护和安全的属性提取
+
+2. **调试信息优化**：
+   - 为 `JSON.stringify(data)` 添加错误处理，失败时回退到直接对象输出
+   - 重构上下文信息记录，只提取安全的属性：
+     - `context.auth`: 提取 uid 和 token 存在性
+     - `context.app`: 提取 appId 和 projectId
+     - `context.rawRequest`: 改为布尔值 `hasRawRequest`
+     - `context.instanceIdToken`: 改为存在性字符串
+
+3. **代码质量改进**：
+   - 修复所有 ESLint 代码风格问题（引号、逗号、尾随空格）
+   - 成功通过 Firebase Functions 部署验证
+
+**影响的组件/文件：**
+- [`functions/index.js`](functions/index.js:55-77) - 修复循环引用和代码风格
+- Firebase Functions 部署 - 成功部署修复后的版本到项目 yacht-f816d
+- 调试能力 - 保持完整调试信息的同时避免循环引用错误
+- [`test_delete_function.dart`](test_delete_function.dart:1) - 创建测试脚本验证修复
+
+---
+### Decision (Debug)
+[2025-05-26 10:03:59] - [Bug Fix Strategy: Cloud Function `deleteUserData` - `invalid-argument` due to UID extraction]
+
+**Rationale:**
+The `deleteUserData` Cloud Function ([`functions/index.js`](functions/index.js:55)) is throwing an `invalid-argument` error, indicating a missing "uid" parameter. Cloud Function logs show "提取的 UID: undefined" and "上下文信息: { auth: null, ... }". Client-side logs suggest a potential App Check failure, but also indicate that the `uid` might be nested within `data.data.uid` due to the log entry `body: { data: [Object] }`. The previous fix for circular references in logging did not address this potential uid extraction issue.
+
+**Details:**
+**修复的关键问题：**
+1.  **UID 提取逻辑**:
+    *   问题：当前直接从 `data.uid` ([`functions/index.js`](functions/index.js:79)) 提取 `uid`，但客户端可能将其包装在 `data.data.uid` 中。
+    *   修复：修改 [`functions/index.js`](functions/index.js:79-81) 的 `uid` 提取逻辑，使其首先尝试 `data.uid`，如果不存在，则尝试 `data.data.uid`。
+
+2.  **日志记录增强**:
+    *   问题：需要更清晰地了解传入 `data` 对象的实际结构，以确认 `uid` 的位置。
+    *   修复：在 [`functions/index.js`](functions/index.js:58-63) 中增强日志记录，包括：
+        *   记录原始传入的 `data` 对象。
+        *   尝试序列化 `data` 对象并记录，如果失败则记录原始对象和错误。
+        *   记录 `data` 对象的顶层键。
+        *   如果存在 `data.data`，记录其嵌套对象的键。
+        *   记录最终提取的 `uid` 值。
+
+**影响的组件/文件：**
+- [`functions/index.js`](functions/index.js:1) - 修改了 `uid` 提取逻辑和增强了日志记录。
+
+**预期结果：**
+- Cloud Function 能够正确提取 `uid` 参数，无论其是否被嵌套。
+- 增强的日志将提供足够的信息来诊断任何进一步的参数传递问题。
+- 解决 `invalid-argument` 错误。

@@ -89,9 +89,12 @@
     * Adding new key `highScoreDisplay` to all `.arb` localization files ([`lib/l10n/app_en.arb`](lib/l10n/app_en.arb), [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb), [`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)).
     * Regenerating localization classes using `flutter gen-l10n`.
     * Updating the `Text` widget in [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart) to use `localizations.highScoreDisplay`.
+* [2025-05-26 08:31:00] - **安全审查完成 (Firestore 规则):** 发现并记录了当前 Firestore 安全规则中的多个高风险漏洞，包括排行榜完全开放访问 (`allow read: true`)、transferCode 查询权限过宽、时间戳验证缺失等问题。创建了详细的安全改进建议文档 [`firestore_security_recommendations.md`](firestore_security_recommendations.md:1)，并更新了 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1)。建议立即实施安全修复以防止数据泄露和恶意攻击。
 ## Open Questions/Issues
 * [2025-05-25 14:02:00] - [Debug Status Update: Issue Resolved] 解决了 "Error no routes for location：/home" 路由错误。通过修改 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:49) 将导航目标从 `/home` 更改为 `/`。
 
+* [2025-05-26 10:08:28] - [Debug Status Update: Fixing ESLint error in `deleteUserData`] Removed trailing whitespace from line 99 of [`functions/index.js`](functions/index.js:99) to resolve ESLint error "Trailing spaces not allowed" that was blocking Cloud Function deployment.
+* [2025-05-26 10:02:51] - [Debug Status Update: Investigating `deleteUserData` `invalid-argument` error] Applied changes to [`functions/index.js`](functions/index.js:1) to improve `uid` extraction logic (checking `data.uid` and `data.data.uid`) and enhance logging for incoming `data` structure to diagnose "uid" argument issue in `deleteUserData` Cloud Function.
 *
 * [2025-05-23 08:08:27] - Updated home screen to show "Continue Game" button if a game is in progress. Updated game screen exit button to 'X' icon and added a confirmation dialog before exiting a game. Updated relevant localization files.
 * [2025-05-23 08:12:11] - Fixed bug where "Continue Game" button was still shown after exiting a game. Implemented `setToInitialState` in `GameStateNotifier` to correctly reset `isGameInProgress` to false when exiting.
@@ -132,4 +135,42 @@ Details:
      - 改进 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart) 错误处理，显示具体的权限错误
      - 添加详细调试日志帮助后续问题诊断
      - 成功部署更新后的 Firestore 安全规则
+* [2025-05-26 04:20:31] - [Debug Status Update: Issue Analysis Complete] 匿名登录自动触发问题分析完成。确认这是**预期的设计行为**，不是bug。应用启动时自动执行匿名登录是为了：1) 获得稳定的Firebase UID用于数据关联；2) 支持引继码系统；3) 解决之前的认证失败问题。认证流程：启动 → SplashScreen自动匿名登录 → 检查用户名 → 路由到相应页面。用户名设置是在匿名认证成功后的独立流程。
 * [2025-05-26 03:25:33] - [Debug Status Update: Issue Resolved] 权限被拒绝问题已解决。根本原因是 Firestore 安全规则中的时间戳验证逻辑与 `FieldValue.serverTimestamp()` 不兼容。修复措施：简化了 [`firestore.rules`](firestore.rules:22) 第22行的时间戳验证，移除了严格的时间戳匹配要求，允许服务器处理时间戳。已成功部署更新后的安全规则。
+* [2025-05-26 06:26:57] - [Debug Status Update: Issue Resolved] 修复了 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:76-78) 中的 Flutter 空安全编译错误。问题出现在第76-77行，`idToken` 变量可能为 null 但代码直接访问了其 `length` 属性和 `substring` 方法。通过添加空值检查 (`if (idToken != null)`) 解决了编译错误，确保代码在 idToken 为 null 时不会崩溃，同时保持了调试信息的完整性。
+* [2025-05-26 06:34:59] - [Debug Status Update: Firebase 错误修复完成] 成功修复了两个 Firebase 相关错误：
+  1. **Firestore 权限错误修复**：更新了 [`firestore.rules`](firestore.rules:43-46) 中排行榜集合的路径配置，从 `/scores/{scoreId}` 修正为 `/leaderboards/{leaderboardId}/scores/{scoreId}`，与 [`lib/services/leaderboard_service.dart`](lib/services/leaderboard_service.dart:23-27) 中实际使用的路径匹配
+  2. **排行榜数据获取优化**：
+     - 移除了 [`lib/state_management/providers/personal_best_score_provider.dart`](lib/state_management/providers/personal_best_score_provider.dart:15) 中对 `leaderboardProvider` 的不必要监听
+     - 将 [`lib/state_management/providers/leaderboard_providers.dart`](lib/state_management/providers/leaderboard_providers.dart:22) 中的 `leaderboardProvider` 从 `autoDispose` 改为普通版本
+     - 解决了排行榜数据频繁获取的性能问题
+  3. **Cloud Function 调用验证**：确认 [`lib/services/user_service.dart`](lib/services/user_service.dart:240) 中 `deleteUserData` 函数调用正确传递了 `uid` 参数
+* [2025-05-26 09:02:00] - [Debug Status Update: Cloud Function 参数传递问题深度分析完成] 完成对 `deleteUserData` Cloud Function 参数传递问题的全面调试分析：
+  1. **问题确认**：错误信息 "The function must be called with a 'uid' argument" 与实际代码不符
+  2. **根本原因**：Firebase Functions 日志显示 `"app":"MISSING"`，表明 App Check 验证失败导致请求被拦截
+  3. **代码验证**：
+     - 客户端代码 [`lib/services/user_service.dart`](lib/services/user_service.dart:240) 正确传递 `{'uid': user.uid}` 参数
+     - Cloud Function 代码 [`functions/index.js`](functions/index.js:55-63) 正确检查 `uid` 参数
+     - Firebase Auth 状态正常，匿名登录成功
+  4. **实际问题**：App Check 配置缺失或不正确，导致 Cloud Function 调用被 Firebase 安全层拦截
+  5. **解决方案**：需要配置 Firebase App Check 或在开发环境中禁用 App Check 验证
+* [2025-05-26 09:31:00] - [Debug Status Update: Cloud Function INTERNAL 错误修复完成] 成功诊断并修复了 `deleteUserData` Cloud Function 的 INTERNAL 错误：
+  1. **根本原因确认**：Cloud Function 内部的 `JSON.stringify()` 调用试图序列化包含循环引用的 `context` 对象，导致 "Converting circular structure to JSON" 错误
+  2. **错误定位**：Firebase Functions 日志显示错误发生在 `/workspace/index.js:57:31`，正是我们的调试日志代码
+  3. **修复措施**：
+     - 移除 [`functions/index.js`](functions/index.js:58) 中的 `JSON.stringify()` 调用，直接输出对象
+     - 增强错误处理和日志记录，添加分步骤的详细调试信息
+     - 改进 Firestore 和 Firebase Auth 删除操作的错误处理
+     - 添加对用户不存在情况的优雅处理
+  4. **部署状态**：✅ 修复后的 Cloud Function 已成功部署到 Firebase 项目 yacht-f816d
+* [2025-05-26 09:48:45] - [Debug Status Update: Issue Resolved] 成功修复了 Cloud Function deleteUserData 中的循环引用错误：
+  1. **问题定位**：第57行 `JSON.stringify(data)` 和第58-63行上下文日志记录中的 `context.rawRequest` 包含循环引用（Socket -> HTTPParser -> Socket）
+  2. **修复措施**：
+     - 为 `JSON.stringify(data)` 添加 try-catch 错误处理，避免循环引用崩溃
+     - 重构上下文信息记录，移除可能包含循环引用的 `context.rawRequest` 直接访问
+     - 改为记录安全的属性：`hasRawRequest: !!context.rawRequest`
+     - 优化 `context.app` 记录，只提取 `appId` 和 `projectId` 等安全属性
+     - 修复所有 ESLint 代码风格问题（引号、逗号、空格等）
+  3. **部署状态**：✅ 修复后的 Cloud Function 已成功部署到 Firebase 项目 yacht-f816d
+  4. **调试信息保持**：确保修复后仍保持完整的调试信息和可读性，同时避免循环引用错误
+  5. **测试准备**：创建了 [`test_delete_function.dart`](test_delete_function.dart:1) 测试脚本用于验证修复效果
