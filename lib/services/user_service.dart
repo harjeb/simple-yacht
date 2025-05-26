@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // Correct package import
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:myapp/services/auth_service.dart'; // For firebaseAuthProvider
+import 'package:myapp/services/auth_service.dart'; // For firebaseAuthProvider and authServiceProvider
+import 'package:myapp/services/local_storage_service.dart'; // For LocalStorageService
 
 // Provider for FirebaseFirestore instance
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
@@ -14,11 +15,16 @@ final functionsProvider = Provider<FirebaseFunctions>((ref) { // Use FirebaseFun
   return FirebaseFunctions.instance; // Use FirebaseFunctions.instance
 });
 
+// Provider for LocalStorageService
+final localStorageServiceProvider = Provider<LocalStorageService>((ref) => LocalStorageService());
+
 final userAccountServiceProvider = Provider<UserAccountService>((ref) {
   return UserAccountService(
-    ref.watch(firebaseAuthProvider),
+    ref.watch(firebaseAuthProvider), // For current user
     ref.watch(firestoreProvider),
     ref.watch(functionsProvider),
+    ref.watch(authServiceProvider), // For signOut
+    ref.watch(localStorageServiceProvider), // For clearing local cache
   );
 });
 
@@ -71,11 +77,19 @@ class UserProfile {
 
 
 class UserAccountService {
-  final FirebaseAuth _firebaseAuth;
+  final FirebaseAuth _firebaseAuth; // To get currentUser
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions; // Use FirebaseFunctions type
+  final AuthService _authService; // To call signOut
+  final LocalStorageService _localStorageService; // To clear local data
 
-  UserAccountService(this._firebaseAuth, this._firestore, this._functions);
+  UserAccountService(
+    this._firebaseAuth,
+    this._firestore,
+    this._functions,
+    this._authService,
+    this._localStorageService,
+  );
 
   CollectionReference<Map<String, dynamic>> get _usersCollection => _firestore.collection('users');
 
@@ -241,8 +255,15 @@ class UserAccountService {
       
       if (response.data['success'] == true) {
         print('User account deleted successfully via Cloud Function.');
-        // The auth state listener in AuthService should handle sign-out automatically
-        // after the user is deleted from Firebase Auth by the function.
+        // Now, perform client-side cleanup
+        await _authService.signOut();
+        print('User signed out from client.');
+        await _localStorageService.clearAllUserData();
+        print('Local user data cleared.');
+        // Riverpod providers that depend on authState or usernameProvider
+        // should invalidate automatically.
+        // If specific providers need manual invalidation, it should be done
+        // in the UI layer (e.g., SettingsScreen) after this method returns true.
         return true;
       } else {
         print('Cloud Function indicated failure in deleting user: ${response.data['message']}');

@@ -40,4 +40,11 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_usernameKey);
   }
+
+  Future<void> clearAllUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_usernameKey);
+    await prefs.remove(_leaderboardKey);
+    // Add any other user-specific keys here if they exist
+  }
 }

@@ -6,7 +6,10 @@
 *
 
 ## Current Focus
-
+* [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新 (账号删除流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为，包括用户登出、本地数据清除 ([`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44))、应用状态重置 (Riverpod Providers) 以及导航至初始屏幕 ([`/splash`](lib/ui_screens/splash_screen.dart:1))。
+* [2025-05-26 12:51:56] - **代码实现 (账号删除流程修复):** 实现了删除账号成功后应用正确返回创建界面的修复。关键更改包括：在 `UserAccountService` 中增加登出和清除本地缓存的逻辑；在 `SettingsScreen` 中增加显式导航到 `/splash` 并使相关 Riverpod Provider 失效。
+* [2025-05-26 12:48:02] - **架构更新 (账号删除流程):** 基于提供的伪代码，更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以详细说明账号删除成功后客户端状态的正确清理和到初始界面的导航逻辑。重点包括 `UserService` 的协调角色、`AuthService.signOut()` 的调用、本地缓存清理、Riverpod Provider 的重置以及通过 `GoRouter` 进行的强制导航。
+* [{{YYYY-MM-DD HH:MM:SS}}] - **问题分析与规范定义 (账号删除流程):** 分析了用户删除账号后应用未正确返回创建账号界面的问题。定义了当前问题流程和期望的修复流程伪代码，重点关注客户端状态重置和导航逻辑。
 * [2025-05-25 13:53:23] - **代码修复 (语法错误):** 修复了 [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1) 中的语法错误，主要是添加了缺失的闭合括号。
 * [2025-05-25 12:50:00] - **架构设计 (用户名保存):** 正在为解决用户创建时保存用户名失败（提示“请重试”）的问题设计详细的架构方案。方案将涵盖用户输入验证、网络问题、后端服务错误（包括使用 Cloud Function 和 Firestore 事务确保用户名唯一性）、本地存储问题和并发问题。
 * [2025-05-25 12:42:36 UTC] - Firestore `PERMISSION_DENIED` 错误已通过部署新的安全规则解决。 (原记录时间: 2025-05-25 12:37:12)
@@ -23,6 +26,12 @@
 * [2025-05-24 14:03:00] - Designing and documenting the detailed architecture for Firebase backend integration (Firebase Authentication, Cloud Firestore, Cloud Functions) and the transfer code system for account persistence and recovery.
 * [2025-05-25 06:15:00] - 诊断 Flutter 应用中 Firebase 匿名认证后 UI 加载状态持续存在的问题，并制定解决方案架构。
 ## Recent Changes
+* [2025-05-26 12:51:56] - **代码实现 (账号删除流程修复):**
+* [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新 (账号删除流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为。文档现在明确了用户登出、通过 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 清除本地数据、重置 Riverpod Providers 以及导航至初始屏幕 [`/splash`](lib/ui_screens/splash_screen.dart:1) 的完整流程。关键代码点包括 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44), [`lib/services/user_service.dart`](lib/services/user_service.dart:1), 和 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1)。
+    *   [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44): 添加 `clearAllUserData()` 方法。
+    *   [`lib/services/user_service.dart`](lib/services/user_service.dart:1): 注入 `AuthService` 和 `LocalStorageService`，并在 `deleteCurrentUserAccount` 成功后调用 `signOut()` 和 `clearAllUserData()`。
+    *   [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1): 在账号删除成功后，显式 `invalidate` 多个用户和游戏相关的 Riverpod providers，并使用 `GoRouter.of(context).go('/splash')` 进行导航。
+* [2025-05-26 12:48:02] - **架构更新 (账号删除流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以包含账号删除后客户端状态重置和导航的详细架构。强调了 `UserService`、`AuthService`、本地缓存清理、Provider 重置和导航服务在确保正确流程中的作用。
 * [2025-05-25 14:41:49] - **代码实现 (Firestore 安全规则):** 根据用户提供的规范，完全重写了 [`firestore.rules`](firestore.rules:1) 文件的内容。新规则定义了对 `users` 和 `scores` (或 `leaderboard`) 集合的访问权限，包括创建、读取、更新和删除操作的条件。
 * [2025-05-25 14:02:00] - **代码修复 (路由错误):** 修复了 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:49) 中的导航错误，将目标路径从 `/home` 更改为正确的 `/`。
 * [2025-05-25 12:50:00] - **架构更新 (用户名保存流程):**
@@ -106,7 +115,7 @@
 * [2025-05-24 13:34:29] - Updated [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart) to display personal best score using the new provider and `intl` for date formatting.
 * [2025-05-24 13:34:29] - Added new localization keys (`yourPersonalBestScoreLabel`, `noPersonalBestScore`, `scoreLabel`, `dateTimeLabel`) to all `.arb` files ([`lib/l10n/app_en.arb`](lib/l10n/app_en.arb), [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb), [`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)) and ran `flutter gen-l10n`.
 * [2025-05-24 13:41:30] - Implemented username display on the home screen's top-right corner using Stack, Positioned, and Chip widgets. Modified user_providers.dart to add `usernameAsyncProvider` (FutureProvider) to correctly use `AsyncValue.when()` for loading/error/data states as per pseudocode. Updated home_screen.dart to use the new provider.
-* [2025-05-24 14:03:00] - Completed detailed architecture design for Firebase backend integration and transfer code system. Updated [`memory-bank/architecture.md`](memory-bank/architecture.md:1), [`memory-bank/productContext.md`](memory-bank/productContext.md:1), and [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1) accordingly.
+* [2025-05-24 14:03:00] - Completed detailed architecture design for Firebase backend integration and transfer code system. Updated [`memory-bank/architecture.md`](memory-bank/architecture.md:1), [`memory-bank/productContext.md`](memory-bank/productContext.md:1), and [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1).
 * [2025-05-24 {{HH:MM:SS}}] - **本地化字符串补充完成:** 为 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) 和 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 中因 Firebase 和引继码功能新增的文本元素补充了本地化支持。所有相关键已在 `.arb` 文件中验证/添加，并重新生成了本地化类。
 * [2025-05-25 04:58:34] - Firebase Cloud Functions successfully migrated from TypeScript to JavaScript. Related configurations and documentation updated.
 * [2025-05-25 05:27:56] - [Debug Status Update: Resolved] Build failure due to missing `lib/firebase_options.dart` resolved by running `flutterfire configure --project=yacht-f816d -y`.

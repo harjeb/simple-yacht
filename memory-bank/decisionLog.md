@@ -7,6 +7,26 @@ This file records architectural and implementation decisions using a list format
 
 ---
 ### Decision
+[2025-05-26 12:48:19] - 采纳关于账号删除成功后客户端状态清理和导航的架构方案。
+
+**Rationale:**
+用户报告在删除账号成功后，应用未正确返回创建账号界面，而是停留在游戏主界面并显示已删除的用户。提供的伪代码清晰地指出了问题在于客户端状态未被完全重置，并且没有正确的导航逻辑。为了确保用户数据的隔离和正确的用户体验，必须在账号删除操作成功后，彻底清理客户端的所有相关状态（认证、本地缓存、应用状态管理中的用户数据）并强制导航到初始屏幕。
+
+**Implications/Details:**
+*   **客户端状态清理的必要性:**
+    *   **认证状态:** 必须调用 `AuthService.signOut()` 清除 Firebase Auth 状态。
+    *   **本地缓存:** 必须清除 SharedPreferences 或其他本地存储中与用户相关的所有数据（例如，用户名、设置、游戏进度缓存）。
+    *   **应用状态 (Riverpod Providers):** 必须使所有存储用户特定数据的 Riverpod Provider 无效 (例如，通过 `ref.invalidate()`)，包括 `userProvider`, `usernameProvider`, `personalBestScoreProvider` 等。
+    *   **游戏状态:** 如果游戏状态与用户相关，也需要重置。
+*   **强制导航:**
+    *   使用 `GoRouter` (或项目的导航服务) 强制导航到应用的初始屏幕 (例如 `Route.CREATE_ACCOUNT_SCREEN` 或 `Route.SPLASH_SCREEN`)。
+    *   导航操作必须能够清除当前的导航堆栈，防止用户通过返回按钮回到之前的界面。
+*   **`UserService` 的协调角色:** `UserService.deleteCurrentUserAccount()` 在接收到 Cloud Function 删除成功的响应后，应负责协调上述客户端清理步骤。
+*   **`Cloud Function (deleteUserData)` 的职责:** 后端函数负责删除 Firebase Authentication 用户和 Firestore 中的用户数据。客户端的清理是在此操作成功后的必要补充。
+*   **架构文档更新:** 相关原则和流程已更新到 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 的 "2.5. 用户会话结束与状态重置" 和 "3.3. Firebase Cloud Functions" 部分。
+
+---
+### Decision
 [2025-05-25 12:50:00] - 采纳针对用户名保存失败问题的综合架构方案，重点解决用户输入验证、网络问题、后端服务错误、本地存储问题和并发问题。
 
 **Rationale:**

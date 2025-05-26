@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For Clipboard
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:myapp/state_management/providers/locale_provider.dart';
 import 'package:myapp/generated/app_localizations.dart';
-import 'package:myapp/state_management/providers/user_providers.dart'; // For userProfileProvider
+import 'package:myapp/state_management/providers/user_providers.dart'; // For userProfileProvider and usernameProvider
 import 'package:myapp/services/user_service.dart'; // For userAccountServiceProvider
+// It's good practice to also invalidate game state if any exists
+import 'package:myapp/state_management/providers/game_providers.dart';
+
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -42,8 +46,22 @@ class SettingsScreen extends ConsumerWidget {
           ),
         );
         if (success) {
-          // AppRouter redirect logic should handle navigation to username_setup or appropriate screen
-          // as authStateChangesProvider will update.
+          // Explicitly invalidate providers to ensure state is cleared immediately.
+          // Though authStateChangesProvider will trigger rebuilds, this is more direct.
+          ref.invalidate(userProfileProvider);
+          ref.invalidate(usernameProvider);
+          // Add any other user-specific or game-specific providers that need reset
+          // ref.invalidate(rawGameScoreProvider); // Removed as it caused an error and gameStateProvider should cover game state reset.
+          ref.invalidate(isGameOverProvider);
+          ref.invalidate(gameStateProvider);
+          // Add other providers as necessary, e.g., personalBestScoreProvider if it exists and caches user data
+
+          // Navigate to splash screen. GoRouter's redirect logic will then
+          // take the user to username_setup or home based on the new state.
+          // Using context.go effectively replaces the navigation stack.
+          if (context.mounted) { // Check context is still valid before navigating
+            GoRouter.of(context).go('/splash');
+          }
         }
       }
     }

@@ -9,7 +9,7 @@
 ### 2.1. 关键模块/目录结构
 *   `lib/core_logic/`: 核心游戏逻辑 (例如 `game_state.dart`, `dice_roller.dart`, `scoring_rules.dart`)。
 *   `lib/models/`: 数据模型 (例如 `user_profile.dart`, `score_entry.dart`)。
-*   `lib/services/`: 服务层，处理外部交互 (例如 `auth_service.dart`, `user_service.dart`, `leaderboard_service.dart`, `local_storage_service.dart`)。
+*   `lib/services/`: 服务层，处理外部交互 (例如 [`auth_service.dart`](lib/services/auth_service.dart:1), [`user_service.dart`](lib/services/user_service.dart:1), [`leaderboard_service.dart`](lib/services/leaderboard_service.dart:1), [`local_storage_service.dart`](lib/services/local_storage_service.dart:1))。[`UserService`](lib/services/user_service.dart:1) 负责协调账号删除流程，确保在后端删除成功后，调用 [`AuthService.signOut()`](lib/services/auth_service.dart:1) 进行登出，调用 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 清除本地数据，并触发客户端状态的重置。
 *   `lib/state_management/`: Riverpod providers 和 notifiers。
 *   `lib/ui_screens/`: 应用的主要屏幕。
 *   `lib/widgets/`: 可重用的 UI 组件。
@@ -26,7 +26,7 @@
 ### 2.3. 导航策略
 *   **方案:** GoRouter
 *   **理由:** 声明式路由、深度链接、类型安全路由（通过代码生成）、易于处理复杂场景。
-*   **实现:** 路由配置在 `lib/navigation/app_router.dart`。
+*   **实现:** 路由配置在 `lib/navigation/app_router.dart`。其 `redirect` 逻辑对于处理用户认证状态变化（包括账号删除后变为未登录）并正确导航至初始屏幕（如创建账号页或启动页）至关重要。
 
 ### 2.4. 用户名创建与管理流程
 
@@ -88,6 +88,24 @@
 *   **鲁棒性:** 通过网络检查、超时、重试机制、详细的后端错误处理和清晰的用户反馈实现。
 *   **幂等性:** Cloud Function 设计应确保如果用户重复尝试使用已成功注册的用户名进行保存，操作不会产生副作用（如重复创建条目），并能返回一个表示成功或无变化的响应。客户端在调用保存前也可检查本地状态，避免不必要的后端调用。
 
+### 2.5. 用户会话结束、状态重置与导航
+
+在用户会话结束的关键时刻（例如用户登出、账号删除成功后），应用必须执行彻底的客户端状态清理、导航重置，以确保数据隔离、防止状态泄露并提供正确的用户体验。修复后的流程确保用户在删除账号后被正确登出，本地数据被清除，应用状态被重置，并导航到初始的应用流程（如启动页 [`/splash`](lib/ui_screens/splash_screen.dart:1)，然后是账号创建/用户名设置页 [`UsernameSetupScreen`](lib/ui_screens/username_setup_screen.dart:1)）。此过程涉及以下步骤：
+
+1.  **认证状态清除:**
+    *   调用 `AuthService.signOut()` 来清除当前的 Firebase Authentication 凭据和会话。这将通知应用认证状态已改变。
+2.  **本地用户数据清除:**
+    *   调用 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 方法，清除所有存储在本地的、与特定用户相关的数据（例如，用户名、用户偏好设置、缓存的游戏状态等）。
+3.  **应用状态重置 (State Management - Riverpod):**
+    *   使所有与用户特定数据相关的 Riverpod Providers 无效。这可以通过 `ref.invalidate(providerName)` 实现，确保它们在下次被读取时会重置到其初始状态。
+    *   关键 Providers 包括但不限于：`userProvider`, `usernameProvider`, `personalBestScoreProvider`, `currentAuthStatusProvider` (如果存在)，以及任何其他存储用户特定信息的 Provider。
+    *   如果游戏状态 (`gameStateProvider`) 与特定用户绑定，也应将其重置。
+4.  **导航至初始屏幕:**
+    *   使用 `NavigationService` (GoRouter) 强制导航到应用的初始屏幕，例如 [`/splash`](lib/ui_screens/splash_screen.dart:1) (启动页)，随后应用逻辑会引导用户至账号创建页 ([`UsernameSetupScreen`](lib/ui_screens/username_setup_screen.dart:1)) 或类似界面。
+    *   关键在于使用能够清理当前导航堆栈的导航方法 (例如，GoRouter 中的 `go()` 或 `replace()` 方法，并确保路由配置能处理 `replaceAll: TRUE` 的效果)，防止用户通过返回按钮回到之前的、与已删除用户相关的界面。
+5.  **UI 反馈 (可选):**
+    *   可以短暂显示一个全局消息（例如 Snackbar），告知用户操作已成功完成，并且正在返回初始界面。
+
 ## 3. 后端架构 (Firebase)
 
 ### 3.1. Firebase Authentication
@@ -121,7 +139,13 @@
 *   **关键函数示例:**
     *   `callable_setUniqueUsername(data, context)`: 处理用户名注册，确保唯一性（使用 Firestore 事务）。
     *   `callable_generateCustomAuthToken(data, context)`: 为账户恢复生成自定义认证令牌。
-    *   `callable_deleteUserData(data, context)`: 删除用户所有相关数据。
+    *   `callable_deleteUserData(data, context)`: 删除用户所有相关数据 (Firestore 中的用户数据、Firebase Authentication 中的用户记录等)。**此函数仅处理后端数据删除。**
+        *   **客户端后续操作（由 [`UserService.deleteCurrentUserAccount()`](lib/services/user_service.dart:1) 和 [`SettingsScreen._deleteAccount()`](lib/ui_screens/settings_screen.dart:1) 协调）：** 在 `deleteUserData` Cloud Function 成功返回后，客户端应用执行以下操作：
+            1.  [`UserService.deleteCurrentUserAccount()`](lib/services/user_service.dart:1) 调用 [`AuthService.signOut()`](lib/services/auth_service.dart:1) 清除 Firebase Auth 状态。
+            2.  [`UserService.deleteCurrentUserAccount()`](lib/services/user_service.dart:1) 调用 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 清除本地存储的用户数据。
+            3.  [`SettingsScreen._deleteAccount()`](lib/ui_screens/settings_screen.dart:1) 方法负责重置相关的 Riverpod Providers (例如通过 `ref.invalidate(providerName)` 或调用特定的重置方法)。
+            4.  [`SettingsScreen._deleteAccount()`](lib/ui_screens/settings_screen.dart:1) 方法执行强制导航到初始屏幕 [`/splash`](lib/ui_screens/splash_screen.dart:1)，并清空导航堆栈。应用将从启动页开始，引导用户至账号创建/设置流程。
+            5.  参考上述 `2.5. 用户会话结束、状态重置与导航` 部分的详细步骤。
     *   Firestore 触发器 (例如，`onUserCreate`, `onScoreSubmit`) 可用于数据聚合或维护。
 
 ## 4. 数据流
@@ -137,4 +161,4 @@
 (描述应用的构建、部署流程，以及监控和维护策略)
 
 ---
-*上次更新: {{YYYY-MM-DD HH:MM:SS}} - 添加了用户名创建与管理流程的详细架构。*
+*上次更新: 2025-05-26 13:06:20 - 更新了账号删除流程的文档，以反映最新的代码更改：明确了 `LocalStorageService.clearAllUserData()` 的调用，`UserService` 对登出和本地数据清除的协调，以及 `SettingsScreen` 在成功删除账号后重置状态并导航到 `/splash` 的行为。*

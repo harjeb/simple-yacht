@@ -1,5 +1,11 @@
 # Progress
 
+* [2025-05-26 12:51:56] - **代码实现完成 (账号删除流程修复):** 成功修复了“删除账号成功后应用不返回创建界面”的错误。
+    *   修改了 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44) 添加 `clearAllUserData()` 方法。
+    *   修改了 [`lib/services/user_service.dart`](lib/services/user_service.dart:1) 以在 `deleteCurrentUserAccount` 成功后调用 `AuthService.signOut()` 和 `LocalStorageService.clearAllUserData()`。
+    *   修改了 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 以在账号删除成功后显式 `invalidate` 相关 Riverpod providers 并导航到 `/splash`。
+    *   确认 [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1) 的重定向逻辑能够正确处理后续导航。
+* [{{YYYY-MM-DD HH:MM:SS}}] - **规范定义完成 (账号删除流程错误):** 分析了用户删除账号后应用未正确返回创建账号界面的问题，并提供了当前流程和期望流程的伪代码。相关上下文已更新到 `activeContext.md`。
 * [2025-05-26 06:26:57] - **调试任务完成 (Flutter 空安全编译错误修复):** 成功修复了 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:76-78) 中的 Flutter 空安全编译错误：
   1. **问题定位**：第76-77行 `idToken.length` 和 `idToken.substring()` 直接访问可能为 null 的 `idToken` 变量
   2. **修复措施**：
@@ -15,6 +21,13 @@ This file tracks the project's progress using a task list format.
 *
 
 ## Completed Tasks
+
+* [2025-05-26 12:51:56] - **代码实现完成 (账号删除流程修复):** 成功修复了“删除账号成功后应用不返回创建界面”的错误。
+    *   修改了 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44) 添加 `clearAllUserData()` 方法。
+    *   修改了 [`lib/services/user_service.dart`](lib/services/user_service.dart:1) 以在 `deleteCurrentUserAccount` 成功后调用 `AuthService.signOut()` 和 `LocalStorageService.clearAllUserData()`。
+    *   修改了 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 以在账号删除成功后显式 `invalidate` 相关 Riverpod providers 并导航到 `/splash`。
+    *   确认 [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1) 的重定向逻辑能够正确处理后续导航。
+* [2025-05-26 12:48:37] - **架构更新完成 (账号删除流程):** 基于用户提供的伪代码，成功更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以包含账号删除成功后客户端状态的正确清理和导航逻辑。此更新明确了 `UserService`、`AuthService`、本地缓存清理、Riverpod Provider 重置以及 `GoRouter` 在此流程中的关键作用和交互。相关的内存银行文件 ([`memory-bank/activeContext.md`](memory-bank/activeContext.md:0), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:0)) 也已同步更新。
 
 * [2025-05-25 14:41:49] - **代码实现 (Firestore 安全规则):** 已根据用户提供的规范，完全重写了 [`firestore.rules`](firestore.rules:1) 文件的内容。
 * [2025-05-25 14:02:00] - **Bug Fix Complete (路由错误):** 解决了 "Error no routes for location：/home" 错误。通过修改 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:49) 将导航目标从 `/home` 更改为 `/`。
@@ -179,3 +192,5 @@ The rules file was already up to date.
   2. **修复尝试**: 修改了 [`functions/index.js`](functions/index.js:1) 中的 `uid` 提取逻辑，尝试从 `data.uid` 和 `data.data.uid` 获取，并增强了对传入 `data` 结构的日志记录。
   3. **后续步骤**: 部署更新后的 Cloud Function 并进行测试。
   5. **Memory Bank 更新**：已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)
+
+* [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新完成 (账号删除流程):** 审查并更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为。文档现在详细说明了用户登出、通过 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 清除本地数据、重置 Riverpod Providers 以及导航至初始屏幕 [`/splash`](lib/ui_screens/splash_screen.dart:1) 的完整流程。此更新基于对 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44), [`lib/services/user_service.dart`](lib/services/user_service.dart:1), 和 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 中相关代码更改的审查。[`memory-bank/activeContext.md`](memory-bank/activeContext.md:0) 也已同步更新。
