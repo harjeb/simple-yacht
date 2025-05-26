@@ -117,16 +117,18 @@ class GameStateNotifier extends StateNotifier<GameState> {
     state = workingState.copyWith(lastRollEvent: newTurnRollEvent);
   }
 
-  // Resets the entire game
-  void resetGame() {
+  // Resets the entire game and starts a new one.
+  // This method should call GameState.initial() to set the state.
+  void resetAndStartNewGame() {
     // if (state.isGameOver && state.isGameInProgress) { // Only save if game was actually played and over
     //   _localStorageService.saveHighScore(state.grandTotal); // Removed: LeaderboardService will handle this
     // }
     _rollCounter = 0;
-    // Create a new GameState instance. The constructor sets defaults (isGameInProgress = false).
-    final newCleanState = GameState();
-    // Then, _performInitialRollAndUpdateState will handle the first roll and set isGameInProgress to true.
-    _performInitialRollAndUpdateState(isNewGame: true, baseState: newCleanState);
+    // Use the new factory constructor from GameState.
+    final initialGameState = GameState.initial();
+    // Then, _performInitialRollAndUpdateState will handle the first roll and set the lastRollEvent.
+    // isGameInProgress is already true from GameState.initial().
+    _performInitialRollAndUpdateState(isNewGame: true, baseState: initialGameState);
   }
 
   // Resets the game to a completely fresh state, where no game is in progress.

@@ -310,25 +310,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get firestoreDatabaseNotConfiguredError => 'База данных бэкэнда не настроена. Пожалуйста, свяжитесь с администратором.';
 
   @override
-  String get scoreSavedToLeaderboard => 'Score saved to leaderboard!';
+  String get scoreSavedToLeaderboard => 'Score saved to leaderboard! (NEEDS RU TRANSLATION)';
 
   @override
-  String get failedToSaveScore => 'Failed to save score';
+  String get failedToSaveScore => 'Failed to save score (NEEDS RU TRANSLATION)';
 
   @override
-  String get fix => 'Fix';
+  String get fix => 'Fix (NEEDS RU TRANSLATION)';
 
   @override
-  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username.';
+  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username. (NEEDS RU TRANSLATION)';
 
   @override
-  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved.';
+  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved. (NEEDS RU TRANSLATION)';
 
   @override
   String errorRetrievingUsername(String details) {
-    return 'Error retrieving username: $details';
+    return 'Error retrieving username: $details (NEEDS RU TRANSLATION)';
   }
 
   @override
-  String get errorFetchingUsername => 'Error fetching username';
+  String get errorFetchingUsername => 'Error fetching username (NEEDS RU TRANSLATION)';
+
+  @override
+  String get invalidGameStateRedirecting => 'Недопустимое состояние игры. Перенаправление на главный экран... (NEEDS RU TRANSLATION)';
 }

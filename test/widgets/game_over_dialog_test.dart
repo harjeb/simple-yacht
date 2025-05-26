@@ -77,7 +77,7 @@ void main() {
     await tester.pumpAndSettle(); // Wait for pop animation
 
     // Verify resetGame was called on the notifier
-    verify(mockGameStateNotifier.resetGame()).called(1);
+    verify(mockGameStateNotifier.resetAndStartNewGame()).called(1);
 
     // Verify the dialog is dismissed
     expect(find.byType(AlertDialog), findsNothing);

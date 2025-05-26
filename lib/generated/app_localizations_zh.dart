@@ -310,25 +310,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firestoreDatabaseNotConfiguredError => '后端数据库未配置，请联系管理员。';
 
   @override
-  String get scoreSavedToLeaderboard => 'Score saved to leaderboard!';
+  String get scoreSavedToLeaderboard => 'Score saved to leaderboard! (NEEDS ZH TRANSLATION)';
 
   @override
-  String get failedToSaveScore => 'Failed to save score';
+  String get failedToSaveScore => 'Failed to save score (NEEDS ZH TRANSLATION)';
 
   @override
-  String get fix => 'Fix';
+  String get fix => 'Fix (NEEDS ZH TRANSLATION)';
 
   @override
-  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username.';
+  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username. (NEEDS ZH TRANSLATION)';
 
   @override
-  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved.';
+  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved. (NEEDS ZH TRANSLATION)';
 
   @override
   String errorRetrievingUsername(String details) {
-    return 'Error retrieving username: $details';
+    return 'Error retrieving username: $details (NEEDS ZH TRANSLATION)';
   }
 
   @override
-  String get errorFetchingUsername => 'Error fetching username';
+  String get errorFetchingUsername => 'Error fetching username (NEEDS ZH TRANSLATION)';
+
+  @override
+  String get invalidGameStateRedirecting => '无效的游戏状态。正在重定向到主页...';
 }

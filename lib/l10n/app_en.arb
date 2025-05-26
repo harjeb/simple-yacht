@@ -309,5 +309,9 @@
   "errorFetchingUsername": "Error fetching username",
   "@errorFetchingUsername": {
     "description": "Part of a generic error message, indicating the action that failed during username fetch from provider."
+  },
+  "invalidGameStateRedirecting": "Invalid game state. Redirecting to home...",
+  "@invalidGameStateRedirecting": {
+    "description": "Message shown when the game state is invalid and the user is redirected to the home screen."
   }
 }

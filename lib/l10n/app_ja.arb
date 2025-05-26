@@ -313,7 +313,7 @@
   "firestoreDatabaseNotConfiguredError": "バックエンドデータベースが設定されていません。管理者に連絡してください。",
   "@firestoreDatabaseNotConfiguredError": {
     "description": "Firestoreデータベースが見つからないか、設定されていない場合に表示されるエラーメッセージ。"
-,
+  },
   "scoreSavedToLeaderboard": "Score saved to leaderboard! (NEEDS JA TRANSLATION)",
   "@scoreSavedToLeaderboard": {
     "description": "Snackbar message when score is successfully saved to the leaderboard. (NEEDS JA TRANSLATION)"
@@ -346,6 +346,9 @@
   "errorFetchingUsername": "Error fetching username (NEEDS JA TRANSLATION)",
   "@errorFetchingUsername": {
     "description": "Part of a generic error message, indicating the action that failed during username fetch from provider. (NEEDS JA TRANSLATION)"
-  }
+  },
+  "invalidGameStateRedirecting": "無効なゲーム状態です。ホームにリダイレクトしています... (NEEDS JA TRANSLATION)",
+  "@invalidGameStateRedirecting": {
+    "description": "Message shown when the game state is invalid and the user is redirected to the home screen. (NEEDS JA TRANSLATION)"
   }
 }

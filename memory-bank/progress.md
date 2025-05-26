@@ -22,6 +22,15 @@ This file tracks the project's progress using a task list format.
 
 ## Completed Tasks
 
+* [2025-05-26 19:50:00] - **代码实现完成 (新游戏流程错误修复):** 成功修复了“进入新游戏后不显示任何画面”的错误。
+    *   [`lib/core_logic/game_state.dart`](lib/core_logic/game_state.dart:1): 添加了 `GameState.initial()` 工厂构造函数。
+    *   [`lib/state_management/providers/game_providers.dart`](lib/state_management/providers/game_providers.dart:1): 更新 `GameStateNotifier.resetAndStartNewGame()` 以使用 `GameState.initial()`。
+    *   [`lib/widgets/game_over_dialog.dart`](lib/widgets/game_over_dialog.dart:1), [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1), [`test/widgets/game_over_dialog_test.dart`](test/widgets/game_over_dialog_test.dart:1): 更新了对 `resetGame` 的调用为 `resetAndStartNewGame`。
+    *   [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1): 添加了无效游戏状态检查和重定向逻辑。
+    *   [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1): 为 `/game` 路由添加了 `redirect` 守卫。
+    *   本地化文件 (`.arb`): 添加了新键 `invalidGameStateRedirecting` 并修复了所有 `.arb` 文件中的格式问题。
+    *   执行了 `flutter gen-l10n` 以重新生成本地化文件。
+* [2025-05-26 13:34:00] - **架构文档更新 (新游戏流程):** 成功更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以解决“新游戏不显示任何画面”的错误。更新内容包括游戏状态初始化 (`GameState.initial()`)、[`GameScreen`](lib/ui_screens/game_screen.dart:1) 渲染逻辑以及相关的导航守卫。
 * [2025-05-26 12:51:56] - **代码实现完成 (账号删除流程修复):** 成功修复了“删除账号成功后应用不返回创建界面”的错误。
     *   修改了 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44) 添加 `clearAllUserData()` 方法。
     *   修改了 [`lib/services/user_service.dart`](lib/services/user_service.dart:1) 以在 `deleteCurrentUserAccount` 成功后调用 `AuthService.signOut()` 和 `LocalStorageService.clearAllUserData()`。
@@ -194,3 +203,7 @@ The rules file was already up to date.
   5. **Memory Bank 更新**：已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)
 
 * [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新完成 (账号删除流程):** 审查并更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为。文档现在详细说明了用户登出、通过 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 清除本地数据、重置 Riverpod Providers 以及导航至初始屏幕 [`/splash`](lib/ui_screens/splash_screen.dart:1) 的完整流程。此更新基于对 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44), [`lib/services/user_service.dart`](lib/services/user_service.dart:1), 和 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 中相关代码更改的审查。[`memory-bank/activeContext.md`](memory-bank/activeContext.md:0) 也已同步更新。
+
+- 2025-05-26 13:52:01 UTC: 开始更新新游戏启动流程和游戏状态管理的文档。
+
+- 2025-05-26 13:54:49 UTC: 完成更新新游戏启动流程和游戏状态管理的文档。审查确认 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 已是最新状态。更新了 [`memory-bank/activeContext.md`](memory-bank/activeContext.md:1)。

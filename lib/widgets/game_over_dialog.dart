@@ -49,7 +49,7 @@ class GameOverDialog extends ConsumerWidget {
         ElevatedButton(
           onPressed: () {
             // 重置游戏状态
-            ref.read(gameStateProvider.notifier).resetGame();
+            ref.read(gameStateProvider.notifier).resetAndStartNewGame();
             // 关闭弹窗
             Navigator.of(context).pop();
             // 可选：导航回主屏幕或其他地方

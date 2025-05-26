@@ -313,7 +313,7 @@
   "firestoreDatabaseNotConfiguredError": "Backend-Datenbank ist nicht konfiguriert. Bitte kontaktieren Sie den Administrator.",
   "@firestoreDatabaseNotConfiguredError": {
     "description": "Fehlermeldung, die angezeigt wird, wenn die Firestore-Datenbank nicht gefunden oder nicht konfiguriert wurde."
-,
+  },
   "scoreSavedToLeaderboard": "Score saved to leaderboard! (NEEDS DE TRANSLATION)",
   "@scoreSavedToLeaderboard": {
     "description": "Snackbar message when score is successfully saved to the leaderboard. (NEEDS DE TRANSLATION)"
@@ -346,6 +346,9 @@
   "errorFetchingUsername": "Error fetching username (NEEDS DE TRANSLATION)",
   "@errorFetchingUsername": {
     "description": "Part of a generic error message, indicating the action that failed during username fetch from provider. (NEEDS DE TRANSLATION)"
-  }
+  },
+  "invalidGameStateRedirecting": "Ungültiger Spielstatus. Weiterleitung zur Startseite... (NEEDS DE TRANSLATION)",
+  "@invalidGameStateRedirecting": {
+    "description": "Message shown when the game state is invalid and the user is redirected to the home screen. (NEEDS DE TRANSLATION)"
   }
 }

@@ -102,7 +102,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> { // Changed to Consume
             ElevatedButton(
               onPressed: () {
                 // Always reset game if starting a new one, regardless of current game state
-                ref.read(gameStateProvider.notifier).resetGame();
+                ref.read(gameStateProvider.notifier).resetAndStartNewGame();
                 context.push('/game');
               },
               child: Text(localizations.startGame), // Text is now always "Start Game" or "New Game"

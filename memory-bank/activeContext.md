@@ -6,6 +6,8 @@
 *
 
 ## Current Focus
+* [2025-05-26 19:50:00] - **代码实现 (新游戏流程错误修复):** 完成了“进入新游戏后不显示任何画面”错误的修复。关键更改包括：在 `GameState` 中添加 `initial()` 工厂构造函数，更新 `GameStateNotifier` 以使用此构造函数，增强 `GameScreen` 的健壮性以处理无效游戏状态，并为 `GameScreenRoute` 添加导航守卫。同时修复了由此产生的编译错误和本地化文件格式问题。
+* [2025-05-26 13:34:00] - **架构更新 (新游戏流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以解决“新游戏不显示任何画面”的错误。重点关注游戏状态 (`GameState`) 的正确初始化 (使用 `GameState.initial()`)，[`GameScreen`](lib/ui_screens/game_screen.dart:1) 基于 `isGameInProgress` 和 `gameOver` 的渲染逻辑，以及 [`AppRouter`](lib/navigation/app_router.dart:1) 中相关的导航守卫。
 * [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新 (账号删除流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为，包括用户登出、本地数据清除 ([`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44))、应用状态重置 (Riverpod Providers) 以及导航至初始屏幕 ([`/splash`](lib/ui_screens/splash_screen.dart:1))。
 * [2025-05-26 12:51:56] - **代码实现 (账号删除流程修复):** 实现了删除账号成功后应用正确返回创建界面的修复。关键更改包括：在 `UserAccountService` 中增加登出和清除本地缓存的逻辑；在 `SettingsScreen` 中增加显式导航到 `/splash` 并使相关 Riverpod Provider 失效。
 * [2025-05-26 12:48:02] - **架构更新 (账号删除流程):** 基于提供的伪代码，更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以详细说明账号删除成功后客户端状态的正确清理和到初始界面的导航逻辑。重点包括 `UserService` 的协调角色、`AuthService.signOut()` 的调用、本地缓存清理、Riverpod Provider 的重置以及通过 `GoRouter` 进行的强制导航。
@@ -25,7 +27,19 @@
 * [2025-05-24 13:38:37] - 审查了在主屏幕右上角使用 `Stack` 和 `Positioned` 显示用户名的伪代码架构。
 * [2025-05-24 14:03:00] - Designing and documenting the detailed architecture for Firebase backend integration (Firebase Authentication, Cloud Firestore, Cloud Functions) and the transfer code system for account persistence and recovery.
 * [2025-05-25 06:15:00] - 诊断 Flutter 应用中 Firebase 匿名认证后 UI 加载状态持续存在的问题，并制定解决方案架构。
+* [2025-05-26 19:50:00] - **代码实现 (新游戏流程错误修复):**
+    *   [`lib/core_logic/game_state.dart`](lib/core_logic/game_state.dart:1): 添加了 `GameState.initial()` 工厂构造函数，用于正确初始化新游戏的状态，确保 `isGameInProgress` 设置为 `true`。
+    *   [`lib/state_management/providers/game_providers.dart`](lib/state_management/providers/game_providers.dart:1): 更新了 `GameStateNotifier.resetAndStartNewGame()` (原 `resetGame`) 方法，使其调用 `GameState.initial()` 来设置初始游戏状态。
+    *   [`lib/widgets/game_over_dialog.dart`](lib/widgets/game_over_dialog.dart:1): 更新了对 `resetGame` 的调用为 `resetAndStartNewGame`。
+    *   [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1): 更新了对 `resetGame` 的调用为 `resetAndStartNewGame`。
+    *   [`test/widgets/game_over_dialog_test.dart`](test/widgets/game_over_dialog_test.dart:1): 更新了 mock 调用以匹配重命名后的 `resetAndStartNewGame`。
+    *   [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1): 增强了 `GameScreen` 的健壮性，在 `build` 方法开始时检查游戏状态。如果 `!isGameInProgress && !isGameOver`，则显示加载指示器并异步导航回主屏幕 (`/`)。
+    *   [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1): 为 `/game` 路由添加了 `redirect` 逻辑。如果 `!gameState.isGameInProgress && !gameState.isGameOver`，则重定向到主屏幕 (`/`)。
+    *   本地化文件 (`.arb`): 为 [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1) 中新的重定向消息添加了 `invalidGameStateRedirecting` 键到所有 `.arb` 文件 ([`lib/l10n/app_en.arb`](lib/l10n/app_en.arb:1) 等)。修复了多个 `.arb` 文件中的 JSON 格式问题。
+    *   执行了 `flutter gen-l10n` 命令以重新生成本地化 Dart 文件。
 ## Recent Changes
+* [2025-05-26 13:52:53] - **文档审查 (新游戏流程):** 审查了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 中关于新游戏启动流程和游戏状态管理的文档。确认文档已准确反映了最新的代码更改，包括 `GameState.initial()` 的使用、`GameStateNotifier.resetAndStartNewGame()` 的更新、`GameScreen` 的健壮性处理以及导航守卫逻辑。无需进一步修改 `architecture.md`。
+* [2025-05-26 13:34:00] - **架构更新 (新游戏流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以详细说明解决“新游戏不显示任何画面”错误的架构调整。这包括对游戏状态初始化 (`GameState.initial()`)、[`GameScreen`](lib/ui_screens/game_screen.dart:1) 渲染逻辑和导航守卫的澄清。
 * [2025-05-26 12:51:56] - **代码实现 (账号删除流程修复):**
 * [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新 (账号删除流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为。文档现在明确了用户登出、通过 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 清除本地数据、重置 Riverpod Providers 以及导航至初始屏幕 [`/splash`](lib/ui_screens/splash_screen.dart:1) 的完整流程。关键代码点包括 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44), [`lib/services/user_service.dart`](lib/services/user_service.dart:1), 和 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1)。
     *   [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44): 添加 `clearAllUserData()` 方法。

@@ -716,6 +716,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error fetching username'**
   String get errorFetchingUsername;
+
+  /// Message shown when the game state is invalid and the user is redirected to the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid game state. Redirecting to home...'**
+  String get invalidGameStateRedirecting;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

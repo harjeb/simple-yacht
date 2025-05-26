@@ -310,25 +310,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get firestoreDatabaseNotConfiguredError => 'バックエンドデータベースが設定されていません。管理者に連絡してください。';
 
   @override
-  String get scoreSavedToLeaderboard => 'Score saved to leaderboard!';
+  String get scoreSavedToLeaderboard => 'Score saved to leaderboard! (NEEDS JA TRANSLATION)';
 
   @override
-  String get failedToSaveScore => 'Failed to save score';
+  String get failedToSaveScore => 'Failed to save score (NEEDS JA TRANSLATION)';
 
   @override
-  String get fix => 'Fix';
+  String get fix => 'Fix (NEEDS JA TRANSLATION)';
 
   @override
-  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username.';
+  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username. (NEEDS JA TRANSLATION)';
 
   @override
-  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved.';
+  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved. (NEEDS JA TRANSLATION)';
 
   @override
   String errorRetrievingUsername(String details) {
-    return 'Error retrieving username: $details';
+    return 'Error retrieving username: $details (NEEDS JA TRANSLATION)';
   }
 
   @override
-  String get errorFetchingUsername => 'Error fetching username';
+  String get errorFetchingUsername => 'Error fetching username (NEEDS JA TRANSLATION)';
+
+  @override
+  String get invalidGameStateRedirecting => '無効なゲーム状態です。ホームにリダイレクトしています... (NEEDS JA TRANSLATION)';
 }

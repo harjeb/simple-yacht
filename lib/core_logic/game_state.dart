@@ -151,6 +151,21 @@ class GameState {
     // _performInitialRoll is called by the Notifier which will also set the initial RollEvent
   }
 
+  // Factory constructor for creating a fully initialized new game state.
+  factory GameState.initial() {
+    final initialState = GameState(
+      currentPlayerId: 0,
+      currentRound: 1,
+      yahtzeeBonusCount: 0,
+      isGameInProgress: true, // A new game starts in progress.
+    );
+    // The GameState constructor already initializes dice, rollsLeft, and scores appropriately for a new game.
+    // Specifically, rollsLeft is set to 2 (assuming an initial auto-roll by the notifier),
+    // and scores are initialized to null (or 0 for bonus).
+    // The Notifier will be responsible for the actual initial dice roll and setting the lastRollEvent.
+    return initialState;
+  }
+
   // Note: _performInitialRoll and rollDice are now primarily managed by GameStateNotifier
   // to handle RollEvent creation and state updates atomically.
   // These methods in GameState can be simplified or made internal if GameStateNotifier
@@ -217,54 +232,22 @@ class GameState {
       scores[category] = score;
 
       // Handle Yahtzee bonus
-      if (category == ScoreCategory.yahtzee && score > 0) {
-        // Check if Yahtzee was already scored (i.e., this is a bonus Yahtzee)
-        // This logic assumes the first Yahtzee score is 50 and subsequent ones add to bonus count.
-        // A more robust way might be to check if scores[ScoreCategory.yahtzee] was already non-null *before* this assignment.
-        // However, for simplicity, if a Yahtzee is scored and it's not the *first* time a score is put here,
-        // it implies a bonus. This needs careful handling if a player scores 0 for Yahtzee then later a real one.
-        // A dedicated flag `hasScoredFirstYahtzee` might be better.
-        // For now, let's assume if scores[ScoreCategory.yahtzee] is already non-null and > 0, this is a bonus.
-        // This needs to be re-evaluated. A simpler approach: if yahtzee is scored (score > 0),
-        // and scores[ScoreCategory.yahtzee] was *already* > 0 before this assignment, it's a bonus.
-        // The current `assignScore` structure makes this tricky.
-        // Let's refine: if this is a Yahtzee (score > 0) AND scores[ScoreCategory.yahtzee] was already filled with a Yahtzee (50),
-        // then it's a bonus.
-        // The problem is `scores[category]` is updated *before* this check.
-        // A better way: if category is Yahtzee and score is 50:
-        //  if scores[ScoreCategory.yahtzee] was already 50 (or more due to previous bonuses if we stored total there), increment bonus.
-        //  else, this is the first Yahtzee.
-        // Let's assume the `score` parameter is the calculated score for the current attempt (e.g. 50 for Yahtzee)
-        // And `scores[ScoreCategory.yahtzee]` holds the *current stored* score for that category.
-
-        // If Yahtzee category already has a score (meaning it was scored before, even if 0)
-        // and the current dice make a Yahtzee (score == 50)
-        // then it's a bonus Yahtzee.
-        // This logic is flawed if a player scores 0 for Yahtzee then gets a real one.
-        // The rules are: first Yahtzee is 50. Each subsequent Yahtzee is a 100 point bonus.
-        // The Yahtzee box itself can only be scored once.
-        // So, if scores[ScoreCategory.yahtzee] is NOT null (it has been scored) AND score == 50 (current roll is a Yahtzee)
-        // then it's a bonus.
-        // This still doesn't feel right.
-
-        // Correct logic for Yahtzee Bonus:
-        // 1. The Yahtzee category itself scores 50 for the first Yahtzee.
-        // 2. For *each subsequent* Yahtzee rolled, if the Yahtzee category has already been scored (with 50 or 0),
-        //    the player gets a 100 point bonus. These bonuses are tracked by yahtzeeBonusCount.
-        //    The player must also score the current roll in another category according to Yahtzee Joker Rules.
-
-        // So, when assignScore is called for Yahtzee:
-        if (category == ScoreCategory.yahtzee) {
-          // If this is the first Yahtzee being scored (value 50)
-          // no immediate bonus count increment. The 50 goes into the Yahtzee box.
-        } else if (score > 0 && dice.every((d) => d.value == dice.first.value) && dice.length == 5 && dice.first.value != 0) {
-          // This means: current category is NOT Yahtzee, BUT the dice ARE a Yahtzee.
-          // And the Yahtzee category has already been scored (either 50 or 0).
-          if (scores[ScoreCategory.yahtzee] != null) {
-            yahtzeeBonusCount++;
-          }
+      // Correct logic for Yahtzee Bonus:
+      // 1. The Yahtzee category itself scores 50 for the first Yahtzee.
+      // 2. For *each subsequent* Yahtzee rolled, if the Yahtzee category has already been scored (with 50 or 0),
+      //    the player gets a 100 point bonus. These bonuses are tracked by yahtzeeBonusCount.
+      //    The player must also score the current roll in another category according to Yahtzee Joker Rules.
+      if (category == ScoreCategory.yahtzee) {
+        // If this is the first Yahtzee being scored (value 50)
+        // no immediate bonus count increment. The 50 goes into the Yahtzee box.
+      } else if (score > 0 && dice.every((d) => d.value == dice.first.value) && dice.length == 5 && dice.first.value != 0) {
+        // This means: current category is NOT Yahtzee, BUT the dice ARE a Yahtzee.
+        // And the Yahtzee category has already been scored (either 50 or 0).
+        if (scores[ScoreCategory.yahtzee] != null) {
+          yahtzeeBonusCount++;
         }
       }
+
 
       if (isGameOver) {
         isGameInProgress = false;
@@ -288,10 +271,11 @@ class GameState {
     return false;
   }
 
-  // Resets the game to its initial state.
+  // Resets the game to its initial state. This method is typically used by the Notifier.
+  // For a public factory constructor for a new game, see GameState.initial().
   void resetGame() { // Called by Notifier
     dice = List.generate(5, (_) => Die());
-    rollsLeft = 3; // Notifier will call _performInitialRoll and set to 2
+    rollsLeft = 3; // Notifier will call updateDiceForInitialRoll and set to 2, and create RollEvent
     scores = {
       for (var category in ScoreCategory.values)
         category: category == ScoreCategory.bonus ? 0 : null
@@ -300,6 +284,7 @@ class GameState {
     currentRound = 1;
     yahtzeeBonusCount = 0; // Reset Yahtzee bonus count
     isGameInProgress = true; // A new game is now in progress
+    lastRollEvent = null; // Clear last roll event
     // Placeholder for network send if applicable
     // NETWORK_SEND_GAME_RESET();
   }

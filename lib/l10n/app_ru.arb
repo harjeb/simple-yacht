@@ -313,7 +313,7 @@
   "firestoreDatabaseNotConfiguredError": "База данных бэкэнда не настроена. Пожалуйста, свяжитесь с администратором.",
   "@firestoreDatabaseNotConfiguredError": {
     "description": "Сообщение об ошибке, отображаемое, когда база данных Firestore не найдена или не настроена."
-,
+  },
   "scoreSavedToLeaderboard": "Score saved to leaderboard! (NEEDS RU TRANSLATION)",
   "@scoreSavedToLeaderboard": {
     "description": "Snackbar message when score is successfully saved to the leaderboard. (NEEDS RU TRANSLATION)"
@@ -346,6 +346,9 @@
   "errorFetchingUsername": "Error fetching username (NEEDS RU TRANSLATION)",
   "@errorFetchingUsername": {
     "description": "Part of a generic error message, indicating the action that failed during username fetch from provider. (NEEDS RU TRANSLATION)"
-  }
+  },
+  "invalidGameStateRedirecting": "Недопустимое состояние игры. Перенаправление на главный экран... (NEEDS RU TRANSLATION)",
+  "@invalidGameStateRedirecting": {
+    "description": "Message shown when the game state is invalid and the user is redirected to the home screen. (NEEDS RU TRANSLATION)"
   }
 }

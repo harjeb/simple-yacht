@@ -310,25 +310,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get firestoreDatabaseNotConfiguredError => 'Backend-Datenbank ist nicht konfiguriert. Bitte kontaktieren Sie den Administrator.';
 
   @override
-  String get scoreSavedToLeaderboard => 'Score saved to leaderboard!';
+  String get scoreSavedToLeaderboard => 'Score saved to leaderboard! (NEEDS DE TRANSLATION)';
 
   @override
-  String get failedToSaveScore => 'Failed to save score';
+  String get failedToSaveScore => 'Failed to save score (NEEDS DE TRANSLATION)';
 
   @override
-  String get fix => 'Fix';
+  String get fix => 'Fix (NEEDS DE TRANSLATION)';
 
   @override
-  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username.';
+  String get scoreSavedUsingLocallyStoredUsername => 'Score saved using locally stored username. (NEEDS DE TRANSLATION)';
 
   @override
-  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved.';
+  String get usernameNotFoundScoreNotSaved => 'Username not found. Score not saved. (NEEDS DE TRANSLATION)';
 
   @override
   String errorRetrievingUsername(String details) {
-    return 'Error retrieving username: $details';
+    return 'Error retrieving username: $details (NEEDS DE TRANSLATION)';
   }
 
   @override
-  String get errorFetchingUsername => 'Error fetching username';
+  String get errorFetchingUsername => 'Error fetching username (NEEDS DE TRANSLATION)';
+
+  @override
+  String get invalidGameStateRedirecting => 'Ungültiger Spielstatus. Weiterleitung zur Startseite... (NEEDS DE TRANSLATION)';
 }

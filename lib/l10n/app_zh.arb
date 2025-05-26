@@ -276,7 +276,7 @@
   "firestoreDatabaseNotConfiguredError": "后端数据库未配置，请联系管理员。",
   "@firestoreDatabaseNotConfiguredError": {
     "description": "当 Firestore 数据库未找到或未配置时显示的错误消息。"
-,
+  },
   "scoreSavedToLeaderboard": "Score saved to leaderboard! (NEEDS ZH TRANSLATION)",
   "@scoreSavedToLeaderboard": {
     "description": "Snackbar message when score is successfully saved to the leaderboard. (NEEDS ZH TRANSLATION)"
@@ -309,6 +309,9 @@
   "errorFetchingUsername": "Error fetching username (NEEDS ZH TRANSLATION)",
   "@errorFetchingUsername": {
     "description": "Part of a generic error message, indicating the action that failed during username fetch from provider. (NEEDS ZH TRANSLATION)"
-  }
+  },
+  "invalidGameStateRedirecting": "无效的游戏状态。正在重定向到主页...",
+  "@invalidGameStateRedirecting": {
+    "description": "当游戏状态无效并且用户被重定向到主屏幕时显示的消息。"
   }
 }

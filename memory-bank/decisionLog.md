@@ -7,6 +7,27 @@ This file records architectural and implementation decisions using a list format
 
 ---
 ### Decision
+[2025-05-26 13:34:00] - 采纳基于伪代码分析的架构更新，以解决“新游戏不显示任何画面”的错误。
+
+**Rationale:**
+用户报告在新游戏开始后不显示任何画面。规范编写器模式提供的伪代码和分析指出，问题可能源于游戏状态 (`GameState`) 未正确初始化/重置，或导航/UI渲染逻辑未能正确响应当前游戏状态。为了确保新游戏能够正确显示，必须在开始新游戏时彻底重置 `GameState`，并且 `GameScreen` 的渲染逻辑和导航守卫必须正确处理 `GameState` 中的 `isGameInProgress` 和 `gameOver` 标志。
+
+**Implications/Details:**
+*   **游戏状态初始化 (`GameState.initial()`):**
+    *   在 `GameStateNotifier.resetAndStartNewGame()` ([`lib/state_management/providers/game_providers.dart`](lib/state_management/providers/game_providers.dart:1)) 中，必须使用 `GameState.initial()` 工厂构造函数来创建和分配新的状态。这确保了所有游戏属性（骰子、分数、回合、`isGameInProgress`、`gameOver` 等）都被重置为干净的初始值。
+*   **`GameScreen` 渲染逻辑 ([`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1)):**
+    *   `GameScreen` 的 `build` 方法必须检查 `ref.watch(gameStateProvider)` 返回的 `GameState`。
+    *   如果 `!gameState.isGameInProgress && !gameState.gameOver`，则表明游戏不处于活动状态，此时不应渲染完整游戏界面。可以考虑导航回主屏幕或显示加载/错误状态。
+*   **导航守卫 (`AppRouter` - [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1)):**
+    *   前往 `GameScreenRoute` 的 `GoRoute` 定义中应包含一个 `redirect` 函数。
+    *   此 `redirect` 函数会读取 `gameStateProvider`。如果 `!gameState.isGameInProgress && !gameState.gameOver`，则重定向到 `HomeScreenRoute`，防止在无效状态下访问游戏。
+*   **新游戏流程协调:**
+    *   当用户点击“开始新游戏”时，首先调用 `ref.read(gameStateProvider.notifier).resetAndStartNewGame()` 来重置状态。
+    *   然后执行到 `GameScreenRoute` 的导航。
+*   **架构文档更新:** 相关原则和流程已更新到 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 的 "2.2. 状态管理", "2.3. 导航策略", 新增 "2.6. 游戏界面 (`GameScreen`) 渲染逻辑" 和 "2.7. 开始新游戏流程" 部分。
+
+---
+### Decision
 [2025-05-26 12:48:19] - 采纳关于账号删除成功后客户端状态清理和导航的架构方案。
 
 **Rationale:**

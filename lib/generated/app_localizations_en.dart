@@ -331,4 +331,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorFetchingUsername => 'Error fetching username';
+
+  @override
+  String get invalidGameStateRedirecting => 'Invalid game state. Redirecting to home...';
 }

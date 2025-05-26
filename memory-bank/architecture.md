@@ -22,11 +22,14 @@
 *   **方案:** Riverpod
 *   **理由:** 编译时安全、可测试性、灵活性、声明式、无需 `BuildContext` 访问 Provider，性能优化。
 *   **实现:** Providers 定义在 `lib/state_management/providers/` 目录下。UI 组件通过 `ref.watch` 和 `ref.read` 与状态交互。
+    *   **游戏状态 (`gameStateProvider`):** 这是管理核心游戏逻辑状态的关键 Provider。它通过 `GameStateNotifier` ([`lib/state_management/providers/game_providers.dart`](lib/state_management/providers/game_providers.dart:1)) 提供对 `GameState` ([`lib/core_logic/game_state.dart`](lib/core_logic/game_state.dart:1)) 的访问和修改。
+        *   **状态重置与初始化:** 当开始新游戏时，`GameStateNotifier.resetAndStartNewGame()` 方法被调用。此方法必须使用 `GameState.initial()` 工厂构造函数来创建一个全新的、干净的 `GameState` 实例，确保所有游戏相关属性（如骰子、剩余投掷次数、当前回合、分数、游戏是否进行中等）都恢复到初始默认值。这是防止旧游戏状态影响新游戏的关键。
 
 ### 2.3. 导航策略
 *   **方案:** GoRouter
 *   **理由:** 声明式路由、深度链接、类型安全路由（通过代码生成）、易于处理复杂场景。
-*   **实现:** 路由配置在 `lib/navigation/app_router.dart`。其 `redirect` 逻辑对于处理用户认证状态变化（包括账号删除后变为未登录）并正确导航至初始屏幕（如创建账号页或启动页）至关重要。
+*   **实现:** 路由配置在 [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1)。其 `redirect` 逻辑对于处理用户认证状态变化（包括账号删除后变为未登录）并正确导航至初始屏幕（如创建账号页或启动页）至关重要。
+    *   **游戏屏幕路由守卫:** 对于导航到 [`GameScreen`](lib/ui_screens/game_screen.dart:1) 的路由 (例如 `GameScreenRoute`)，可以设置一个 `redirect` 函数。此守卫会读取当前的 `gameStateProvider`。如果 `!gameState.isGameInProgress && !gameState.gameOver`（即游戏既未开始也不处于结束状态），则用户将被重定向回主屏幕 (例如 `HomeScreenRoute`)，防止在无效状态下访问游戏界面。
 
 ### 2.4. 用户名创建与管理流程
 
@@ -106,6 +109,29 @@
 5.  **UI 反馈 (可选):**
     *   可以短暂显示一个全局消息（例如 Snackbar），告知用户操作已成功完成，并且正在返回初始界面。
 
+### 2.6. 游戏界面 (`GameScreen`) 渲染逻辑
+
+[`GameScreen`](lib/ui_screens/game_screen.dart:1) 的构建逻辑 (`build` 方法) 严重依赖于从 `gameStateProvider` 获取的当前 `GameState`。
+*   **状态依赖:** UI 组件（如骰子、计分板、回合指示器）的显示和行为都基于 `gameState` 的属性。
+*   **无效状态处理:** 在 `build` 方法的早期，应检查 `gameState.isGameInProgress` 和 `gameState.gameOver`。
+    *   如果 `!gameState.isGameInProgress && !gameState.gameOver`，这可能表示状态异常或用户不应在此屏幕。此时，可以考虑：
+        *   使用 `WidgetsBinding.instance.addPostFrameCallback` 异步导航回主屏幕 (例如 `context.go(HomeScreenRoute)`)，以避免在构建期间直接导航。
+        *   或者，显示一个加载指示器或错误消息，而不是尝试渲染游戏界面。
+*   **游戏结束逻辑:** 当 `gameState.gameOver` 为 `true` 时，应显示游戏结束对话框或相关UI。
+
+### 2.7. 开始新游戏流程
+
+当用户触发“开始新游戏”操作时（例如，在 [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1) 中点击按钮），会发生以下关键步骤：
+
+1.  **状态重置:** 调用 `ref.read(gameStateProvider.notifier).resetAndStartNewGame()`。
+    *   这会触发 `GameStateNotifier` 中的 `resetAndStartNewGame` 方法。
+    *   该方法的核心是 `state = GameState.initial();`，确保使用工厂构造函数创建一个全新的、干净的 `GameState` 实例。所有游戏相关的属性（骰子、回合、分数、`isGameInProgress` 等）都被设置为初始值。`isGameInProgress` 通常在此处设置为 `true`。
+2.  **导航:** 调用 `context.go(GameScreenRoute)` (或等效的导航命令) 将用户导航到 [`GameScreen`](lib/ui_screens/game_screen.dart:1)。
+3.  **路由守卫 (如果配置):** [`AppRouter`](lib/navigation/app_router.dart:1) 中的 `redirect` 守卫会检查新的 `GameState`。由于 `isGameInProgress` 此时应为 `true`，导航通常会成功。
+4.  **`GameScreen` 渲染:** [`GameScreen`](lib/ui_screens/game_screen.dart:1) 读取已正确初始化的 `GameState` 并渲染游戏界面。由于 `isGameInProgress` 为 `true`，游戏界面会正常显示。
+
+这个流程确保了每次开始新游戏时，都有一个干净、独立的游戏状态，避免了之前游戏会话的数据干扰。
+
 ## 3. 后端架构 (Firebase)
 
 ### 3.1. Firebase Authentication
@@ -162,3 +188,4 @@
 
 ---
 *上次更新: 2025-05-26 13:06:20 - 更新了账号删除流程的文档，以反映最新的代码更改：明确了 `LocalStorageService.clearAllUserData()` 的调用，`UserService` 对登出和本地数据清除的协调，以及 `SettingsScreen` 在成功删除账号后重置状态并导航到 `/splash` 的行为。*
+*上次更新: 2025-05-26 13:25:00 - 更新了前端架构部分，详细说明了新游戏开始时的游戏状态管理 (`GameState.initial()`)、`GameScreen` 的渲染逻辑（依赖 `isGameInProgress` 和 `gameOver` 标志）以及相关的导航守卫逻辑，以解决“新游戏不显示任何画面”的错误。*

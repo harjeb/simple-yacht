@@ -85,6 +85,15 @@ class AppRouter {
               builder: (BuildContext context, GoRouterState state) {
                 return const GameScreen();
               },
+              redirect: (BuildContext context, GoRouterState state) {
+                final gameState = ref.read(gameStateProvider); // Use ref from createRouter
+                if (!gameState.isGameInProgress && !gameState.isGameOver) {
+                  // If game is not in progress and not over, redirect to home.
+                  // This prevents accessing game screen in an invalid state.
+                  return '/';
+                }
+                return null; // No redirect needed
+              },
             ),
             GoRoute(
               path: 'leaderboard',
