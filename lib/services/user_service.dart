@@ -82,31 +82,46 @@ class UserAccountService {
   /// Generates a unique 18-character alphanumeric (uppercase) transfer code.
   /// Checks Firestore for uniqueness.
   Future<String> _generateUniqueTransferCode() async {
+    print("DEBUG: 开始生成唯一传输代码");
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const codeLength = 18;
     final random = Random();
     String code;
     bool isUnique = false;
+    int attempts = 0;
 
     do {
+      attempts++;
       code = String.fromCharCodes(Iterable.generate(
           codeLength, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
       
+      print("DEBUG: 尝试 #$attempts - 生成的代码: $code");
+      print("DEBUG: 检查代码唯一性...");
+      
       final querySnapshot = await _usersCollection.where('transferCode', isEqualTo: code).limit(1).get();
       isUnique = querySnapshot.docs.isEmpty;
+      
+      print("DEBUG: 代码唯一性检查结果: ${isUnique ? '唯一' : '重复'}");
+      if (!isUnique) {
+        print("DEBUG: 代码重复，重新生成...");
+      }
     } while (!isUnique);
 
+    print("DEBUG: 生成唯一传输代码成功，总尝试次数: $attempts, 最终代码: $code");
     return code;
   }
 
   /// Creates a new user document in Firestore.
   /// This is typically called after a new user signs in anonymously and sets up their username.
   Future<UserProfile?> createNewUser({required String userId, required String username}) async {
-    print("DEBUG: createNewUser called - userId: $userId, username: '$username'");
+    print("=== DEBUG: UserAccountService.createNewUser 开始 ===");
+    print("DEBUG: 输入参数 - userId: $userId, username: '$username'");
+    print("DEBUG: 用户名验证 - 长度: ${username.length}, 是否为空: ${username.isEmpty}");
+    
     try {
-      print("DEBUG: Generating unique transfer code...");
+      print("DEBUG: 开始生成唯一传输代码...");
       final transferCode = await _generateUniqueTransferCode();
-      print("DEBUG: Generated transfer code: $transferCode");
+      print("DEBUG: 生成的传输代码: $transferCode");
       
       // Use FieldValue.serverTimestamp() to ensure server-side timestamp
       final userData = {
@@ -115,11 +130,15 @@ class UserAccountService {
         'createdAt': FieldValue.serverTimestamp(), // Server timestamp for security rules
       };
       
-      print("DEBUG: Attempting to write user data to Firestore...");
-      print("DEBUG: User data: $userData");
+      print("DEBUG: 准备写入 Firestore 的用户数据:");
+      print("DEBUG: - username: ${userData['username']}");
+      print("DEBUG: - transferCode: ${userData['transferCode']}");
+      print("DEBUG: - createdAt: ${userData['createdAt']}");
+      print("DEBUG: 目标文档路径: users/$userId");
       
+      print("DEBUG: 开始写入 Firestore...");
       await _usersCollection.doc(userId).set(userData);
-      print("DEBUG: Successfully wrote user data to Firestore");
+      print("DEBUG: Firestore 写入成功");
       
       // Return UserProfile with current timestamp for local use
       final userProfile = UserProfile(
@@ -128,18 +147,29 @@ class UserAccountService {
         transferCode: transferCode,
         createdAt: Timestamp.now(), // Local timestamp for return value
       );
-      print("DEBUG: Returning UserProfile: ${userProfile.username}");
+      print("DEBUG: 创建 UserProfile 对象成功");
+      print("DEBUG: 返回的 UserProfile - uid: ${userProfile.uid}, username: ${userProfile.username}");
       return userProfile;
     } on FirebaseException catch (e) {
+      print("=== DEBUG: FirebaseException 在 createNewUser 中捕获 ===");
+      print("DEBUG: 错误代码: ${e.code}");
+      print("DEBUG: 错误消息: ${e.message}");
+      print("DEBUG: 错误插件: ${e.plugin}");
+      print("DEBUG: 完整错误: ${e.toString()}");
+      
       if (e.code == 'not-found' || (e.message?.contains('NOT_FOUND') ?? false) || (e.message?.contains('database does not exist') ?? false)) {
         // Rethrow to be caught by the caller, allowing specific UI handling
-        print('Error creating new user: Firestore database not found. $e');
+        print('DEBUG: 检测到 Firestore 数据库未找到错误，重新抛出');
         throw FirebaseException(plugin: 'Firestore', code: 'not-found', message: 'Firestore database not found during user creation.');
       }
-      print('Error creating new user: $e');
+      print('DEBUG: 重新抛出其他 FirebaseException');
       rethrow; // Rethrow other FirebaseExceptions
     } catch (e) {
-      print('Error creating new user: $e');
+      print("=== DEBUG: 通用异常在 createNewUser 中捕获 ===");
+      print("DEBUG: 异常类型: ${e.runtimeType}");
+      print("DEBUG: 异常消息: $e");
+      print("DEBUG: 异常堆栈跟踪:");
+      print(StackTrace.current);
       rethrow; // Rethrow other general exceptions
     }
   }

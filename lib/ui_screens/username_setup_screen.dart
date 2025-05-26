@@ -59,11 +59,15 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
     final authService = ref.read(authServiceProvider);
     final currentUser = authService.currentUser;
 
-    print("DEBUG: _createNewAccount called with username: '$enteredUsername'");
-    print("DEBUG: Current user UID: ${currentUser?.uid}");
+    print("=== DEBUG: 开始创建新账户 ===");
+    print("DEBUG: 输入的用户名: '$enteredUsername'");
+    print("DEBUG: 用户名长度: ${enteredUsername.length}");
+    print("DEBUG: 当前用户 UID: ${currentUser?.uid}");
+    print("DEBUG: 当前用户是否匿名: ${currentUser?.isAnonymous}");
+    print("DEBUG: 当前用户邮箱: ${currentUser?.email}");
 
     if (currentUser == null) {
-      print("DEBUG: No current user - authentication failed");
+      print("DEBUG: 错误 - 没有当前用户，认证失败");
       if (mounted) {
         setState(() {
           _errorText = AppLocalizations.of(context)!.authenticationError;
@@ -74,67 +78,81 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
     }
 
     final userAccountService = ref.read(userAccountServiceProvider);
-    final localStorageService = LocalStorageService(); // Create local storage service
+    final localStorageService = LocalStorageService();
     
     try {
-      print("DEBUG: Attempting to create user in Firebase...");
+      print("DEBUG: 开始在 Firebase 中创建用户...");
+      print("DEBUG: 调用 userAccountService.createNewUser");
+      
       // 1. Try to create user in Firebase
       final userProfile = await userAccountService.createNewUser(
         userId: currentUser.uid,
         username: enteredUsername,
       );
-      print("DEBUG: User creation result: ${userProfile != null ? 'SUCCESS' : 'FAILED'}");
+      
+      print("DEBUG: userAccountService.createNewUser 完成");
+      print("DEBUG: 用户创建结果: ${userProfile != null ? 'SUCCESS' : 'FAILED'}");
       
       if (userProfile != null) {
+        print("DEBUG: 用户创建成功，开始保存到本地存储...");
         // 2. Also save username to local storage as backup
         try {
           await localStorageService.saveUsername(enteredUsername);
-          print("Username saved to both Firebase and local storage: $enteredUsername");
+          print("DEBUG: 用户名已保存到 Firebase 和本地存储: $enteredUsername");
         } catch (localError) {
           // Even if local storage fails, we continue since Firebase save succeeded
-          print("Warning: Username saved to Firebase but failed to save locally: $localError");
+          print("DEBUG: 警告 - 用户名已保存到 Firebase 但本地存储失败: $localError");
         }
         
+        print("DEBUG: 刷新 providers...");
         ref.refresh(usernameProvider);
         ref.refresh(userProfileProvider);
+        print("DEBUG: 账户创建流程完成，等待 GoRouter 重定向");
         // GoRouter redirect should handle navigation
       } else {
+        print("DEBUG: 错误 - 保存用户名到 Firebase 失败: userProfile 为 null");
         if (mounted) {
           setState(() {
             _errorText = AppLocalizations.of(context)!.failedToSaveUsername;
           });
         }
-        print("Failed to save username to Firebase: userProfile is null");
       }
     } on FirebaseException catch (e) {
+      print("=== DEBUG: FirebaseException 捕获 ===");
+      print("DEBUG: 错误代码: ${e.code}");
+      print("DEBUG: 错误消息: ${e.message}");
+      print("DEBUG: 错误插件: ${e.plugin}");
+      print("DEBUG: 错误详情: ${e.toString()}");
+      
       if (mounted) {
         setState(() {
           if (e.code == 'not-found') {
-            _errorText =
-                AppLocalizations.of(
-                  context,
-                )!.firestoreDatabaseNotConfiguredError;
+            _errorText = AppLocalizations.of(context)!.firestoreDatabaseNotConfiguredError;
+            print("DEBUG: 设置错误文本为数据库未配置错误");
           } else if (e.code == 'permission-denied') {
             // More specific error for permission denied
-            _errorText = "权限被拒绝：请检查用户名格式是否正确，或稍后重试。";
-            print("PERMISSION_DENIED error details: ${e.message}");
+            _errorText = "权限被拒绝：请检查用户名格式是否正确，或稍后重试。详细错误: ${e.message}";
+            print("DEBUG: 权限被拒绝错误详情: ${e.message}");
           } else {
-            _errorText =
-                AppLocalizations.of(
-                  context,
-                )!.failedToSaveUsername; // Or a more specific error based on e.code
+            _errorText = "保存用户名失败 (${e.code}): ${e.message}";
+            print("DEBUG: 设置通用 Firebase 错误文本");
           }
         });
       }
-      print("FirebaseException in _createNewAccount: ${e.code} - ${e.message}");
     } catch (e) {
+      print("=== DEBUG: 通用异常捕获 ===");
+      print("DEBUG: 异常类型: ${e.runtimeType}");
+      print("DEBUG: 异常消息: $e");
+      print("DEBUG: 异常堆栈跟踪:");
+      print(StackTrace.current);
+      
       if (mounted) {
         setState(() {
-          _errorText = AppLocalizations.of(context)!.genericError;
+          _errorText = "发生未知错误: $e";
         });
       }
-      print("Error in _createNewAccount: $e");
     } finally {
+      print("DEBUG: _createNewAccount 方法结束，设置 loading 为 false");
       if (mounted) {
         setState(() {
           _isLoading = false;
