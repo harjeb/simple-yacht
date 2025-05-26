@@ -2,14 +2,162 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 临时测试规则 - 允许所有已认证用户的操作
+    
+    // ===== 用户数据规则 =====
     match /users/{userId} {
-      allow read, write, list: if request.auth != null;
+      // 用户只能读写自己的数据
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // 其他用户可以读取基本信息（用于显示对手信息）
+      allow read: if request.auth != null && 
+        resource.data.keys().hasAll(['username', 'elo']) &&
+        request.query.limit <= 1;
     }
     
-    match /leaderboards/{leaderboardId}/scores/{scoreId} {
-      allow read, write: if request.auth != null;  // 至少需要认证
+    // ===== 用户名唯一性集合 =====
+    match /usernames/{normalizedUsername} {
+      // 只允许Cloud Functions写入
+      allow read: if request.auth != null;
+      allow write: if false; // 只能通过Cloud Functions操作
     }
-
+    
+    // ===== 排行榜规则 =====
+    match /leaderboards/{leaderboardType}/scores/{scoreId} {
+      // 读取：所有认证用户可以读取排行榜
+      allow read: if request.auth != null;
+      // 写入：只能通过Cloud Functions操作
+      allow write: if false;
+    }
+    
+    // ===== 多人游戏房间规则 =====
+    match /gameRooms/{roomId} {
+      // 读取：房间参与者可以读取
+      allow read: if request.auth != null && 
+        (request.auth.uid in resource.data.players ||
+         request.auth.uid == resource.data.player1 ||
+         request.auth.uid == resource.data.player2);
+      
+      // 创建：认证用户可以创建房间
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.player1 &&
+        request.resource.data.status == 'waiting' &&
+        request.resource.data.gameMode in ['random', 'friend'] &&
+        request.resource.data.createdAt == request.time;
+      
+      // 更新：只有参与者可以更新特定字段
+      allow update: if request.auth != null &&
+        (request.auth.uid in resource.data.players ||
+         request.auth.uid == resource.data.player1 ||
+         request.auth.uid == resource.data.player2) &&
+        // 只允许更新游戏状态相关字段
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'player2', 'players', 'gameState', 'lastActivity', 'winner']);
+      
+      // 删除：不允许直接删除，通过Cloud Functions清理
+      allow delete: if false;
+    }
+    
+    // ===== 游戏状态子集合 =====
+    match /gameRooms/{roomId}/gameStates/{stateId} {
+      // 读取：房间参与者可以读取
+      allow read: if request.auth != null && 
+        request.auth.uid in get(/databases/$(database)/documents/gameRooms/$(roomId)).data.players;
+      
+      // 写入：只有当前回合的玩家可以写入
+      allow create, update: if request.auth != null &&
+        request.auth.uid in get(/databases/$(database)/documents/gameRooms/$(roomId)).data.players &&
+        request.auth.uid == request.resource.data.currentPlayer &&
+        request.resource.data.timestamp == request.time;
+      
+      allow delete: if false;
+    }
+    
+    // ===== 匹配队列规则 =====
+    match /matchmakingQueue/{queueId} {
+      // 读取：只能读取自己的队列条目
+      allow read: if request.auth != null && request.auth.uid == queueId;
+      
+      // 创建：用户可以创建自己的队列条目
+      allow create: if request.auth != null &&
+        request.auth.uid == queueId &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'waiting' &&
+        request.resource.data.createdAt == request.time;
+      
+      // 更新：用户可以更新自己的队列状态
+      allow update: if request.auth != null &&
+        request.auth.uid == queueId &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'lastActivity']);
+      
+      // 删除：用户可以删除自己的队列条目
+      allow delete: if request.auth != null && request.auth.uid == queueId;
+    }
+    
+    // ===== 好友系统规则 =====
+    match /friendships/{friendshipId} {
+      // 读取：涉及的用户可以读取
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.user1 ||
+         request.auth.uid == resource.data.user2);
+      
+      // 创建：用户可以发送好友请求
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.user1 &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.createdAt == request.time;
+      
+      // 更新：接收方可以接受/拒绝请求
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.user2 &&
+        resource.data.status == 'pending' &&
+        request.resource.data.status in ['accepted', 'rejected'];
+      
+      // 删除：双方都可以删除好友关系
+      allow delete: if request.auth != null &&
+        (request.auth.uid == resource.data.user1 ||
+         request.auth.uid == resource.data.user2);
+    }
+    
+    // ===== ELO评级历史规则 =====
+    match /eloHistory/{userId}/matches/{matchId} {
+      // 读取：用户可以读取自己的ELO历史
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // 写入：只能通过Cloud Functions操作
+      allow write: if false;
+    }
+    
+    // ===== 游戏统计规则 =====
+    match /gameStats/{userId} {
+      // 读取：用户可以读取自己的统计，其他用户可以读取基本统计
+      allow read: if request.auth != null &&
+        (request.auth.uid == userId ||
+         resource.data.keys().hasAll(['wins', 'losses', 'draws', 'totalGames']));
+      // 写入：只能通过Cloud Functions操作
+      allow write: if false;
+    }
+    
+    // ===== 聊天消息规则（如果需要游戏内聊天）=====
+    match /gameRooms/{roomId}/messages/{messageId} {
+      // 读取：房间参与者可以读取消息
+      allow read: if request.auth != null &&
+        request.auth.uid in get(/databases/$(database)/documents/gameRooms/$(roomId)).data.players;
+      
+      // 创建：房间参与者可以发送消息
+      allow create: if request.auth != null &&
+        request.auth.uid in get(/databases/$(database)/documents/gameRooms/$(roomId)).data.players &&
+        request.auth.uid == request.resource.data.senderId &&
+        request.resource.data.timestamp == request.time &&
+        request.resource.data.message.size() <= 500; // 限制消息长度
+      
+      // 不允许更新或删除消息
+      allow update, delete: if false;
+    }
+    
+    // ===== 系统配置规则 =====
+    match /systemConfig/{configId} {
+      // 只读访问系统配置
+      allow read: if request.auth != null;
+      allow write: if false; // 只能通过管理员或Cloud Functions操作
+    }
   }
 }

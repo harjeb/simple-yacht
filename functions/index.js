@@ -172,3 +172,759 @@ exports.deleteUserData = functions.https.onCall(async (data, context) => {
     );
   }
 });
+
+/**
+ * 设置唯一用户名
+ * 使用Firestore事务确保用户名唯一性
+ */
+exports.setUniqueUsername = functions.https.onCall(async (data, context) => {
+  // 验证认证
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
+  }
+
+  const {username} = data;
+  const userId = context.auth.uid;
+
+  if (!username || typeof username !== "string") {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Username must be a non-empty string.",
+    );
+  }
+
+  // 验证用户名格式
+  if (username.length < 3 || username.length > 15) {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Username must be between 3 and 15 characters.",
+    );
+  }
+
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Username can only contain letters, numbers, and underscores.",
+    );
+  }
+
+  const normalizedUsername = username.toLowerCase();
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      // 检查用户名是否已存在
+      const usernameDoc = await transaction.get(
+          db.collection("usernames").doc(normalizedUsername),
+      );
+
+      if (usernameDoc.exists && usernameDoc.data().userId !== userId) {
+        throw new functions.https.HttpsError(
+            "already-exists",
+            "Username is already taken.",
+        );
+      }
+
+      // 获取用户当前数据
+      const userDoc = await transaction.get(db.collection("users").doc(userId));
+      const userData = userDoc.exists ? userDoc.data() : {};
+
+      // 如果用户已有用户名，需要清理旧的用户名记录
+      if (userData.normalizedUsername &&
+          userData.normalizedUsername !== normalizedUsername) {
+        transaction.delete(
+            db.collection("usernames").doc(userData.normalizedUsername),
+        );
+      }
+
+      // 设置新的用户名记录
+      transaction.set(db.collection("usernames").doc(normalizedUsername), {
+        userId: userId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // 更新用户文档
+      transaction.set(db.collection("users").doc(userId), {
+        ...userData,
+        username: username,
+        normalizedUsername: normalizedUsername,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        // 初始化游戏数据（如果是新用户）
+        elo: userData.elo || 1200,
+        wins: userData.wins || 0,
+        losses: userData.losses || 0,
+        draws: userData.draws || 0,
+        totalGames: userData.totalGames || 0,
+      }, {merge: true});
+
+      return {success: true};
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error setting username:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError(
+        "internal",
+        "Unable to set username.",
+    );
+  }
+});
+
+/**
+ * 加入匹配队列
+ * 随机匹配功能
+ */
+exports.joinMatchmakingQueue = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
+  }
+
+  const userId = context.auth.uid;
+  const {gameMode = "random"} = data;
+
+  try {
+    // 获取用户信息
+    const userDoc = await db.collection("users").doc(userId).get();
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+          "not-found",
+          "User profile not found.",
+      );
+    }
+
+    const userData = userDoc.data();
+    const userElo = userData.elo || 1200;
+
+    // 检查是否已在队列中
+    const existingQueue = await db.collection("matchmakingQueue")
+        .doc(userId).get();
+    if (existingQueue.exists) {
+      return {
+        success: true,
+        message: "Already in queue",
+        queueId: userId,
+      };
+    }
+
+    // 寻找合适的对手（ELO差距在200以内）
+    const eloRange = 200;
+    const potentialOpponents = await db.collection("matchmakingQueue")
+        .where("gameMode", "==", gameMode)
+        .where("status", "==", "waiting")
+        .where("elo", ">=", userElo - eloRange)
+        .where("elo", "<=", userElo + eloRange)
+        .limit(1)
+        .get();
+
+    if (!potentialOpponents.empty) {
+      // 找到对手，创建游戏房间
+      const opponentDoc = potentialOpponents.docs[0];
+      const opponentData = opponentDoc.data();
+      const opponentId = opponentData.userId;
+
+      // 创建游戏房间
+      const roomId = `${userId}_${opponentId}_${Date.now()}`;
+      const gameRoomData = {
+        roomId: roomId,
+        player1: userId,
+        player2: opponentId,
+        players: [userId, opponentId],
+        gameMode: gameMode,
+        status: "active",
+        currentPlayer: userId, // 随机选择先手
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastActivity: admin.firestore.FieldValue.serverTimestamp(),
+        gameState: {
+          round: 1,
+          player1Score: 0,
+          player2Score: 0,
+          isGameOver: false,
+        },
+      };
+
+      // 使用事务创建房间并清理队列
+      await db.runTransaction(async (transaction) => {
+        // 创建游戏房间
+        transaction.set(db.collection("gameRooms").doc(roomId), gameRoomData);
+
+        // 删除队列条目
+        transaction.delete(db.collection("matchmakingQueue").doc(userId));
+        transaction.delete(db.collection("matchmakingQueue").doc(opponentId));
+      });
+
+      return {
+        success: true,
+        matched: true,
+        roomId: roomId,
+        opponent: {
+          id: opponentId,
+          username: opponentData.username,
+          elo: opponentData.elo,
+        },
+      };
+    } else {
+      // 没有找到对手，加入队列
+      await db.collection("matchmakingQueue").doc(userId).set({
+        userId: userId,
+        username: userData.username,
+        elo: userElo,
+        gameMode: gameMode,
+        status: "waiting",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastActivity: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {
+        success: true,
+        matched: false,
+        message: "Added to matchmaking queue",
+        queueId: userId,
+      };
+    }
+  } catch (error) {
+    console.error("Error joining matchmaking queue:", error);
+    throw new functions.https.HttpsError(
+        "internal",
+        "Unable to join matchmaking queue.",
+    );
+  }
+});
+
+/**
+ * 离开匹配队列
+ */
+exports.leaveMatchmakingQueue = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
+  }
+
+  const userId = context.auth.uid;
+
+  try {
+    await db.collection("matchmakingQueue").doc(userId).delete();
+    return {success: true, message: "Left matchmaking queue"};
+  } catch (error) {
+    console.error("Error leaving matchmaking queue:", error);
+    throw new functions.https.HttpsError(
+        "internal",
+        "Unable to leave matchmaking queue.",
+    );
+  }
+});
+
+/**
+ * 创建好友对战房间
+ */
+exports.createFriendBattle = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
+  }
+
+  const userId = context.auth.uid;
+  const {friendId} = data;
+
+  if (!friendId) {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Friend ID is required.",
+    );
+  }
+
+  try {
+    // 验证好友关系
+    const friendshipQuery = await db.collection("friendships")
+        .where("user1", "in", [userId, friendId])
+        .where("user2", "in", [userId, friendId])
+        .where("status", "==", "accepted")
+        .limit(1)
+        .get();
+
+    if (friendshipQuery.empty) {
+      throw new functions.https.HttpsError(
+          "permission-denied",
+          "You are not friends with this user.",
+      );
+    }
+
+    // 获取双方用户信息
+    const [userDoc, friendDoc] = await Promise.all([
+      db.collection("users").doc(userId).get(),
+      db.collection("users").doc(friendId).get(),
+    ]);
+
+    if (!userDoc.exists || !friendDoc.exists) {
+      throw new functions.https.HttpsError(
+          "not-found",
+          "User profile not found.",
+      );
+    }
+
+    // 创建游戏房间
+    const roomId = `friend_${userId}_${friendId}_${Date.now()}`;
+    const gameRoomData = {
+      roomId: roomId,
+      player1: userId,
+      player2: null, // 等待好友加入
+      players: [userId],
+      gameMode: "friend",
+      status: "waiting",
+      invitedPlayer: friendId,
+      currentPlayer: userId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastActivity: admin.firestore.FieldValue.serverTimestamp(),
+      gameState: {
+        round: 1,
+        player1Score: 0,
+        player2Score: 0,
+        isGameOver: false,
+      },
+    };
+
+    await db.collection("gameRooms").doc(roomId).set(gameRoomData);
+
+    return {
+      success: true,
+      roomId: roomId,
+      message: "Friend battle room created",
+    };
+  } catch (error) {
+    console.error("Error creating friend battle:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError(
+        "internal",
+        "Unable to create friend battle.",
+    );
+  }
+});
+
+/**
+ * 加入好友对战房间
+ */
+exports.joinFriendBattle = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
+  }
+
+  const userId = context.auth.uid;
+  const {roomId} = data;
+
+  if (!roomId) {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Room ID is required.",
+    );
+  }
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const roomDoc = await transaction.get(
+          db.collection("gameRooms").doc(roomId),
+      );
+
+      if (!roomDoc.exists) {
+        throw new functions.https.HttpsError(
+            "not-found",
+            "Game room not found.",
+        );
+      }
+
+      const roomData = roomDoc.data();
+
+      // 验证用户是否被邀请
+      if (roomData.invitedPlayer !== userId) {
+        throw new functions.https.HttpsError(
+            "permission-denied",
+            "You are not invited to this room.",
+        );
+      }
+
+      // 验证房间状态
+      if (roomData.status !== "waiting") {
+        throw new functions.https.HttpsError(
+            "failed-precondition",
+            "Room is not available for joining.",
+        );
+      }
+
+      // 更新房间状态
+      transaction.update(db.collection("gameRooms").doc(roomId), {
+        player2: userId,
+        players: [roomData.player1, userId],
+        status: "active",
+        lastActivity: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {success: true, message: "Joined friend battle"};
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error joining friend battle:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError(
+        "internal",
+        "Unable to join friend battle.",
+    );
+  }
+});
+
+/**
+ * 提交游戏结果并更新ELO评级
+ */
+exports.submitGameResult = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
+  }
+
+  const userId = context.auth.uid;
+  const {roomId, playerScore, opponentScore} = data;
+
+  if (!roomId || playerScore === undefined || opponentScore === undefined) {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Room ID and scores are required.",
+    );
+  }
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const roomDoc = await transaction.get(
+          db.collection("gameRooms").doc(roomId),
+      );
+
+      if (!roomDoc.exists) {
+        throw new functions.https.HttpsError(
+            "not-found",
+            "Game room not found.",
+        );
+      }
+
+      const roomData = roomDoc.data();
+
+      // 验证用户是否是房间参与者
+      if (!roomData.players.includes(userId)) {
+        throw new functions.https.HttpsError(
+            "permission-denied",
+            "You are not a participant in this room.",
+        );
+      }
+
+      // 验证游戏是否已结束
+      if (roomData.status === "completed") {
+        throw new functions.https.HttpsError(
+            "failed-precondition",
+            "Game has already been completed.",
+        );
+      }
+
+      const player1Id = roomData.player1;
+      const player2Id = roomData.player2;
+      const isPlayer1 = userId === player1Id;
+      const opponentId = isPlayer1 ? player2Id : player1Id;
+
+      // 获取双方用户数据
+      const [player1Doc, player2Doc] = await Promise.all([
+        transaction.get(db.collection("users").doc(player1Id)),
+        transaction.get(db.collection("users").doc(player2Id)),
+      ]);
+
+      const player1Data = player1Doc.data();
+      const player2Data = player2Doc.data();
+
+      // 计算ELO变化（仅对随机匹配）
+      let eloChanges = {player1: 0, player2: 0};
+      if (roomData.gameMode === "random") {
+        eloChanges = calculateEloChange(
+            player1Data.elo || 1200,
+            player2Data.elo || 1200,
+            playerScore,
+            opponentScore,
+            isPlayer1,
+        );
+      }
+
+      // 确定游戏结果
+      let winner = null;
+      if (playerScore > opponentScore) {
+        winner = userId;
+      } else if (opponentScore > playerScore) {
+        winner = opponentId;
+      }
+
+      // 更新房间状态
+      transaction.update(db.collection("gameRooms").doc(roomId), {
+        status: "completed",
+        winner: winner,
+        finalScores: {
+          [player1Id]: isPlayer1 ? playerScore : opponentScore,
+          [player2Id]: isPlayer1 ? opponentScore : playerScore,
+        },
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // 更新用户统计（仅对随机匹配更新ELO）
+      const updatePlayer1Stats = {
+        totalGames: (player1Data.totalGames || 0) + 1,
+        lastGameAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const updatePlayer2Stats = {
+        totalGames: (player2Data.totalGames || 0) + 1,
+        lastGameAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (roomData.gameMode === "random") {
+        updatePlayer1Stats.elo = (player1Data.elo || 1200) + eloChanges.player1;
+        updatePlayer2Stats.elo = (player2Data.elo || 1200) + eloChanges.player2;
+      }
+
+      // 更新胜负记录
+      if (winner === player1Id) {
+        updatePlayer1Stats.wins = (player1Data.wins || 0) + 1;
+        updatePlayer2Stats.losses = (player2Data.losses || 0) + 1;
+      } else if (winner === player2Id) {
+        updatePlayer1Stats.losses = (player1Data.losses || 0) + 1;
+        updatePlayer2Stats.wins = (player2Data.wins || 0) + 1;
+      } else {
+        updatePlayer1Stats.draws = (player1Data.draws || 0) + 1;
+        updatePlayer2Stats.draws = (player2Data.draws || 0) + 1;
+      }
+
+      transaction.update(db.collection("users").doc(player1Id), updatePlayer1Stats);
+      transaction.update(db.collection("users").doc(player2Id), updatePlayer2Stats);
+
+      // 记录ELO历史（仅对随机匹配）
+      if (roomData.gameMode === "random") {
+        const matchId = `${roomId}_${Date.now()}`;
+        transaction.set(
+            db.collection("eloHistory").doc(player1Id)
+                .collection("matches").doc(matchId),
+            {
+              opponentId: player2Id,
+              opponentUsername: player2Data.username,
+              myScore: isPlayer1 ? playerScore : opponentScore,
+              opponentScore: isPlayer1 ? opponentScore : playerScore,
+              eloChange: eloChanges.player1,
+              newElo: (player1Data.elo || 1200) + eloChanges.player1,
+              result: winner === player1Id ? "win" : (winner === null ? "draw" : "loss"),
+              gameMode: roomData.gameMode,
+              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            },
+        );
+
+        transaction.set(
+            db.collection("eloHistory").doc(player2Id)
+                .collection("matches").doc(matchId),
+            {
+              opponentId: player1Id,
+              opponentUsername: player1Data.username,
+              myScore: isPlayer1 ? opponentScore : playerScore,
+              opponentScore: isPlayer1 ? playerScore : opponentScore,
+              eloChange: eloChanges.player2,
+              newElo: (player2Data.elo || 1200) + eloChanges.player2,
+              result: winner === player2Id ? "win" : (winner === null ? "draw" : "loss"),
+              gameMode: roomData.gameMode,
+              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            },
+        );
+      }
+
+      return {
+        success: true,
+        winner: winner,
+        eloChanges: roomData.gameMode === "random" ? eloChanges : null,
+        finalScores: {
+          [player1Id]: isPlayer1 ? playerScore : opponentScore,
+          [player2Id]: isPlayer1 ? opponentScore : playerScore,
+        },
+      };
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error submitting game result:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError(
+        "internal",
+        "Unable to submit game result.",
+    );
+  }
+});
+
+/**
+ * 计算ELO评级变化
+ * @param {number} player1Elo 玩家1当前ELO
+ * @param {number} player2Elo 玩家2当前ELO
+ * @param {number} player1Score 玩家1得分
+ * @param {number} player2Score 玩家2得分
+ * @param {boolean} isPlayer1 当前用户是否为玩家1
+ * @return {object} ELO变化值
+ */
+function calculateEloChange(player1Elo, player2Elo, player1Score, player2Score, isPlayer1) {
+  const K = 32; // ELO K因子
+
+  // 计算期望得分
+  const expectedScore1 = 1 / (1 + Math.pow(10, (player2Elo - player1Elo) / 400));
+  const expectedScore2 = 1 / (1 + Math.pow(10, (player1Elo - player2Elo) / 400));
+
+  // 计算实际得分
+  let actualScore1, actualScore2;
+  if (player1Score > player2Score) {
+    actualScore1 = 1;
+    actualScore2 = 0;
+  } else if (player1Score < player2Score) {
+    actualScore1 = 0;
+    actualScore2 = 1;
+  } else {
+    actualScore1 = 0.5;
+    actualScore2 = 0.5;
+  }
+
+  // 计算ELO变化
+  const eloChange1 = Math.round(K * (actualScore1 - expectedScore1));
+  const eloChange2 = Math.round(K * (actualScore2 - expectedScore2));
+
+  return {
+    player1: eloChange1,
+    player2: eloChange2,
+  };
+}
+
+/**
+ * 获取全球排行榜
+ */
+exports.getGlobalLeaderboard = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
+  }
+
+  const {limit = 50, gameMode = "random"} = data;
+
+  try {
+    const leaderboardQuery = await db.collection("users")
+        .where("totalGames", ">", 0)
+        .orderBy("elo", "desc")
+        .limit(Math.min(limit, 100))
+        .get();
+
+    const leaderboard = [];
+    let rank = 1;
+
+    leaderboardQuery.forEach((doc) => {
+      const userData = doc.data();
+      leaderboard.push({
+        rank: rank++,
+        userId: doc.id,
+        username: userData.username,
+        elo: userData.elo || 1200,
+        wins: userData.wins || 0,
+        losses: userData.losses || 0,
+        draws: userData.draws || 0,
+        totalGames: userData.totalGames || 0,
+        winRate: userData.totalGames > 0 ?
+          Math.round((userData.wins || 0) / userData.totalGames * 100) : 0,
+      });
+    });
+
+    return {
+      success: true,
+      leaderboard: leaderboard,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    };
+  } catch (error) {
+    console.error("Error getting global leaderboard:", error);
+    throw new functions.https.HttpsError(
+        "internal",
+        "Unable to get global leaderboard.",
+    );
+  }
+});
+
+/**
+ * 清理过期的匹配队列条目
+ * 定时触发函数，每5分钟执行一次
+ */
+exports.cleanupExpiredQueue = functions.pubsub
+    .schedule("every 5 minutes")
+    .onRun(async (context) => {
+      const fiveMinutesAgo = admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() - 5 * 60 * 1000),
+      );
+
+      try {
+        const expiredEntries = await db.collection("matchmakingQueue")
+            .where("lastActivity", "<", fiveMinutesAgo)
+            .get();
+
+        const batch = db.batch();
+        expiredEntries.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+        console.log(`Cleaned up ${expiredEntries.size} expired queue entries`);
+      } catch (error) {
+        console.error("Error cleaning up expired queue entries:", error);
+      }
+    });
+
+/**
+ * 清理过期的游戏房间
+ * 定时触发函数，每小时执行一次
+ */
+exports.cleanupExpiredRooms = functions.pubsub
+    .schedule("every 1 hours")
+    .onRun(async (context) => {
+      const oneHourAgo = admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() - 60 * 60 * 1000),
+      );
+
+      try {
+        const expiredRooms = await db.collection("gameRooms")
+            .where("lastActivity", "<", oneHourAgo)
+            .where("status", "in", ["waiting", "active"])
+            .get();
+
+        const batch = db.batch();
+        expiredRooms.forEach((doc) => {
+          batch.update(doc.ref, {
+            status: "expired",
+            expiredAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        });
+
+        await batch.commit();
+        console.log(`Marked ${expiredRooms.size} rooms as expired`);
+      } catch (error) {
+        console.error("Error cleaning up expired rooms:", error);
+      }
+    });
