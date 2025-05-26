@@ -9,7 +9,7 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == userId;
 
       // 允许已认证用户查询 transferCode 以检查唯一性（仅在创建用户时）
-      allow read: if request.auth != null 
+      allow list: if request.auth != null 
                     && request.query.limit <= 1
                     && request.query.where.size() == 1
                     && request.query.where[0].field == 'transferCode'

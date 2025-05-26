@@ -8,6 +8,7 @@ import 'package:myapp/services/auth_service.dart'; // For authServiceProvider
 import 'package:myapp/services/user_service.dart'; // For userAccountServiceProvider, functionsProvider
 import 'package:cloud_functions/cloud_functions.dart'; // For FirebaseFunctionsException, HttpsCallable
 import 'package:myapp/services/local_storage_service.dart'; // For local username storage
+import 'dart:math' as math;
 
 enum SetupMode { create, recover }
 
@@ -65,6 +66,19 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
     print("DEBUG: 当前用户 UID: ${currentUser?.uid}");
     print("DEBUG: 当前用户是否匿名: ${currentUser?.isAnonymous}");
     print("DEBUG: 当前用户邮箱: ${currentUser?.email}");
+    print("DEBUG: 当前用户 providerId: ${currentUser?.providerData.map((p) => p.providerId).toList()}");
+    print("DEBUG: 当前用户 token 是否可用: ${currentUser != null}");
+    
+    // 检查用户的 ID token
+    if (currentUser != null) {
+      try {
+        final idToken = await currentUser.getIdToken();
+        print("DEBUG: 成功获取 ID token，长度: ${idToken.length}");
+        print("DEBUG: ID token 前50字符: ${idToken.substring(0, math.min(50, idToken.length))}...");
+      } catch (e) {
+        print("DEBUG: 获取 ID token 失败: $e");
+      }
+    }
 
     if (currentUser == null) {
       print("DEBUG: 错误 - 没有当前用户，认证失败");
@@ -107,8 +121,32 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
         print("DEBUG: 刷新 providers...");
         ref.refresh(usernameProvider);
         ref.refresh(userProfileProvider);
-        print("DEBUG: 账户创建流程完成，等待 GoRouter 重定向");
-        // GoRouter redirect should handle navigation
+        
+        // 等待 usernameProvider 更新完成
+        print("DEBUG: 等待 usernameProvider 更新...");
+        try {
+          final updatedUsername = await ref.read(usernameProvider.future);
+          print("DEBUG: usernameProvider 更新完成，新用户名: $updatedUsername");
+          
+          if (updatedUsername != null && updatedUsername.isNotEmpty) {
+            print("DEBUG: 用户名验证成功，准备跳转...");
+            // 手动触发路由重新评估
+            if (mounted && context.mounted) {
+              print("DEBUG: 手动跳转到主页面...");
+              context.go('/');
+            }
+          } else {
+            print("DEBUG: 警告 - usernameProvider 更新后仍为空");
+          }
+        } catch (e) {
+          print("DEBUG: 等待 usernameProvider 更新时出错: $e");
+          // 即使出错，也尝试跳转，让路由系统处理
+          if (mounted && context.mounted) {
+            context.go('/');
+          }
+        }
+        
+        print("DEBUG: 账户创建流程完成");
       } else {
         print("DEBUG: 错误 - 保存用户名到 Firebase 失败: userProfile 为 null");
         if (mounted) {

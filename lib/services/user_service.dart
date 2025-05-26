@@ -97,11 +97,23 @@ class UserAccountService {
       
       print("DEBUG: 尝试 #$attempts - 生成的代码: $code");
       print("DEBUG: 检查代码唯一性...");
+      print("DEBUG: 查询条件 - collection: users, where: transferCode == $code, limit: 1");
       
-      final querySnapshot = await _usersCollection.where('transferCode', isEqualTo: code).limit(1).get();
-      isUnique = querySnapshot.docs.isEmpty;
+      try {
+        final querySnapshot = await _usersCollection.where('transferCode', isEqualTo: code).limit(1).get();
+        isUnique = querySnapshot.docs.isEmpty;
+        print("DEBUG: 查询成功 - 代码唯一性检查结果: ${isUnique ? '唯一' : '重复'}");
+        print("DEBUG: 查询返回文档数量: ${querySnapshot.docs.length}");
+      } catch (e) {
+        print("DEBUG: 查询 transferCode 唯一性时发生错误: $e");
+        print("DEBUG: 错误类型: ${e.runtimeType}");
+        if (e is FirebaseException) {
+          print("DEBUG: Firebase 错误代码: ${e.code}");
+          print("DEBUG: Firebase 错误消息: ${e.message}");
+        }
+        rethrow;
+      }
       
-      print("DEBUG: 代码唯一性检查结果: ${isUnique ? '唯一' : '重复'}");
       if (!isUnique) {
         print("DEBUG: 代码重复，重新生成...");
       }
