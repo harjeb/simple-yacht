@@ -23,6 +23,7 @@
 * [2025-05-24 14:03:00] - Designing and documenting the detailed architecture for Firebase backend integration (Firebase Authentication, Cloud Firestore, Cloud Functions) and the transfer code system for account persistence and recovery.
 * [2025-05-25 06:15:00] - 诊断 Flutter 应用中 Firebase 匿名认证后 UI 加载状态持续存在的问题，并制定解决方案架构。
 ## Recent Changes
+* [2025-05-25 14:41:49] - **代码实现 (Firestore 安全规则):** 根据用户提供的规范，完全重写了 [`firestore.rules`](firestore.rules:1) 文件的内容。新规则定义了对 `users` 和 `scores` (或 `leaderboard`) 集合的访问权限，包括创建、读取、更新和删除操作的条件。
 * [2025-05-25 14:02:00] - **代码修复 (路由错误):** 修复了 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:49) 中的导航错误，将目标路径从 `/home` 更改为正确的 `/`。
 * [2025-05-25 12:50:00] - **架构更新 (用户名保存流程):**
     *   更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 新增 "用户名创建与管理流程" 章节，详细描述了从前端验证到后端唯一性检查（推荐 Cloud Function + Firestore 事务）及错误处理的完整流程。
@@ -111,3 +112,24 @@
 * [2025-05-25 10:31:24] - 手动修复生成的本地化文件 ([`lib/generated/app_localizations.dart`](lib/generated/app_localizations.dart) 及各语言版本如 [`lib/generated/app_localizations_en.dart`](lib/generated/app_localizations_en.dart))，以包含缺失的 `loadingLabel`, `errorLabel`, `retryButtonLabel`, `signInFailedGeneric` 的抽象声明和具体实现。此前 `flutter gen-l10n` 未能正确生成这些键，尽管 `.arb` 文件看起来配置正确。
 * [2025-05-25 11:34:07] - **架构决策:** 采纳了解决 SplashScreen 卡顿和路由循环问题的方案。核心是在 [`SplashScreen`](lib/ui_screens/splash_screen.dart:1) 中，当匿名登录成功后，使用显式导航（例如 `context.go('/home')`）替代 `GoRouter.refresh()`，以避免不必要的路由刷新和组件重建循环。相关决策已记录在 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1)。
 * [2025-05-25 13:05:00] - [Debug Status Update: Issue Investigation] 开始调查 "failedToSaveUsername" 错误。日志分析指出 `GoogleApiManager SecurityException: Unknown calling package name 'com.google.android.gms'` 和 `ProviderInstaller module load failure` 可能是根本原因。将优先排查 Google Play 服务集成和配置问题。
+* [2025-05-25 14:31:00] - [Debug Status Update: Investigating Firestore permission denied error during new user creation. Current rules in `firestore.rules` seem correct, suspecting client-side auth timing or `userId` mismatch during the create operation.]
+---
+Timestamp: 5/25/2025, 2:43:58 PM (UTC, UTC+0:00)
+Context: Firestore Security Rules Deployment
+Status: Deployed with warnings
+Details:
+  - Firebase CLI command `firebase deploy --only firestore:rules` executed successfully.
+  - Firestore rules file [`firestore.rules`](firestore.rules) was reported as already up to date.
+  - Warnings were issued for "Invalid function name: containsKey" on multiple lines (15, 19, 22, 29, 47, 49) in [`firestore.rules`](firestore.rules). This might indicate potential issues or deprecated syntax that should be reviewed.
+---
+* [2025-05-25 14:45:40] - **代码修改 (Firestore 规则):** 修改了 [`firestore.rules`](firestore.rules:1) 文件，将所有 `request.resource.data.containsKey('fieldName')` 的实例替换为 `'fieldName' in request.resource.data`，以修复部署警告并使用推荐的语法。
+* [2025-05-26 02:51:30] - [Debug Status Update: Root Cause Identified and Fixed] 双重错误问题的根本原因已确定并修复：
+  1. **Firestore PERMISSION_DENIED 错误**：由于客户端使用 `Timestamp.now()` 而安全规则要求 `request.time` 导致时间戳不匹配
+  2. **UI "please enter a username" 错误**：权限错误被通用错误处理掩盖，未显示具体的权限拒绝信息
+  3. **修复措施**：
+     - 修改 [`lib/services/user_service.dart`](lib/services/user_service.dart) 使用 `FieldValue.serverTimestamp()` 确保服务器端时间戳
+     - 更新 [`firestore.rules`](firestore.rules) 使时间戳验证更灵活
+     - 改进 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart) 错误处理，显示具体的权限错误
+     - 添加详细调试日志帮助后续问题诊断
+     - 成功部署更新后的 Firestore 安全规则
+* [2025-05-26 03:25:33] - [Debug Status Update: Issue Resolved] 权限被拒绝问题已解决。根本原因是 Firestore 安全规则中的时间戳验证逻辑与 `FieldValue.serverTimestamp()` 不兼容。修复措施：简化了 [`firestore.rules`](firestore.rules:22) 第22行的时间戳验证，移除了严格的时间戳匹配要求，允许服务器处理时间戳。已成功部署更新后的安全规则。

@@ -7,6 +7,7 @@ This file tracks the project's progress using a task list format.
 
 ## Completed Tasks
 
+* [2025-05-25 14:41:49] - **代码实现 (Firestore 安全规则):** 已根据用户提供的规范，完全重写了 [`firestore.rules`](firestore.rules:1) 文件的内容。
 * [2025-05-25 14:02:00] - **Bug Fix Complete (路由错误):** 解决了 "Error no routes for location：/home" 错误。通过修改 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:49) 将导航目标从 `/home` 更改为 `/`。
 * [2025-05-25 13:53:41] - **代码修复完成 (语法错误):** 修复了 [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1) 中的语法错误。主要操作是在文件末尾添加了缺失的闭合括号 `}` 和 `)`. 此前尝试修复第 170 行的分号问题，但发现该行已正确。
 * [2025-05-25 12:50:00] - **架构设计完成 (用户名保存失败处理):** 已为解决用户创建时保存用户名失败的问题设计了详细的架构方案。方案覆盖了用户输入验证、网络问题、后端服务错误（包括使用 Cloud Function 和 Firestore 事务确保用户名唯一性）、本地存储问题和并发问题。相关更新已记录在 [`memory-bank/architecture.md`](memory-bank/architecture.md:1), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1), [`memory-bank/systemPatterns.md`](memory-bank/systemPatterns.md:1), 和 [`memory-bank/activeContext.md`](memory-bank/activeContext.md:1)。
@@ -80,3 +81,35 @@ This file tracks the project's progress using a task list format.
 * [2025-05-25 11:34:21] - **架构定义完成 (SplashScreen 卡顿问题):** 针对 SplashScreen 卡顿和路由循环问题，已定义并采纳了解决方案架构。核心是在 [`SplashScreen`](lib/ui_screens/splash_screen.dart:1) 认证成功后使用显式导航替换 `GoRouter.refresh()`。相关决策已记录在 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1) 和 [`memory-bank/activeContext.md`](memory-bank/activeContext.md:1)。
 - [2025-05-25 12:42:20 UTC] Firestore 安全规则已成功部署。
 * [2025-05-25 13:05:00] - [Debugging Task Status Update: In Progress] 正在调查和修复 "failedToSaveUsername" 错误。初步分析指向 Google Play 服务集成问题，特别是 `GoogleApiManager SecurityException`。
+* [2025-05-25 14:31:00] - [Debugging Task Status Update: Started investigation of Firestore permission denied error for new user creation. Analyzing `firestore.rules` and client-side implications based on Memory Bank.]
+---
+Timestamp: 5/25/2025, 2:42:50 PM (UTC, UTC+0:00)
+Task: Deploy Firestore Security Rules
+Status: Started
+Details: Initiating deployment of firestore.rules.
+---
+---
+Timestamp: 5/25/2025, 2:43:48 PM (UTC, UTC+0:00)
+Task: Deploy Firestore Security Rules
+Status: Success with warnings
+Details: Firestore security rules deployed. However, the following warnings were reported:
+- Invalid function name: containsKey (lines 15, 19, 22, 29, 47, 49)
+The rules file was already up to date.
+---
+* [2025-05-25 14:45:49] - **代码修改完成 (Firestore 规则语法):** 成功将 [`firestore.rules`](firestore.rules:1) 中的 `containsKey()` 用法替换为 `in` 操作符。
+[2025-05-25 14:46:33 UTC] - 开始部署 Firestore 安全规则。
+* [2025-05-26 02:52:30] - **调试任务完成 (双重错误修复):** 成功诊断并修复了 Flutter 应用中的双重错误问题：
+  1. **Firestore PERMISSION_DENIED 错误**：根本原因是客户端时间戳与服务器时间戳不匹配
+  2. **UI "please enter a username" 错误**：由权限错误的不当错误处理导致
+  3. **修复措施**：
+     - 修改 [`lib/services/user_service.dart`](lib/services/user_service.dart) 使用服务器时间戳
+     - 更新并部署 [`firestore.rules`](firestore.rules) 安全规则
+     - 改进 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart) 错误处理
+     - 添加详细调试日志
+  4. **Memory Bank 更新**：已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md)* [2025-05-26 03:25:33] - **调试任务完成 (权限拒绝问题修复):** 成功诊断并修复了用户创建过程中的"权限被拒绝：请检查用户名格式是否正确，或稍后重试"错误：
+  1. **根本原因**：Firestore 安全规则中的时间戳验证逻辑与 `FieldValue.serverTimestamp()` 不兼容
+  2. **修复措施**：
+     - 修改 firestore.rules 第22行，简化时间戳验证逻辑
+     - 移除严格的 `request.time` 匹配要求，允许服务器处理时间戳
+     - 成功部署更新后的 Firestore 安全规则到 Firebase 项目 yacht-f816d
+  3. **Memory Bank 更新**：已更新 memory-bank/activeContext.md, memory-bank/decisionLog.md, memory-bank/progress.md

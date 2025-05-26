@@ -59,7 +59,11 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
     final authService = ref.read(authServiceProvider);
     final currentUser = authService.currentUser;
 
+    print("DEBUG: _createNewAccount called with username: '$enteredUsername'");
+    print("DEBUG: Current user UID: ${currentUser?.uid}");
+
     if (currentUser == null) {
+      print("DEBUG: No current user - authentication failed");
       if (mounted) {
         setState(() {
           _errorText = AppLocalizations.of(context)!.authenticationError;
@@ -73,11 +77,13 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
     final localStorageService = LocalStorageService(); // Create local storage service
     
     try {
+      print("DEBUG: Attempting to create user in Firebase...");
       // 1. Try to create user in Firebase
       final userProfile = await userAccountService.createNewUser(
         userId: currentUser.uid,
         username: enteredUsername,
       );
+      print("DEBUG: User creation result: ${userProfile != null ? 'SUCCESS' : 'FAILED'}");
       
       if (userProfile != null) {
         // 2. Also save username to local storage as backup
@@ -108,6 +114,10 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                 AppLocalizations.of(
                   context,
                 )!.firestoreDatabaseNotConfiguredError;
+          } else if (e.code == 'permission-denied') {
+            // More specific error for permission denied
+            _errorText = "权限被拒绝：请检查用户名格式是否正确，或稍后重试。";
+            print("PERMISSION_DENIED error details: ${e.message}");
           } else {
             _errorText =
                 AppLocalizations.of(

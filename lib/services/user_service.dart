@@ -102,15 +102,33 @@ class UserAccountService {
   /// Creates a new user document in Firestore.
   /// This is typically called after a new user signs in anonymously and sets up their username.
   Future<UserProfile?> createNewUser({required String userId, required String username}) async {
+    print("DEBUG: createNewUser called - userId: $userId, username: '$username'");
     try {
+      print("DEBUG: Generating unique transfer code...");
       final transferCode = await _generateUniqueTransferCode();
+      print("DEBUG: Generated transfer code: $transferCode");
+      
+      // Use FieldValue.serverTimestamp() to ensure server-side timestamp
+      final userData = {
+        'username': username,
+        'transferCode': transferCode,
+        'createdAt': FieldValue.serverTimestamp(), // Server timestamp for security rules
+      };
+      
+      print("DEBUG: Attempting to write user data to Firestore...");
+      print("DEBUG: User data: $userData");
+      
+      await _usersCollection.doc(userId).set(userData);
+      print("DEBUG: Successfully wrote user data to Firestore");
+      
+      // Return UserProfile with current timestamp for local use
       final userProfile = UserProfile(
         uid: userId,
         username: username,
         transferCode: transferCode,
-        createdAt: Timestamp.now(),
+        createdAt: Timestamp.now(), // Local timestamp for return value
       );
-      await _usersCollection.doc(userId).set(userProfile.toFirestore());
+      print("DEBUG: Returning UserProfile: ${userProfile.username}");
       return userProfile;
     } on FirebaseException catch (e) {
       if (e.code == 'not-found' || (e.message?.contains('NOT_FOUND') ?? false) || (e.message?.contains('database does not exist') ?? false)) {
