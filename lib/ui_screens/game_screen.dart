@@ -154,16 +154,12 @@ class GameScreen extends ConsumerWidget {
       }
     });
 
-    // Assuming the rest of the Scaffold body (dice, scoreboard etc.) is here
-    // For the purpose of this diff, we are only adding the robustness check above.
-    // The existing Scaffold structure from line 140 onwards is assumed to be part of the complete UI.
-
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.appTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.close), // Changed icon to X
+            icon: const Icon(Icons.close),
             tooltip: AppLocalizations.of(context)!.exitToHome,
             onPressed: () async {
               final bool? shouldExit = await showDialog<bool>(
@@ -189,12 +185,102 @@ class GameScreen extends ConsumerWidget {
               );
               if (shouldExit == true) {
                 ref.read(gameStateProvider.notifier).setToInitialState();
-                if (context.mounted) context.go('/'); 
-} // 关闭 if (shouldExit == true) {
-            }, // 关闭 onPressed: () async {
-          ), // 关闭 IconButton(
-        ], // 关闭 actions: [
-      ), // 关闭 appBar: AppBar(
-    ); // 关闭 return Scaffold(
-  } // 关闭 build 方法 Widget build(...) {
-} // 关闭 class GameScreen extends ... {
+                if (context.mounted) context.go('/');
+              }
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Game info section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.round,
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                        Text(
+                          '$currentRound/13',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.rollsLeft,
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                        Text(
+                          '$rollsLeft',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Dice section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.dice,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    const DiceWidget(),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: rollsLeft > 0 && !isGameOverForUI
+                          ? () {
+                              ref.read(gameStateProvider.notifier).rollDice();
+                            }
+                          : null,
+                      child: Text(AppLocalizations.of(context)!.rollDice),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Scoreboard section
+            Expanded(
+              child: Card(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        AppLocalizations.of(context)!.scorecard,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    const Expanded(
+                      child: ScoreboardWidget(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
