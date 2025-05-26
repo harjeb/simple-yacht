@@ -4,69 +4,59 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // 用户集合 (users/{userId})
-    // 假设您的用户数据存储在名为 'users' 的集合中
     match /users/{userId} {
       // 允许已认证用户读取自己的数据
       allow read: if request.auth != null && request.auth.uid == userId;
 
+      // 允许已认证用户查询 transferCode 以检查唯一性（仅在创建用户时）
+      allow read: if request.auth != null 
+                    && request.query.limit <= 1
+                    && request.query.where.size() == 1
+                    && request.query.where[0].field == 'transferCode'
+                    && request.query.where[0].op == '=='
+                    && request.query.where[0].value is string
+                    && request.query.where[0].value.matches('^[A-Z0-9]{18}$');
+
       // 允许新用户创建自己的文档 (注册时)
-      // 要求包含 username, transferCode, 并且 createdAt 由服务器时间戳设置
-      allow create: if request.auth != null && request.auth.uid == userId
+      // 简化验证以修复 FieldValue.serverTimestamp() 兼容性问题
+      allow create: if request.auth != null 
+                      && request.auth.uid == userId
                       && 'username' in request.resource.data
                       && request.resource.data.username is string
                       && request.resource.data.username.size() > 0
-                      && request.resource.data.username.size() <= 50 // 示例：用户名长度限制
+                      && request.resource.data.username.size() <= 50
                       && 'transferCode' in request.resource.data
                       && request.resource.data.transferCode is string
-                      && request.resource.data.transferCode.matches('^[A-Z0-9]{18}$') // 可选：引继码格式校验
-                      && 'createdAt' in request.resource.data; // 允许任何 createdAt 字段，服务器会处理时间戳
+                      && request.resource.data.transferCode.matches('^[A-Z0-9]{18}$')
+                      && 'createdAt' in request.resource.data;
 
       // 允许已认证用户更新自己的数据
-      // 重要：通常不允许客户端直接修改 'createdAt' 或 'transferCode' (如果它们是一次性设置或服务器管理的)
-      allow update: if request.auth != null && request.auth.uid == userId
-                      && !('createdAt' in request.resource.data) // 不允许修改 createdAt
-                      && !('transferCode' in request.resource.data && request.resource.data.transferCode != resource.data.transferCode); // 如果 transferCode 存在于更新数据中，则不允许修改
+      allow update: if request.auth != null 
+                      && request.auth.uid == userId
+                      && !('createdAt' in request.resource.data)
+                      && !('transferCode' in request.resource.data && request.resource.data.transferCode != resource.data.transferCode);
 
-      // 通常不建议客户端直接删除用户账户，应通过 Cloud Function 处理以进行清理等操作
+      // 不允许客户端直接删除用户账户
       allow delete: if false;
     }
 
-    // 排行榜集合 (scores/{scoreId} 或 leaderboard/{scoreId})
-    // 假设您的排行榜数据存储在名为 'scores' 或 'leaderboard' 的集合中
-    match /scores/{scoreId} { // 或者使用 /leaderboard/{scoreId}
+    // 排行榜集合 (scores/{scoreId})
+    match /scores/{scoreId} {
       // 允许任何人读取排行榜数据
       allow read: if true;
 
       // 允许已认证用户创建新的分数条目
-      // 要求包含 userId (与认证用户匹配), score (数字且非负), username, 和服务器时间戳
       allow create: if request.auth != null
                       && request.resource.data.userId == request.auth.uid
                       && request.resource.data.score is number
                       && request.resource.data.score >= 0
                       && 'username' in request.resource.data
                       && request.resource.data.username is string
-                      && 'timestamp' in request.resource.data
-                      && request.resource.data.timestamp == request.time; // 确保是服务器时间
+                      && 'timestamp' in request.resource.data;
 
-      // 通常不允许更新或删除排行榜条目
+      // 不允许更新或删除排行榜条目
       allow update: if false;
       allow delete: if false;
     }
-    // 如果您的排行榜集合是 'leaderboard'，请取消注释下面的规则并注释掉上面的 'scores' 规则
-    /*
-    match /leaderboard/{scoreId} {
-      allow read: if true;
-      allow create: if request.auth != null
-                      && request.resource.data.userId == request.auth.uid
-                      && request.resource.data.score is number
-                      && request.resource.data.score >= 0
-                      && request.resource.data.containsKey('username')
-                      && request.resource.data.username is string
-                      && request.resource.data.containsKey('timestamp')
-                      && request.resource.data.timestamp == request.time;
-      allow update: if false;
-      allow delete: if false;
-    }
-    */
   }
 }
