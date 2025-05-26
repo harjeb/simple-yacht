@@ -205,11 +205,7 @@ class GameScreen extends ConsumerWidget {
                     Column(
                       children: [
                         Text(
-                          AppLocalizations.of(context)!.round,
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        Text(
-                          '$currentRound/13',
+                          AppLocalizations.of(context)!.round(currentRound, 13),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
@@ -217,11 +213,7 @@ class GameScreen extends ConsumerWidget {
                     Column(
                       children: [
                         Text(
-                          AppLocalizations.of(context)!.rollsLeft,
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        Text(
-                          '$rollsLeft',
+                          AppLocalizations.of(context)!.rollsLeft(rollsLeft),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
@@ -267,7 +259,7 @@ class GameScreen extends ConsumerWidget {
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
-                        AppLocalizations.of(context)!.scorecard,
+                        AppLocalizations.of(context)!.scoreboard,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
