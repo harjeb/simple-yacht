@@ -18,9 +18,25 @@ const db = admin.firestore();
  */
 exports.generateCustomAuthToken = functions.https.onCall(
     async (data, context) => {
-      const uid = data.uid;
+      console.log('=== generateCustomAuthToken Cloud Function 调用开始 ===');
+      console.log('原始传入 data 对象:', data);
+
+      // 尝试从不同位置提取 uid
+      let uid = null;
+      if (data && typeof data === 'object') {
+        if (data.uid) {
+          uid = data.uid;
+          console.log('从 data.uid 提取的 UID:', uid);
+        } else if (data.data && typeof data.data === 'object' && data.data.uid) {
+          uid = data.data.uid;
+          console.log('从 data.data.uid 提取的 UID:', uid);
+        }
+      }
+
+      console.log('最终提取的 UID:', uid);
 
       if (!uid) {
+        console.error('错误: 未能提取到 uid 参数');
         throw new functions.https.HttpsError(
             'invalid-argument',
             'The function must be called with a "uid" argument.',
@@ -28,7 +44,9 @@ exports.generateCustomAuthToken = functions.https.onCall(
       }
 
       try {
+        console.log('开始生成自定义令牌...');
         const customToken = await admin.auth().createCustomToken(uid);
+        console.log('自定义令牌生成成功');
         return {token: customToken};
       } catch (error) {
         console.error('Error creating custom token:', error);
@@ -999,7 +1017,7 @@ exports.getLeaderboard = functions.https.onCall(async (data, context) => {
   try {
     let query;
     const now = new Date();
-    
+
     switch (leaderboardType) {
       case 'daily':
         // 日榜：今天的数据
@@ -1008,7 +1026,7 @@ exports.getLeaderboard = functions.https.onCall(async (data, context) => {
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(todayStart))
             .orderBy('elo', 'desc');
         break;
-        
+
       case 'weekly':
         // 周榜：本周的数据
         const weekStart = new Date(now);
@@ -1018,7 +1036,7 @@ exports.getLeaderboard = functions.https.onCall(async (data, context) => {
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(weekStart))
             .orderBy('elo', 'desc');
         break;
-        
+
       case 'monthly':
         // 月榜：本月的数据
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -1026,14 +1044,14 @@ exports.getLeaderboard = functions.https.onCall(async (data, context) => {
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(monthStart))
             .orderBy('elo', 'desc');
         break;
-        
+
       case 'ladder':
         // 天梯分排名：按ELO分段
         query = db.collection('users')
             .where('totalGames', '>', 0)
             .orderBy('elo', 'desc');
         break;
-        
+
       case 'total':
       default:
         // 总榜：所有时间的数据
@@ -1054,7 +1072,7 @@ exports.getLeaderboard = functions.https.onCall(async (data, context) => {
     snapshot.forEach((doc) => {
       const userData = doc.data();
       const userElo = userData.elo || 1200;
-      
+
       leaderboard.push({
         rank: rank++,
         userId: doc.id,
@@ -1226,7 +1244,7 @@ async function getUserRankInLeaderboard(userId, userElo, leaderboardType) {
   try {
     let query;
     const now = new Date();
-    
+
     switch (leaderboardType) {
       case 'daily':
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1235,7 +1253,7 @@ async function getUserRankInLeaderboard(userId, userElo, leaderboardType) {
             .where('elo', '>', userElo)
             .orderBy('elo', 'desc');
         break;
-        
+
       case 'weekly':
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
@@ -1245,7 +1263,7 @@ async function getUserRankInLeaderboard(userId, userElo, leaderboardType) {
             .where('elo', '>', userElo)
             .orderBy('elo', 'desc');
         break;
-        
+
       case 'monthly':
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         query = db.collection('users')
@@ -1253,7 +1271,7 @@ async function getUserRankInLeaderboard(userId, userElo, leaderboardType) {
             .where('elo', '>', userElo)
             .orderBy('elo', 'desc');
         break;
-        
+
       case 'total':
       default:
         query = db.collection('users')
@@ -1342,7 +1360,7 @@ exports.getLadderDistribution = functions.https.onCall(async (data, context) => 
       const userData = doc.data();
       const elo = userData.elo || 1200;
       const tier = getLadderTier(elo).tier;
-      
+
       distribution[tier]++;
       totalPlayers++;
     });
@@ -1352,7 +1370,7 @@ exports.getLadderDistribution = functions.https.onCall(async (data, context) => 
     Object.keys(distribution).forEach((tier) => {
       distributionWithPercentage[tier] = {
         count: distribution[tier],
-        percentage: totalPlayers > 0 ? 
+        percentage: totalPlayers > 0 ?
           Math.round((distribution[tier] / totalPlayers) * 100) : 0,
       };
     });
@@ -1378,7 +1396,7 @@ exports.getLadderDistribution = functions.https.onCall(async (data, context) => 
 exports.updateLeaderboardCache = functions.https.onCall(async (data, context) => {
   // 这个函数可以用于定期更新排行榜缓存
   // 或者在游戏结束后调用来更新相关排行榜
-  
+
   if (!context.auth) {
     throw new functions.https.HttpsError(
         'unauthenticated',
@@ -1389,7 +1407,7 @@ exports.updateLeaderboardCache = functions.https.onCall(async (data, context) =>
   try {
     const now = new Date();
     const leaderboardTypes = ['total', 'daily', 'weekly', 'monthly'];
-    
+
     for (const type of leaderboardTypes) {
       // 获取前100名并缓存
       const leaderboardData = await exports.getLeaderboard({
@@ -1397,7 +1415,7 @@ exports.updateLeaderboardCache = functions.https.onCall(async (data, context) =>
         limit: 100,
         offset: 0,
       }, context);
-      
+
       // 将数据存储到缓存集合
       await db.collection('leaderboardCache').doc(type).set({
         data: leaderboardData.leaderboard,
@@ -1420,5 +1438,77 @@ exports.updateLeaderboardCache = functions.https.onCall(async (data, context) =>
     );
   }
 });
-// 新增排行榜功能
+
+/**
+ * 账号恢复 - 简化版本
+ * 直接返回用户信息，让客户端处理登录
+ */
+exports.recoverAccountByTransferCode = functions.https.onCall(
+    async (data, context) => {
+      console.log('=== recoverAccountByTransferCode Cloud Function 调用开始 ===');
+      console.log('原始传入 data 对象:', data);
+
+      const {transferCode} = data;
+
+      if (!transferCode) {
+        throw new functions.https.HttpsError(
+            'invalid-argument',
+            'Transfer code is required.',
+        );
+      }
+
+      try {
+        console.log('查找 transferCode:', transferCode);
+        
+        // 查找用户
+        const usersSnapshot = await db.collection('users')
+            .where('transferCode', '==', transferCode)
+            .limit(1)
+            .get();
+
+        if (usersSnapshot.empty) {
+          console.log('未找到对应的用户');
+          throw new functions.https.HttpsError(
+              'not-found',
+              'Invalid transfer code.',
+          );
+        }
+
+        const userDoc = usersSnapshot.docs[0];
+        const userData = userDoc.data();
+        const userId = userDoc.id;
+
+        console.log('找到用户:', userId, userData.username);
+
+        // 验证用户在 Firebase Auth 中是否存在
+        try {
+          const userRecord = await admin.auth().getUser(userId);
+          console.log('用户在 Firebase Auth 中存在');
+          
+          return {
+            success: true,
+            userId: userId,
+            username: userData.username,
+            transferCode: userData.transferCode,
+            // 不返回敏感信息
+          };
+        } catch (authError) {
+          console.error('用户在 Firebase Auth 中不存在:', authError);
+          throw new functions.https.HttpsError(
+              'not-found',
+              'User account not found in authentication system.',
+          );
+        }
+
+      } catch (error) {
+        console.error('Error recovering account:', error);
+        if (error instanceof functions.https.HttpsError) {
+          throw error;
+        }
+        throw new functions.https.HttpsError(
+            'internal',
+            'Unable to recover account.',
+        );
+      }
+    });
 

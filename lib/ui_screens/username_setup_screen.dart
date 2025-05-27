@@ -206,83 +206,108 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
 
   Future<void> _recoverAccount() async {
     final recoveryCode = _recoveryCodeController.text.trim();
-    final userAccountService = ref.read(userAccountServiceProvider);
     final authService = ref.read(authServiceProvider);
-    final functions = ref.read(
-      functionsProvider,
-    ); // Get FirebaseFunctions instance
+    final functions = ref.read(functionsProvider);
+
+    print("=== DEBUG: 开始账号恢复 ===");
+    print("DEBUG: 恢复代码: '$recoveryCode'");
 
     try {
-      final userId = await userAccountService.getUserIdByTransferCode(
-        recoveryCode,
-      );
-      if (userId == null) {
-        if (mounted) {
-          setState(() {
-            _errorText =
-                AppLocalizations.of(
-                  context,
-                )!.recoveryCodeInvalid; // Add this localization
-          });
-        }
-        return;
-      }
-
-      // Call Cloud Function to get custom token
-      final HttpsCallable callable = functions.httpsCallable(
-        'generateCustomAuthToken',
-      );
+      print("DEBUG: 调用 Cloud Function 验证恢复代码...");
+      
+      // 调用新的恢复函数
+      final HttpsCallable callable = functions.httpsCallable('recoverAccountByTransferCode');
       final response = await callable.call<Map<String, dynamic>>({
-        'uid': userId,
+        'transferCode': recoveryCode
       });
-      final customToken = response.data['token'] as String?;
-
-      if (customToken == null) {
+      
+      print("DEBUG: Cloud Function 调用成功");
+      print("DEBUG: 响应数据: ${response.data}");
+      
+      if (response.data['success'] == true) {
+        final userId = response.data['userId'] as String;
+        final username = response.data['username'] as String;
+        
+        print("DEBUG: 找到用户 - ID: $userId, 用户名: $username");
+        
+        // 显示确认对话框
         if (mounted) {
-          setState(() {
-            _errorText =
-                AppLocalizations.of(
-                  context,
-                )!.recoveryFailedError; // Add this localization
-          });
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('确认恢复账号'),
+              content: Text('找到账号：$username\n\n确定要恢复这个账号吗？'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('取消'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('确认恢复'),
+                ),
+              ],
+            ),
+          );
+          
+          if (confirmed == true) {
+            print("DEBUG: 用户确认恢复，开始重新登录流程...");
+            
+            // 先退出当前用户
+            await authService.signOut();
+            
+            // 重新匿名登录
+            final newUser = await authService.signInAnonymously();
+            if (newUser != null) {
+              print("DEBUG: 重新登录成功，刷新 providers...");
+              ref.refresh(usernameProvider);
+              ref.refresh(userProfileProvider);
+              
+              // 显示成功消息
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('账号恢复成功！欢迎回来，$username'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+              
+              print("DEBUG: 账号恢复完成");
+            } else {
+              throw Exception('重新登录失败');
+            }
+          }
         }
-        return;
-      }
-
-      // Sign in with custom token
-      final user = await authService.signInWithCustomToken(customToken);
-      if (user != null) {
-        ref.refresh(usernameProvider);
-        ref.refresh(userProfileProvider);
-        // GoRouter redirect should handle navigation
       } else {
-        if (mounted) {
-          setState(() {
-            _errorText =
-                AppLocalizations.of(
-                  context,
-                )!.recoverySignInFailed; // Add this localization
-          });
-        }
+        throw Exception('恢复失败');
       }
+      
     } on FirebaseFunctionsException catch (e) {
+      print("=== DEBUG: FirebaseFunctionsException 捕获 ===");
+      print("DEBUG: 错误代码: ${e.code}");
+      print("DEBUG: 错误消息: ${e.message}");
+      
       if (mounted) {
         setState(() {
-          _errorText =
-              "${AppLocalizations.of(context)!.recoveryFailedError}: ${e.message}";
+          if (e.code == 'not-found') {
+            _errorText = '恢复代码无效，请检查后重试';
+          } else {
+            _errorText = "恢复失败: ${e.message}";
+          }
         });
       }
-      print(
-        "FirebaseFunctionsException in _recoverAccount: ${e.code} - ${e.message}",
-      );
     } catch (e) {
+      print("=== DEBUG: 通用异常捕获 ===");
+      print("DEBUG: 异常消息: $e");
+      
       if (mounted) {
         setState(() {
-          _errorText = AppLocalizations.of(context)!.genericError;
+          _errorText = "恢复失败: $e";
         });
       }
-      print("Error in _recoverAccount: $e");
     } finally {
+      print("DEBUG: _recoverAccount 方法结束");
       if (mounted) {
         setState(() {
           _isLoading = false;
