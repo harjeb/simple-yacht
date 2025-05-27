@@ -8,8 +8,9 @@ import 'package:myapp/generated/app_localizations.dart'; // Import generated loc
 import 'package:myapp/widgets/game_over_dialog.dart'; // Import the GameOverDialog
 import 'package:myapp/state_management/providers/leaderboard_providers.dart';
 import 'package:myapp/state_management/providers/user_providers.dart';
-import 'package:myapp/services/local_storage_service.dart'; // Ensure this is imported
+// import 'package:myapp/services/local_storage_service.dart'; // No longer needed, provider is central
 import 'package:myapp/services/leaderboard_service.dart'; // Ensure this is imported
+import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
 
 
 class GameScreen extends ConsumerWidget {

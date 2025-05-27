@@ -5,6 +5,11 @@ import 'package:myapp/core_logic/score_entry.dart'; // Import ScoreEntry
 class LocalStorageService {
   static const String _leaderboardKey = 'leaderboard';
   static const String _usernameKey = 'username';
+  static const String _transferCodeKey = 'transfer_code';
+  static const String _uidKey = 'user_uid';
+  static const String _gameSettingsKey = 'game_settings';
+  static const String _cachedGameStatesKey = 'cached_game_states';
+  static const String _eloRatingKey = 'elo_rating'; // ELO rating from productContext
 
   // --- Leaderboard Methods ---
 
@@ -43,8 +48,15 @@ class LocalStorageService {
 
   Future<void> clearAllUserData() async {
     final prefs = await SharedPreferences.getInstance();
+    print('LocalStorageService: Clearing all user-specific data.'); // Log as per pseudocode
     await prefs.remove(_usernameKey);
     await prefs.remove(_leaderboardKey);
-    // Add any other user-specific keys here if they exist
+    await prefs.remove(_transferCodeKey);
+    await prefs.remove(_uidKey);
+    await prefs.remove(_gameSettingsKey);
+    await prefs.remove(_cachedGameStatesKey);
+    await prefs.remove(_eloRatingKey);
+    // Add any other user-specific keys here if they are introduced later
+    print('LocalStorageService: All user-specific data cleared.'); // Log as per pseudocode
   }
 }

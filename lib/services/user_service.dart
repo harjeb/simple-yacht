@@ -3,8 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // Correct package import
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:myapp/services/auth_service.dart'; // For firebaseAuthProvider and authServiceProvider
-import 'package:myapp/services/local_storage_service.dart'; // For LocalStorageService
+// import 'package:myapp/services/auth_service.dart'; // No longer needed for providers here
+// import 'package:myapp/services/local_storage_service.dart'; // No longer needed for provider here
+import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
+import 'package:myapp/services/auth_service.dart'; // Still needed for AuthService class if used directly
+import 'package:myapp/services/local_storage_service.dart'; // Still needed for LocalStorageService class if used directly
+
 
 // Provider for FirebaseFirestore instance
 final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
@@ -15,16 +19,15 @@ final functionsProvider = Provider<FirebaseFunctions>((ref) { // Use FirebaseFun
   return FirebaseFunctions.instance; // Use FirebaseFunctions.instance
 });
 
-// Provider for LocalStorageService
-final localStorageServiceProvider = Provider<LocalStorageService>((ref) => LocalStorageService());
+// Provider for LocalStorageService - MOVED to service_providers.dart
 
 final userAccountServiceProvider = Provider<UserAccountService>((ref) {
   return UserAccountService(
-    ref.watch(firebaseAuthProvider), // For current user
+    ref.watch(firebaseAuthProvider), // Now from service_providers.dart
     ref.watch(firestoreProvider),
     ref.watch(functionsProvider),
-    ref.watch(authServiceProvider), // For signOut
-    ref.watch(localStorageServiceProvider), // For clearing local cache
+    ref.watch(authServiceProvider), // Now from service_providers.dart
+    ref.watch(localStorageServiceProvider), // Now from service_providers.dart
   );
 });
 

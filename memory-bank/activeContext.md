@@ -6,6 +6,7 @@
 *
 
 ## Current Focus
+* [2025-05-27 01:50:15] - **架构设计 (“清空本地数据”功能):** 根据用户请求和 `spec-pseudocode` 模式提供的规范，设计了新的“清空本地数据”功能。此功能允许用户清除设备本地的账户信息，而不影响服务器上的账户数据。明确了其在 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:1)、[`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 和状态管理中的实现细节。
 * [2025-05-26 19:50:00] - **代码实现 (新游戏流程错误修复):** 完成了“进入新游戏后不显示任何画面”错误的修复。关键更改包括：在 `GameState` 中添加 `initial()` 工厂构造函数，更新 `GameStateNotifier` 以使用此构造函数，增强 `GameScreen` 的健壮性以处理无效游戏状态，并为 `GameScreenRoute` 添加导航守卫。同时修复了由此产生的编译错误和本地化文件格式问题。
 * [2025-05-26 13:34:00] - **架构更新 (新游戏流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以解决“新游戏不显示任何画面”的错误。重点关注游戏状态 (`GameState`) 的正确初始化 (使用 `GameState.initial()`)，[`GameScreen`](lib/ui_screens/game_screen.dart:1) 基于 `isGameInProgress` 和 `gameOver` 的渲染逻辑，以及 [`AppRouter`](lib/navigation/app_router.dart:1) 中相关的导航守卫。
 * [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新 (账号删除流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为，包括用户登出、本地数据清除 ([`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44))、应用状态重置 (Riverpod Providers) 以及导航至初始屏幕 ([`/splash`](lib/ui_screens/splash_screen.dart:1))。

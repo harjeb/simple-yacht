@@ -95,6 +95,10 @@ This file tracks the project's progress using a task list format.
 * [2025-05-24 13:07:00] - **规范已定义并通过审查:** 修复“游戏结束后排行榜未显示成绩”的问题。解决方案涉及修改 [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1) 以在游戏结束时保存分数到排行榜。
 * [2025-05-25 04:45:19] - [In Progress] Migrate Firebase Functions from TypeScript to JavaScript (Task: Convert TS to JS for Cloud Functions)
 ## Next Steps
+* [2025-05-27 01:51:30] - **实现“清空本地数据”功能:**
+    *   在 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:1) 中实现 `clearAllUserData()` 方法及其依赖的各个清除函数。
+    *   在 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 中添加“清空本地数据”按钮、确认对话框和处理逻辑，包括调用服务、重置 Provider 和导航。
+    *   确保所有相关的用户特定 Riverpod Provider 都能被正确重置。
 * [2025-05-24 14:55:00] - **翻译任务评估:** 评估了项目中未完成翻译对架构的影响。影响很小，主要集中在本地化文件。目标语言：德语 (de), 西班牙语 (es), 法语 (fr), 日语 (ja), 俄语 (ru)。需要翻译/更新多个现有键，并添加和翻译多个新键到相应的 `.arb` 文件。
 
 * [2025-05-24 12:43:48] - **Architecture Definition:** Define architecture for "Continue Game" button bug fix and "Display Username on Home Screen" enhancement. (This task)
@@ -207,3 +211,15 @@ The rules file was already up to date.
 - 2025-05-26 13:52:01 UTC: 开始更新新游戏启动流程和游戏状态管理的文档。
 
 - 2025-05-26 13:54:49 UTC: 完成更新新游戏启动流程和游戏状态管理的文档。审查确认 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 已是最新状态。更新了 [`memory-bank/activeContext.md`](memory-bank/activeContext.md:1)。
+
+## 2025-05-27 02:20:02 UTC - 文档更新开始
+- **任务:** 更新用户文档/FAQ和开发者文档，以反映“清空本地数据”功能和“引继码”在账户删除后的行为。
+- **状态:** 进行中
+
+## 2025-05-27 02:21:23 UTC - 文档更新完成
+- **任务:** 更新用户文档/FAQ和开发者文档，以反映“清空本地数据”功能和“引继码”在账户删除后的行为。
+- **已完成:**
+    - 创建了用户指南 [`user_guide.md`](user_guide.md)
+    - 创建了开发者说明 [`developer_notes.md`](developer_notes.md)
+    - 更新了 [`memory-bank/productContext.md`](memory-bank/productContext.md:1) 中关于引继码和清空本地数据功能的描述。
+- **状态:** 完成

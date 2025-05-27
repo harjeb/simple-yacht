@@ -5,8 +5,9 @@ import 'package:myapp/services/leaderboard_service.dart';
 // import 'package:myapp/services/local_storage_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:firebase_auth/firebase_auth.dart';   // Import FirebaseAuth
-import 'package:myapp/services/auth_service.dart';     // For firebaseAuthProvider (provides FirebaseAuth instance)
+// import 'package:myapp/services/auth_service.dart';     // No longer needed for provider here
 import 'package:myapp/services/user_service.dart';     // For firestoreProvider (provides FirebaseFirestore instance)
+import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
 
 
 // Provider for LeaderboardService

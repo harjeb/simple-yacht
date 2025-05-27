@@ -722,6 +722,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid game state. Redirecting to home...'**
   String get invalidGameStateRedirecting;
+
+  /// Title for the clear local data confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Local Data?'**
+  String get clearLocalDataDialogTitle;
+
+  /// Content/warning message for the clear local data confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'This action will remove your account information, game progress, and settings from this device. Your account itself will not be deleted, and you can still recover it using your recovery code on any device. Are you sure you want to proceed?'**
+  String get clearLocalDataDialogContent;
+
+  /// Label for the confirm clear button in the clear local data dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Clear'**
+  String get confirmClearButtonLabel;
+
+  /// Label for the button to clear local account data.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Account Data on This Device'**
+  String get clearLocalDataButtonLabel;
+
+  /// Snackbar message when local data clearing is successful.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data has been successfully cleared.'**
+  String get clearLocalDataSuccessMessage;
+
+  /// Snackbar message when local data clearing fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to clear local data'**
+  String get clearLocalDataErrorMessage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

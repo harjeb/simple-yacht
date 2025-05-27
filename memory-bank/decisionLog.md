@@ -7,6 +7,27 @@ This file records architectural and implementation decisions using a list format
 
 ---
 ### Decision
+[2025-05-27 01:50:28] - 采纳新的“清空本地数据”功能及其设计规范。
+
+**Rationale:**
+用户请求增加一项功能，允许用户清除设备本地存储的账户数据，而不删除服务器上的实际账户。此功能为用户提供了对其设备上数据的更大控制权，并与现有的“删除账户”（会删除所有后端数据）功能形成明确区分。`spec-pseudocode` 模式提供的规范和伪代码清晰地定义了此功能的行为、UI 考量和服务层实现，与现有项目架构兼容。
+
+**Implications/Details:**
+*   **服务层 ([`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:1)):**
+    *   将实现一个新的公共方法 `clearAllUserData()`，该方法会调用多个私有方法来清除所有本地存储的用户特定数据（如用户名、设置、缓存的引继码、UID、本地游戏进度等）。
+*   **服务层 ([`lib/services/auth_service.dart`](lib/services/auth_service.dart:1)):**
+    *   将使用现有的 `signOut()` 方法来登出用户。
+*   **状态管理层 ([`lib/state_management/providers/`](lib/state_management/providers/)):**
+    *   将实现一个 `resetUserSpecificProviders(ref)` 的过程，用于在数据清除和登出后，使所有用户相关的 Riverpod Provider（如 `userProvider`, `usernameProvider` 等）失效并重置其状态。
+*   **UI 层 ([`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1)):**
+    *   将在“账户管理”部分添加一个新的按钮，标签为“清空此设备上的账户数据”或类似表述。
+    *   该按钮将与“删除账户”按钮有视觉区分。
+    *   操作前会显示一个确认对话框，明确告知用户此操作仅影响本地数据，账户仍可通过引继码恢复。
+    *   确认后，将调用 `LocalStorageService.clearAllUserData()`，然后调用 `AuthService.signOut()`，接着重置相关 Riverpod Provider，最后导航到初始屏幕 (如 [`/splash`](lib/ui_screens/splash_screen.dart:1)) 并清除导航堆栈。
+*   **后端交互:** 此操作不与后端发生任何交互，不会删除服务器上的数据。
+*   **引继码行为:** 清除本地数据后，用户仍可使用其引继码恢复账户。
+---
+### Decision
 [2025-05-26 13:34:00] - 采纳基于伪代码分析的架构更新，以解决“新游戏不显示任何画面”的错误。
 
 **Rationale:**

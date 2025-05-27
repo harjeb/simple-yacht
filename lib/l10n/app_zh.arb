@@ -313,5 +313,29 @@
   "invalidGameStateRedirecting": "无效的游戏状态。正在重定向到主页...",
   "@invalidGameStateRedirecting": {
     "description": "当游戏状态无效并且用户被重定向到主屏幕时显示的消息。"
+  },
+  "clearLocalDataDialogTitle": "清空本地数据？",
+  "@clearLocalDataDialogTitle": {
+    "description": "清空本地数据确认对话框的标题。"
+  },
+  "clearLocalDataDialogContent": "此操作将从此设备上移除您的账户信息、游戏进度和设置。您的账户本身不会被删除，您仍可以使用引继码在任何设备上恢复它。确定要继续吗？",
+  "@clearLocalDataDialogContent": {
+    "description": "清空本地数据确认对话框的内容/警告消息。"
+  },
+  "confirmClearButtonLabel": "确认清除",
+  "@confirmClearButtonLabel": {
+    "description": "清空本地数据对话框中确认清除按钮的标签。"
+  },
+  "clearLocalDataButtonLabel": "清空此设备上的账户数据",
+  "@clearLocalDataButtonLabel": {
+    "description": "清空本地账户数据按钮的标签。"
+  },
+  "clearLocalDataSuccessMessage": "本地数据已成功清除。",
+  "@clearLocalDataSuccessMessage": {
+    "description": "本地数据清除成功后的提示消息。"
+  },
+  "clearLocalDataErrorMessage": "清除本地数据失败",
+  "@clearLocalDataErrorMessage": {
+    "description": "本地数据清除失败时的提示消息。"
   }
 }

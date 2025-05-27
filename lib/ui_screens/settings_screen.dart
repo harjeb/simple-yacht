@@ -6,8 +6,13 @@ import 'package:myapp/state_management/providers/locale_provider.dart';
 import 'package:myapp/generated/app_localizations.dart';
 import 'package:myapp/state_management/providers/user_providers.dart'; // For userProfileProvider and usernameProvider
 import 'package:myapp/services/user_service.dart'; // For userAccountServiceProvider
+// import 'package:myapp/services/local_storage_service.dart'; // No longer needed, provider is central
+// import 'package:myapp/services/auth_service.dart'; // No longer needed, provider is central
+import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
 // It's good practice to also invalidate game state if any exists
 import 'package:myapp/state_management/providers/game_providers.dart';
+import 'package:myapp/state_management/providers/leaderboard_providers.dart'; // Added for leaderboard reset
+import 'package:myapp/state_management/providers/personal_best_score_provider.dart'; // Added for personal best score reset
 
 
 class SettingsScreen extends ConsumerWidget {
@@ -65,6 +70,89 @@ class SettingsScreen extends ConsumerWidget {
         }
       }
     }
+  }
+
+  Future<void> _showConfirmationDialogForClearLocalData(BuildContext context, WidgetRef ref) async {
+    final localizations = AppLocalizations.of(context)!;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(localizations.clearLocalDataDialogTitle), // New localization
+          content: Text(localizations.clearLocalDataDialogContent), // New localization
+          actions: <Widget>[
+            TextButton(
+              child: Text(MaterialLocalizations.of(dialogContext).cancelButtonLabel),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+            ),
+            TextButton(
+              child: Text(localizations.confirmClearButtonLabel), // New localization
+              style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              }
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      // ignore: use_build_context_synchronously
+      _handleClearLocalData(context, ref);
+    }
+  }
+
+  Future<void> _handleClearLocalData(BuildContext context, WidgetRef ref) async {
+    final localizations = AppLocalizations.of(context)!;
+    // Show loading indicator if needed, though operations are quick
+    // ref.read(isLoadingProvider.notifier).state = true;
+
+    try {
+      final localStorageService = ref.read(localStorageServiceProvider); // Assuming this provider exists
+      await localStorageService.clearAllUserData();
+
+      final authService = ref.read(authServiceProvider); // Assuming this provider exists
+      await authService.signOut();
+
+      // Reset user-specific providers
+      _resetUserSpecificProviders(ref);
+
+      if (context.mounted) {
+        GoRouter.of(context).go('/splash');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.clearLocalDataSuccessMessage)), // New localization
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${localizations.clearLocalDataErrorMessage}: ${e.toString()}')), // New localization
+        );
+      }
+    } finally {
+      // ref.read(isLoadingProvider.notifier).state = false;
+    }
+  }
+
+  void _resetUserSpecificProviders(WidgetRef ref) {
+    print('Resetting user-specific Riverpod providers.');
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(usernameProvider);
+    ref.invalidate(leaderboardProvider); // For local leaderboard
+    ref.invalidate(personalBestScoreProvider); // For personal best score
+    // Invalidate other providers based on what's cleared in LocalStorageService
+    // e.g., if transferCodeProvider, uidProvider, gameSettingsProvider, eloRatingProvider exist
+    // ref.invalidate(transferCodeProvider);
+    // ref.invalidate(uidProvider);
+    // ref.invalidate(gameSettingsProvider);
+    // ref.invalidate(eloRatingProvider);
+    
+    // Game related state
+    ref.invalidate(isGameOverProvider);
+    ref.invalidate(gameStateProvider);
+    // ref.invalidate(cachedGameStatesProvider); // If such a provider exists for cached game states
+    print('User-specific Riverpod providers reset.');
   }
 
   @override
@@ -155,6 +243,16 @@ class SettingsScreen extends ConsumerWidget {
             error: (err, stack) => Text(l10n.genericError), // Using genericError now
           ),
           const SizedBox(height: 30),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.cleaning_services), // Or a different icon
+            label: Text(l10n.clearLocalDataButtonLabel), // New localization
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.surfaceVariant, // A less destructive color
+              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            onPressed: () => _showConfirmationDialogForClearLocalData(context, ref),
+          ),
+          const SizedBox(height: 16), // Spacing between buttons
           ElevatedButton.icon(
             icon: const Icon(Icons.delete_forever),
             label: Text(l10n.deleteAccountButtonLabel), // New localization

@@ -334,4 +334,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get invalidGameStateRedirecting => '无效的游戏状态。正在重定向到主页...';
+
+  @override
+  String get clearLocalDataDialogTitle => '清空本地数据？';
+
+  @override
+  String get clearLocalDataDialogContent => '此操作将从此设备上移除您的账户信息、游戏进度和设置。您的账户本身不会被删除，您仍可以使用引继码在任何设备上恢复它。确定要继续吗？';
+
+  @override
+  String get confirmClearButtonLabel => '确认清除';
+
+  @override
+  String get clearLocalDataButtonLabel => '清空此设备上的账户数据';
+
+  @override
+  String get clearLocalDataSuccessMessage => '本地数据已成功清除。';
+
+  @override
+  String get clearLocalDataErrorMessage => '清除本地数据失败';
 }

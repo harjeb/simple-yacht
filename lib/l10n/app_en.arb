@@ -313,5 +313,29 @@
   "invalidGameStateRedirecting": "Invalid game state. Redirecting to home...",
   "@invalidGameStateRedirecting": {
     "description": "Message shown when the game state is invalid and the user is redirected to the home screen."
+  },
+  "clearLocalDataDialogTitle": "Clear Local Data?",
+  "@clearLocalDataDialogTitle": {
+    "description": "Title for the clear local data confirmation dialog."
+  },
+  "clearLocalDataDialogContent": "This action will remove your account information, game progress, and settings from this device. Your account itself will not be deleted, and you can still recover it using your recovery code on any device. Are you sure you want to proceed?",
+  "@clearLocalDataDialogContent": {
+    "description": "Content/warning message for the clear local data confirmation dialog."
+  },
+  "confirmClearButtonLabel": "Confirm Clear",
+  "@confirmClearButtonLabel": {
+    "description": "Label for the confirm clear button in the clear local data dialog."
+  },
+  "clearLocalDataButtonLabel": "Clear Account Data on This Device",
+  "@clearLocalDataButtonLabel": {
+    "description": "Label for the button to clear local account data."
+  },
+  "clearLocalDataSuccessMessage": "Local data has been successfully cleared.",
+  "@clearLocalDataSuccessMessage": {
+    "description": "Snackbar message when local data clearing is successful."
+  },
+  "clearLocalDataErrorMessage": "Failed to clear local data",
+  "@clearLocalDataErrorMessage": {
+    "description": "Snackbar message when local data clearing fails."
   }
 }

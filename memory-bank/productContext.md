@@ -24,7 +24,14 @@ This file provides a high-level overview of the project and the expected product
     *   Dice rolling animation on reset/roll.
 *   **User Identification & Data Persistence:**
     *   Mandatory username setup on first application launch for personalization and leaderboard display.
-    *   **Transfer Code System:** A unique 18-character alphanumeric code is generated for each user. This code allows users to restore their account, including username, high scores, ELO rating, and other game data, on a new device or after reinstalling the app. The transfer code is linked to an anonymous Firebase Authentication UID.
+    *   **Transfer Code System (引继码):** A unique 18-character alphanumeric code is generated for each user. This code allows users to restore their account, including username, high scores, ELO rating, and other game data, on a new device or after reinstalling the app. The transfer code is linked to an anonymous Firebase Authentication UID. **Important: If an account is deleted from the server, its associated transfer code becomes immediately invalid.**
+    *   **Clear Local Data Feature (清空本地数据):**
+        *   **Purpose:** Allows users to clear all locally stored account-related data (e.g., username, settings, local game progress, cached transfer code, UID) from the current device.
+        *   **Effect:** The user is logged out on the device, the application's state is reset to its initial configuration, and the user is navigated to the initial screen. **This action does not delete the account from the server.**
+        *   **Recovery:** The user can still recover their account on any device using a valid transfer code.
+        *   **Location:** Found in the app's "Settings" screen, typically labeled "清空此设备上的账户数据" (or its localized equivalent).
+        *   **Interaction:** A confirmation dialog is displayed before execution, clarifying that only local data is affected and the server account remains intact and recoverable via transfer code.
+        *   This is distinct from "Delete Account," which removes data from both local storage and the server (rendering the transfer code invalid).
 *   **Two-Player Mode Details:**
     *   Random matchmaking.
     *   Friend battle mode.
@@ -49,3 +56,4 @@ This file provides a high-level overview of the project and the expected product
 * Backend for networking features (matchmaking, leaderboards, ELO) is implemented using Firebase services.
 
 2025-05-24 14:03:00 - Updated Key Features and Overall Architecture to reflect Firebase integration and Transfer Code system.
+2025-05-27 02:21:00 - Updated "Transfer Code System" to clarify invalidation on account deletion. Enhanced "Clear Local Data Feature" with details on purpose, effect, recovery, location, and interaction.

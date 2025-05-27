@@ -9,9 +9,9 @@
 ### 2.1. 关键模块/目录结构
 *   `lib/core_logic/`: 核心游戏逻辑 (例如 `game_state.dart`, `dice_roller.dart`, `scoring_rules.dart`)。
 *   `lib/models/`: 数据模型 (例如 `user_profile.dart`, `score_entry.dart`)。
-*   `lib/services/`: 服务层，处理外部交互 (例如 [`auth_service.dart`](lib/services/auth_service.dart:1), [`user_service.dart`](lib/services/user_service.dart:1), [`leaderboard_service.dart`](lib/services/leaderboard_service.dart:1), [`local_storage_service.dart`](lib/services/local_storage_service.dart:1))。[`UserService`](lib/services/user_service.dart:1) 负责协调账号删除流程，确保在后端删除成功后，调用 [`AuthService.signOut()`](lib/services/auth_service.dart:1) 进行登出，调用 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 清除本地数据，并触发客户端状态的重置。
+*   `lib/services/`: 服务层，处理外部交互 (例如 [`auth_service.dart`](lib/services/auth_service.dart:1), [`user_service.dart`](lib/services/user_service.dart:1), [`leaderboard_service.dart`](lib/services/leaderboard_service.dart:1), [`local_storage_service.dart`](lib/services/local_storage_service.dart:1))。[`UserService`](lib/services/user_service.dart:1) 负责协调账号删除流程。[`LocalStorageService`](lib/services/local_storage_service.dart:1) 包含 `clearAllUserData()` 方法用于清除所有本地用户数据。
 *   `lib/state_management/`: Riverpod providers 和 notifiers。
-*   `lib/ui_screens/`: 应用的主要屏幕。
+*   `lib/ui_screens/`: 应用的主要屏幕。[`SettingsScreen`](lib/ui_screens/settings_screen.dart:1) 将包含“清空本地数据”按钮及其处理逻辑。
 *   `lib/widgets/`: 可重用的 UI 组件。
 *   `lib/navigation/`: GoRouter 配置 (`app_router.dart`)。
 *   `lib/l10n/`: 本地化文件 (`.arb` 文件)。
@@ -131,6 +131,41 @@
 4.  **`GameScreen` 渲染:** [`GameScreen`](lib/ui_screens/game_screen.dart:1) 读取已正确初始化的 `GameState` 并渲染游戏界面。由于 `isGameInProgress` 为 `true`，游戏界面会正常显示。
 
 这个流程确保了每次开始新游戏时，都有一个干净、独立的游戏状态，避免了之前游戏会话的数据干扰。
+
+### 2.8. 清空本地数据功能
+
+此功能允许用户从当前设备清除所有本地存储的账户相关数据，而不删除后端服务器上的实际账户。用户仍可通过引继码恢复账户。
+
+**流程:**
+
+1.  **用户触发 (UI - [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1)):**
+    *   用户在设置屏幕点击“清空此设备上的账户数据”按钮。
+    *   显示确认对话框，解释操作后果（仅本地数据，账户可恢复）。
+2.  **确认操作:**
+    *   用户确认清除。
+3.  **执行清除 (UI 调用服务层):**
+    *   `isLoading` 状态设置为 `true`。
+    *   调用 `ref.read(localStorageServiceProvider).clearAllUserData()`。
+        *   **[`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:1):** 此方法将调用内部的各个具体清除方法，例如 `clearUsername()`, `clearTransferCode()`, `clearUID()`, `clearGameSettings()` 等，以删除所有存储在 `shared_preferences` 或其他本地存储中的用户数据。
+    *   调用 `ref.read(authServiceProvider).signOut()`。
+        *   **[`AuthService.signOut()`](lib/services/auth_service.dart:1):** 清除 Firebase Authentication 的本地会话。
+    *   调用 `resetUserSpecificProviders(ref)` (一个在 UI 层或状态管理层定义的辅助函数)。
+        *   **`resetUserSpecificProviders(ref)`:** 使所有用户相关的 Riverpod Provider（如 `userProvider`, `usernameProvider`, `personalBestScoreProvider` 等）失效 (`ref.invalidate()`)，确保它们在下次读取时重置为初始状态。
+4.  **导航:**
+    *   使用 `GoRouter.of(context).go('/splash')` (或类似方法) 导航到初始屏幕，并清除导航堆栈。
+5.  **用户反馈:**
+    *   显示操作成功的提示信息 (例如 Snackbar)。
+    *   `isLoading` 状态设置为 `false`。
+6.  **错误处理:**
+    *   在 `try-catch` 块中执行上述操作，捕获任何潜在错误。
+    *   如果发生错误，显示错误提示信息 (例如 Snackbar)。
+    *   确保 `isLoading` 状态在 `finally` 块中设置为 `false`。
+
+**关键点:**
+
+*   **无后端交互:** 此操作纯粹是客户端行为，不与 Firebase 后端通信以删除数据。
+*   **数据可恢复性:** 用户的账户在服务器上保持不变，可以通过引继码在任何设备上恢复。
+*   **与账户删除的区别:** “账户删除”功能会调用后端 Cloud Function 删除服务器数据和 Firebase Auth 用户记录，是永久性操作。
 
 ## 3. 后端架构 (Firebase)
 

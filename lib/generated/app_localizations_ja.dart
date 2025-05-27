@@ -334,4 +334,22 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get invalidGameStateRedirecting => '無効なゲーム状態です。ホームにリダイレクトしています... (NEEDS JA TRANSLATION)';
+
+  @override
+  String get clearLocalDataDialogTitle => 'Clear Local Data?';
+
+  @override
+  String get clearLocalDataDialogContent => 'This action will remove your account information, game progress, and settings from this device. Your account itself will not be deleted, and you can still recover it using your recovery code on any device. Are you sure you want to proceed?';
+
+  @override
+  String get confirmClearButtonLabel => 'Confirm Clear';
+
+  @override
+  String get clearLocalDataButtonLabel => 'Clear Account Data on This Device';
+
+  @override
+  String get clearLocalDataSuccessMessage => 'Local data has been successfully cleared.';
+
+  @override
+  String get clearLocalDataErrorMessage => 'Failed to clear local data';
 }
