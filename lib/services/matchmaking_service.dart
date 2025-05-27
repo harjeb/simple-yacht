@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import '../models/matchmaking_queue.dart';
 import '../models/game_room.dart';
+import '../models/game_enums.dart';
 
 class MatchmakingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -225,24 +225,24 @@ class MatchmakingService {
     final opponentName = opponentDoc.exists ? opponentDoc.data()?['displayName'] ?? '玩家2' : '玩家2';
 
     final gameRoom = GameRoom(
-      roomId: roomId,
+      id: roomId,
       hostId: user.uid,
-      playerIds: [user.uid, opponentId],
-      playerNames: [userName, opponentName],
-      status: GameRoomStatus.ready,
-      gameMode: GameMode.casual,
-      maxPlayers: 2,
+      guestId: opponentId,
+      gameMode: GameMode.multiplayer,
+      status: GameRoomStatus.waiting,
       createdAt: DateTime.now(),
-      gameSettings: {
+      gameState: {
         'timeLimit': 15 * 60 * 1000, // 15分钟
         'rounds': 13,
+        'hostName': userName,
+        'guestName': opponentName,
       },
     );
 
     await _firestore
         .collection('gameRooms')
         .doc(roomId)
-        .set(gameRoom.toFirestore());
+        .set(gameRoom.toMap());
 
     return roomId;
   }

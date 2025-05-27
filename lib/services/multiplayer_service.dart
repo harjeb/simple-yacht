@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/game_room.dart';
+import '../models/game_enums.dart';
 import '../models/multiplayer_game_state.dart';
 import '../core_logic/game_state.dart';
 
@@ -12,7 +14,6 @@ class MultiplayerService {
   // 创建游戏房间
   Future<String> createRoom({
     required GameMode gameMode,
-    int maxPlayers = 2,
     Map<String, dynamic>? gameSettings,
   }) async {
     final user = _auth.currentUser;
@@ -27,24 +28,22 @@ class MultiplayerService {
     final roomId = _generateRoomCode();
     
     final gameRoom = GameRoom(
-      roomId: roomId,
+      id: roomId,
       hostId: user.uid,
-      playerIds: [user.uid],
-      playerNames: [userName],
-      status: GameRoomStatus.waiting,
       gameMode: gameMode,
-      maxPlayers: maxPlayers,
+      status: GameRoomStatus.waiting,
       createdAt: DateTime.now(),
-      gameSettings: gameSettings ?? {
+      gameState: gameSettings ?? {
         'timeLimit': 15 * 60 * 1000, // 15分钟
         'rounds': 13,
+        'hostName': userName,
       },
     );
 
     await _firestore
         .collection('gameRooms')
         .doc(roomId)
-        .set(gameRoom.toFirestore());
+        .set(gameRoom.toMap());
 
     return roomId;
   }
@@ -79,20 +78,17 @@ class MultiplayerService {
         ? userDoc.data()?['displayName'] ?? '未知用户'
         : '未知用户';
 
-    // 更新房间信息
-    final updatedPlayerIds = [...room.playerIds, user.uid];
-    final updatedPlayerNames = [...room.playerNames, userName];
-    final newStatus = updatedPlayerIds.length >= room.maxPlayers 
-        ? GameRoomStatus.ready 
-        : GameRoomStatus.waiting;
+    // 更新房间信息 - 添加客人
+    final updatedGameState = Map<String, dynamic>.from(room.gameState ?? {});
+    updatedGameState['guestName'] = userName;
 
     await _firestore
         .collection('gameRooms')
         .doc(roomId)
         .update({
-      'playerIds': updatedPlayerIds,
-      'playerNames': updatedPlayerNames,
-      'status': newStatus.toString().split('.').last,
+      'guestId': user.uid,
+      'status': GameRoomStatus.waiting.name,
+      'gameState': updatedGameState,
     });
 
     return true;
@@ -114,34 +110,21 @@ class MultiplayerService {
 
     if (!room.containsPlayer(user.uid)) return;
 
-    final updatedPlayerIds = room.playerIds.where((id) => id != user.uid).toList();
-    final updatedPlayerNames = [...room.playerNames];
-    
-    // 找到用户在列表中的位置并移除对应的名字
-    final userIndex = room.playerIds.indexOf(user.uid);
-    if (userIndex >= 0 && userIndex < updatedPlayerNames.length) {
-      updatedPlayerNames.removeAt(userIndex);
-    }
-
-    if (updatedPlayerIds.isEmpty) {
-      // 房间为空，删除房间
+    if (room.hostId == user.uid) {
+      // 房主离开，删除房间
       await _firestore.collection('gameRooms').doc(roomId).delete();
     } else {
-      // 更新房间信息
-      String newHostId = room.hostId;
-      if (room.hostId == user.uid) {
-        // 如果离开的是房主，选择新房主
-        newHostId = updatedPlayerIds.first;
-      }
+      // 客人离开，清除客人信息
+      final updatedGameState = Map<String, dynamic>.from(room.gameState ?? {});
+      updatedGameState.remove('guestName');
 
       await _firestore
           .collection('gameRooms')
           .doc(roomId)
           .update({
-        'hostId': newHostId,
-        'playerIds': updatedPlayerIds,
-        'playerNames': updatedPlayerNames,
-        'status': GameRoomStatus.waiting.toString().split('.').last,
+        'guestId': null,
+        'status': GameRoomStatus.waiting.name,
+        'gameState': updatedGameState,
       });
     }
   }
@@ -162,54 +145,39 @@ class MultiplayerService {
 
     final room = GameRoom.fromFirestore(roomDoc);
 
-    if (!room.isHost(user.uid)) {
+    if (room.hostId != user.uid) {
       throw Exception('只有房主可以开始游戏');
     }
 
-    if (room.status != GameRoomStatus.ready) {
-      throw Exception('房间状态不正确');
+    if (!room.canStart) {
+      throw Exception('房间状态不正确或玩家未满');
     }
 
-    // 创建多人游戏状态
-    final gameId = _generateGameId();
-    final multiplayerGame = MultiplayerGameState(
-      gameId: gameId,
-      playerIds: room.playerIds,
-      playerNames: Map.fromIterables(room.playerIds, room.playerNames),
-      status: MultiplayerGameStatus.waiting,
-      gameMode: room.gameMode.toString().split('.').last,
-      startTime: DateTime.now(),
-      timeLimit: room.gameSettings['timeLimit'] ?? 15 * 60 * 1000,
-      playerGameStates: {},
-      finalScores: {},
-      playerReady: Map.fromIterable(
-        room.playerIds,
-        key: (id) => id,
-        value: (_) => false,
-      ),
-      lastActivity: Map.fromIterable(
-        room.playerIds,
-        key: (id) => id,
-        value: (_) => DateTime.now(),
-      ),
-    );
-
-    // 保存多人游戏状态
-    await _firestore
-        .collection('multiplayerGames')
-        .doc(gameId)
-        .set(multiplayerGame.toFirestore());
-
-    // 更新房间状态
+    // 更新房间状态为游戏中
     await _firestore
         .collection('gameRooms')
         .doc(roomId)
         .update({
-      'status': GameRoomStatus.playing.toString().split('.').last,
-      'gameId': gameId,
+      'status': GameRoomStatus.playing.name,
+      'startedAt': FieldValue.serverTimestamp(),
     });
 
-    return gameId;
+    return roomId;
+  }
+
+  // 结束游戏
+  Future<void> finishGame(String roomId, Map<String, int> finalScores) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await _firestore
+        .collection('gameRooms')
+        .doc(roomId)
+        .update({
+      'status': GameRoomStatus.finished.name,
+      'finishedAt': FieldValue.serverTimestamp(),
+      'scores': finalScores,
+    });
   }
 
   // 监听游戏房间状态
@@ -224,102 +192,6 @@ class MultiplayerService {
     });
   }
 
-  // 监听多人游戏状态
-  Stream<MultiplayerGameState?> watchMultiplayerGame(String gameId) {
-    return _firestore
-        .collection('multiplayerGames')
-        .doc(gameId)
-        .snapshots()
-        .map((doc) {
-      if (!doc.exists) return null;
-      return MultiplayerGameState.fromFirestore(doc);
-    });
-  }
-
-  // 设置玩家准备状态
-  Future<void> setPlayerReady(String gameId, bool ready) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-
-    await _firestore
-        .collection('multiplayerGames')
-        .doc(gameId)
-        .update({
-      'playerReady.${user.uid}': ready,
-      'lastActivity.${user.uid}': FieldValue.serverTimestamp(),
-    });
-  }
-
-  // 更新玩家游戏状态
-  Future<void> updatePlayerGameState(String gameId, GameState gameState) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-
-    await _firestore
-        .collection('multiplayerGames')
-        .doc(gameId)
-        .update({
-      'playerGameStates.${user.uid}': gameState.toMap(),
-      'lastActivity.${user.uid}': FieldValue.serverTimestamp(),
-    });
-  }
-
-  // 完成游戏
-  Future<void> completeGame(String gameId) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-
-    final gameDoc = await _firestore
-        .collection('multiplayerGames')
-        .doc(gameId)
-        .get();
-
-    if (!gameDoc.exists) return;
-
-    final game = MultiplayerGameState.fromFirestore(gameDoc);
-    
-    // 计算最终得分
-    final finalScores = <String, int>{};
-    String? winnerId;
-    int highestScore = -1;
-
-    game.playerGameStates.forEach((playerId, gameState) {
-      final score = gameState.totalScore;
-      finalScores[playerId] = score;
-      
-      if (score > highestScore) {
-        highestScore = score;
-        winnerId = playerId;
-      }
-    });
-
-    // 更新游戏状态
-    await _firestore
-        .collection('multiplayerGames')
-        .doc(gameId)
-        .update({
-      'status': MultiplayerGameStatus.completed.toString().split('.').last,
-      'endTime': FieldValue.serverTimestamp(),
-      'finalScores': finalScores,
-      'winnerId': winnerId,
-    });
-  }
-
-  // 放弃游戏
-  Future<void> abandonGame(String gameId) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-
-    await _firestore
-        .collection('multiplayerGames')
-        .doc(gameId)
-        .update({
-      'status': MultiplayerGameStatus.abandoned.toString().split('.').last,
-      'endTime': FieldValue.serverTimestamp(),
-      'abandonedBy': user.uid,
-    });
-  }
-
   // 获取房间信息
   Future<GameRoom?> getRoom(String roomId) async {
     final doc = await _firestore
@@ -331,15 +203,38 @@ class MultiplayerService {
     return GameRoom.fromFirestore(doc);
   }
 
-  // 获取多人游戏信息
-  Future<MultiplayerGameState?> getMultiplayerGame(String gameId) async {
-    final doc = await _firestore
-        .collection('multiplayerGames')
-        .doc(gameId)
+  // 获取用户创建的房间列表
+  Future<List<GameRoom>> getUserRooms() async {
+    final user = _auth.currentUser;
+    if (user == null) return [];
+
+    final snapshot = await _firestore
+        .collection('gameRooms')
+        .where('hostId', isEqualTo: user.uid)
+        .orderBy('createdAt', descending: true)
+        .limit(10)
         .get();
 
-    if (!doc.exists) return null;
-    return MultiplayerGameState.fromFirestore(doc);
+    return snapshot.docs
+        .map((doc) => GameRoom.fromFirestore(doc))
+        .toList();
+  }
+
+  // 获取用户参与的房间列表
+  Future<List<GameRoom>> getJoinedRooms() async {
+    final user = _auth.currentUser;
+    if (user == null) return [];
+
+    final snapshot = await _firestore
+        .collection('gameRooms')
+        .where('guestId', isEqualTo: user.uid)
+        .orderBy('createdAt', descending: true)
+        .limit(10)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => GameRoom.fromFirestore(doc))
+        .toList();
   }
 
   // 生成房间代码
@@ -351,52 +246,22 @@ class MultiplayerService {
     );
   }
 
-  // 生成游戏ID
-  String _generateGameId() {
-    return DateTime.now().millisecondsSinceEpoch.toString() + 
-           Random().nextInt(1000).toString().padLeft(3, '0');
-  }
-
-  // 检查房间代码是否有效
-  Future<bool> isValidRoomCode(String roomCode) async {
-    final doc = await _firestore
-        .collection('gameRooms')
-        .doc(roomCode.toUpperCase())
-        .get();
+  // 清理过期房间
+  Future<void> cleanupExpiredRooms() async {
+    final cutoffTime = DateTime.now().subtract(Duration(hours: 24));
     
-    return doc.exists;
-  }
-
-  // 获取用户当前的游戏房间
-  Future<GameRoom?> getCurrentRoom() async {
-    final user = _auth.currentUser;
-    if (user == null) return null;
-
     final snapshot = await _firestore
         .collection('gameRooms')
-        .where('playerIds', arrayContains: user.uid)
-        .where('status', whereIn: ['waiting', 'ready', 'playing'])
-        .limit(1)
+        .where('createdAt', isLessThan: Timestamp.fromDate(cutoffTime))
         .get();
 
-    if (snapshot.docs.isEmpty) return null;
-    return GameRoom.fromFirestore(snapshot.docs.first);
-  }
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
 
-  // 获取用户当前的多人游戏
-  Future<MultiplayerGameState?> getCurrentMultiplayerGame() async {
-    final user = _auth.currentUser;
-    if (user == null) return null;
-
-    final snapshot = await _firestore
-        .collection('multiplayerGames')
-        .where('playerIds', arrayContains: user.uid)
-        .where('status', whereIn: ['waiting', 'playing'])
-        .orderBy('startTime', descending: true)
-        .limit(1)
-        .get();
-
-    if (snapshot.docs.isEmpty) return null;
-    return MultiplayerGameState.fromFirestore(snapshot.docs.first);
+    if (snapshot.docs.isNotEmpty) {
+      await batch.commit();
+    }
   }
 }

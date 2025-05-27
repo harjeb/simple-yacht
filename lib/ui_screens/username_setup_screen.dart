@@ -234,7 +234,34 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
         final userData = response.data['userData'] as Map<String, dynamic>;
         final username = userData['username'] as String;
         
-        print("DEBUG: 数据迁移成功 - 用户名: $username");
+        // 检查是否需要认证
+        if (response.data['requiresAuthentication'] == true) {
+          print("DEBUG: 需要认证，先进行匿名登录");
+          
+          // 确保用户已认证（匿名登录）
+          final authService = ref.read(authServiceProvider);
+          if (authService.currentUser == null) {
+            print("DEBUG: 用户未登录，进行匿名登录");
+            await authService.signInAnonymously();
+          }
+          
+          print("DEBUG: 用户已认证，重新调用函数进行数据迁移");
+          
+          // 重新调用函数进行实际的数据迁移
+          final migrationResponse = await callable.call<Map<String, dynamic>>({
+            'transferCode': recoveryCode
+          });
+          
+          print("DEBUG: 数据迁移响应: ${migrationResponse.data}");
+          
+          if (migrationResponse.data['success'] == true) {
+            print("DEBUG: 数据迁移成功 - 用户名: $username");
+          } else {
+            throw Exception('数据迁移失败: ${migrationResponse.data['message'] ?? '未知错误'}');
+          }
+        } else {
+          print("DEBUG: 数据迁移成功 - 用户名: $username");
+        }
         
         // 刷新所有相关的 providers
         if (mounted) {

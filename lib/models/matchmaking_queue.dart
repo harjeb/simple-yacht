@@ -1,16 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-enum MatchmakingStatus {
-  searching,    // 正在搜索对手
-  matched,      // 已匹配成功
-  timeout,      // 匹配超时
-  cancelled,    // 取消匹配
-}
-
-enum GameMode {
-  ranked,       // 天梯匹配
-  casual,       // 休闲匹配
-}
+import 'game_enums.dart';
 
 class MatchmakingQueue {
   final String playerId;
@@ -42,12 +31,12 @@ class MatchmakingQueue {
       playerId: doc.id,
       playerName: data['playerName'] ?? '',
       gameMode: GameMode.values.firstWhere(
-        (e) => e.toString().split('.').last == data['gameMode'],
-        orElse: () => GameMode.casual,
+        (mode) => mode.name == data['gameMode'],
+        orElse: () => GameMode.multiplayer,
       ),
       eloRating: data['eloRating'] ?? 1200,
       status: MatchmakingStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == data['status'],
+        (status) => status.name == data['status'],
         orElse: () => MatchmakingStatus.searching,
       ),
       joinedAt: (data['joinedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -61,9 +50,9 @@ class MatchmakingQueue {
   Map<String, dynamic> toFirestore() {
     return {
       'playerName': playerName,
-      'gameMode': gameMode.toString().split('.').last,
+      'gameMode': gameMode.name,
       'eloRating': eloRating,
-      'status': status.toString().split('.').last,
+      'status': status.name,
       'joinedAt': Timestamp.fromDate(joinedAt),
       if (roomId != null) 'roomId': roomId,
       if (matchedAt != null) 'matchedAt': Timestamp.fromDate(matchedAt!),
