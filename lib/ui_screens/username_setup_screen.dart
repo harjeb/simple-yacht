@@ -206,16 +206,22 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
 
   Future<void> _recoverAccount() async {
     final recoveryCode = _recoveryCodeController.text.trim();
-    final authService = ref.read(authServiceProvider);
     final functions = ref.read(functionsProvider);
 
-    print("=== DEBUG: 开始账号恢复 ===");
+    print("=== DEBUG: 开始账号恢复 (数据迁移方案) ===");
     print("DEBUG: 恢复代码: '$recoveryCode'");
 
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorText = null;
+      });
+    }
+
     try {
-      print("DEBUG: 调用 Cloud Function 验证恢复代码...");
+      print("DEBUG: 调用 Cloud Function 进行数据迁移...");
       
-      // 调用新的恢复函数
+      // 调用新的数据迁移恢复函数
       final HttpsCallable callable = functions.httpsCallable('recoverAccountByTransferCode');
       final response = await callable.call<Map<String, dynamic>>({
         'transferCode': recoveryCode
@@ -225,96 +231,39 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       print("DEBUG: 响应数据: ${response.data}");
       
       if (response.data['success'] == true) {
-        final userId = response.data['userId'] as String;
-        final username = response.data['username'] as String;
+        final userData = response.data['userData'] as Map<String, dynamic>;
+        final username = userData['username'] as String;
         
-        print("DEBUG: 找到用户 - ID: $userId, 用户名: $username");
+        print("DEBUG: 数据迁移成功 - 用户名: $username");
         
-        // 显示确认对话框
+        // 刷新所有相关的 providers
         if (mounted) {
-          final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text('确认恢复账号'),
-              content: Text('找到账号：$username\n\n确定要恢复这个账号吗？'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: Text('取消'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: Text('确认恢复'),
-                ),
-              ],
+          ref.refresh(usernameProvider);
+          ref.refresh(userProfileProvider);
+          
+          // 显示成功消息
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('账号恢复成功！欢迎回来，$username'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
             ),
           );
           
-          if (confirmed == true) {
-            print("DEBUG: 用户确认恢复，开始恢复流程...");
-            
-            // 正确的恢复流程：
-            // 1. 先退出当前匿名用户
-            await authService.signOut();
-            
-            // 2. 使用自定义令牌登录到原用户账号
-            try {
-              // 调用生成自定义令牌的函数
-              final tokenCallable = functions.httpsCallable('generateCustomAuthToken');
-              final tokenResponse = await tokenCallable.call<Map<String, dynamic>>({
-                'uid': userId
-              });
-              
-              if (tokenResponse.data['token'] != null) {
-                final customToken = tokenResponse.data['token'] as String;
-                print("DEBUG: 获取到自定义令牌，开始登录...");
-                
-                // 使用自定义令牌登录 - 注意这里返回的是 User? 而不是 UserCredential
-                final user = await authService.signInWithCustomToken(customToken);
-                
-                if (user != null) {
-                  print("DEBUG: 自定义令牌登录成功");
-                  
-                  // 等待一下让认证状态更新
-                  await Future.delayed(Duration(milliseconds: 500));
-                  
-                  // 刷新 providers（只有在 widget 还存在时）
-                  if (mounted) {
-                    ref.refresh(usernameProvider);
-                    ref.refresh(userProfileProvider);
-                    
-                    // 显示成功消息
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('账号恢复成功！欢迎回来，$username'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    
-                    // 等待 providers 更新后跳转
-                    Future.delayed(Duration(milliseconds: 1000), () {
-                      if (mounted && context.mounted) {
-                        print("DEBUG: 跳转到主界面");
-                        context.go('/');
-                      }
-                    });
-                  }
-                  
-                  print("DEBUG: 账号恢复完成");
-                } else {
-                  throw Exception('自定义令牌登录失败');
-                }
-              } else {
-                throw Exception('获取自定义令牌失败');
-              }
-            } catch (tokenError) {
-              print("DEBUG: 自定义令牌登录失败: $tokenError");
-              throw tokenError; // 重新抛出错误，让外层处理
-            }
+          print("DEBUG: 等待 providers 更新...");
+          
+          // 等待 providers 更新后跳转到主界面
+          await Future.delayed(Duration(milliseconds: 1500));
+          
+          if (mounted && context.mounted) {
+            print("DEBUG: 跳转到主界面");
+            context.go('/');
           }
         }
+        
+        print("DEBUG: 账号恢复流程完成");
       } else {
-        throw Exception('恢复失败');
+        throw Exception('恢复失败: ${response.data['message'] ?? '未知错误'}');
       }
       
     } on FirebaseFunctionsException catch (e) {
@@ -324,10 +273,18 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       
       if (mounted) {
         setState(() {
-          if (e.code == 'not-found') {
-            _errorText = '恢复代码无效，请检查后重试';
-          } else {
-            _errorText = "恢复失败: ${e.message}";
+          switch (e.code) {
+            case 'not-found':
+              _errorText = '恢复代码无效，请检查后重试';
+              break;
+            case 'already-exists':
+              _errorText = '此恢复代码已被使用，或当前账号已有数据';
+              break;
+            case 'unauthenticated':
+              _errorText = '认证失败，请重启应用后重试';
+              break;
+            default:
+              _errorText = "恢复失败: ${e.message}";
           }
         });
       }

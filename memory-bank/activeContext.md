@@ -6,15 +6,22 @@
 *
 
 ## Current Focus
-* [2025-05-27 01:50:15] - **架构设计 (“清空本地数据”功能):** 根据用户请求和 `spec-pseudocode` 模式提供的规范，设计了新的“清空本地数据”功能。此功能允许用户清除设备本地的账户信息，而不影响服务器上的账户数据。明确了其在 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:1)、[`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 和状态管理中的实现细节。
-* [2025-05-26 19:50:00] - **代码实现 (新游戏流程错误修复):** 完成了“进入新游戏后不显示任何画面”错误的修复。关键更改包括：在 `GameState` 中添加 `initial()` 工厂构造函数，更新 `GameStateNotifier` 以使用此构造函数，增强 `GameScreen` 的健壮性以处理无效游戏状态，并为 `GameScreenRoute` 添加导航守卫。同时修复了由此产生的编译错误和本地化文件格式问题。
-* [2025-05-26 13:34:00] - **架构更新 (新游戏流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以解决“新游戏不显示任何画面”的错误。重点关注游戏状态 (`GameState`) 的正确初始化 (使用 `GameState.initial()`)，[`GameScreen`](lib/ui_screens/game_screen.dart:1) 基于 `isGameInProgress` 和 `gameOver` 的渲染逻辑，以及 [`AppRouter`](lib/navigation/app_router.dart:1) 中相关的导航守卫。
+* [2025-05-27 09:15:00] - **账号恢复功能重构完成:** 成功完成了账号恢复功能的架构重构，从复杂的自定义令牌认证方式改为简单的数据迁移方案。主要改进包括：
+  - ✅ 重构 `recoverAccountByTransferCode` Cloud Function，实现数据迁移而非账号切换
+  - ✅ 简化客户端恢复逻辑，移除自定义令牌相关代码
+  - ✅ 使用 Firestore 事务确保数据迁移的原子性和一致性
+  - ✅ 添加重复迁移检测和数据冲突处理
+  - ✅ 优化错误处理和用户体验，确保恢复后正确导航
+  - ✅ 解决了 Widget 生命周期问题和权限配置复杂性
+* [2025-05-27 01:50:15] - **架构设计 ("清空本地数据"功能):** 根据用户请求和 `spec-pseudocode` 模式提供的规范，设计了新的"清空本地数据"功能。此功能允许用户清除设备本地的账户信息，而不影响服务器上的账户数据。明确了其在 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:1)、[`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1) 和状态管理中的实现细节。
+* [2025-05-26 19:50:00] - **代码实现 (新游戏流程错误修复):** 完成了"进入新游戏后不显示任何画面"错误的修复。关键更改包括：在 `GameState` 中添加 `initial()` 工厂构造函数，更新 `GameStateNotifier` 以使用此构造函数，增强 `GameScreen` 的健壮性以处理无效游戏状态，并为 `GameScreenRoute` 添加导航守卫。同时修复了由此产生的编译错误和本地化文件格式问题。
+* [2025-05-26 13:34:00] - **架构更新 (新游戏流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以解决"新游戏不显示任何画面"的错误。重点关注游戏状态 (`GameState`) 的正确初始化 (使用 `GameState.initial()`)，[`GameScreen`](lib/ui_screens/game_screen.dart:1) 基于 `isGameInProgress` 和 `gameOver` 的渲染逻辑，以及 [`AppRouter`](lib/navigation/app_router.dart:1) 中相关的导航守卫。
 * [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新 (账号删除流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为，包括用户登出、本地数据清除 ([`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44))、应用状态重置 (Riverpod Providers) 以及导航至初始屏幕 ([`/splash`](lib/ui_screens/splash_screen.dart:1))。
 * [2025-05-26 12:51:56] - **代码实现 (账号删除流程修复):** 实现了删除账号成功后应用正确返回创建界面的修复。关键更改包括：在 `UserAccountService` 中增加登出和清除本地缓存的逻辑；在 `SettingsScreen` 中增加显式导航到 `/splash` 并使相关 Riverpod Provider 失效。
 * [2025-05-26 12:48:02] - **架构更新 (账号删除流程):** 基于提供的伪代码，更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以详细说明账号删除成功后客户端状态的正确清理和到初始界面的导航逻辑。重点包括 `UserService` 的协调角色、`AuthService.signOut()` 的调用、本地缓存清理、Riverpod Provider 的重置以及通过 `GoRouter` 进行的强制导航。
 * [{{YYYY-MM-DD HH:MM:SS}}] - **问题分析与规范定义 (账号删除流程):** 分析了用户删除账号后应用未正确返回创建账号界面的问题。定义了当前问题流程和期望的修复流程伪代码，重点关注客户端状态重置和导航逻辑。
 * [2025-05-25 13:53:23] - **代码修复 (语法错误):** 修复了 [`lib/ui_screens/game_screen.dart`](lib/ui_screens/game_screen.dart:1) 中的语法错误，主要是添加了缺失的闭合括号。
-* [2025-05-25 12:50:00] - **架构设计 (用户名保存):** 正在为解决用户创建时保存用户名失败（提示“请重试”）的问题设计详细的架构方案。方案将涵盖用户输入验证、网络问题、后端服务错误（包括使用 Cloud Function 和 Firestore 事务确保用户名唯一性）、本地存储问题和并发问题。
+* [2025-05-25 12:50:00] - **架构设计 (用户名保存):** 正在为解决用户创建时保存用户名失败（提示"请重试"）的问题设计详细的架构方案。方案将涵盖用户输入验证、网络问题、后端服务错误（包括使用 Cloud Function 和 Firestore 事务确保用户名唯一性）、本地存储问题和并发问题。
 * [2025-05-25 12:42:36 UTC] - Firestore `PERMISSION_DENIED` 错误已通过部署新的安全规则解决。 (原记录时间: 2025-05-25 12:37:12)
 * [2025-05-25 11:58:51] - 实现 Firestore 数据库未找到 (`NOT_FOUND`) 错误的健壮处理。修改了 `UserService` 以在创建或获取用户配置时检测并抛出此特定错误。更新了 `AnonymousSignInNotifier` 和 `UsernameSetupScreen` 以捕获此错误并向用户显示友好的、本地化的错误消息。确保在异步操作中正确管理加载状态。
 * [2025-05-25 06:32:15] - 为 Firebase 匿名登录流程添加详细日志，以帮助诊断 Firebase 不再记录匿名登录的问题。涉及文件：[`lib/services/auth_service.dart`](lib/services/auth_service.dart:1), [`lib/state_management/providers/user_providers.dart`](lib/state_management/providers/user_providers.dart:1), [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart:1).
@@ -40,7 +47,7 @@
     *   执行了 `flutter gen-l10n` 命令以重新生成本地化 Dart 文件。
 ## Recent Changes
 * [2025-05-26 13:52:53] - **文档审查 (新游戏流程):** 审查了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 中关于新游戏启动流程和游戏状态管理的文档。确认文档已准确反映了最新的代码更改，包括 `GameState.initial()` 的使用、`GameStateNotifier.resetAndStartNewGame()` 的更新、`GameScreen` 的健壮性处理以及导航守卫逻辑。无需进一步修改 `architecture.md`。
-* [2025-05-26 13:34:00] - **架构更新 (新游戏流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以详细说明解决“新游戏不显示任何画面”错误的架构调整。这包括对游戏状态初始化 (`GameState.initial()`)、[`GameScreen`](lib/ui_screens/game_screen.dart:1) 渲染逻辑和导航守卫的澄清。
+* [2025-05-26 13:34:00] - **架构更新 (新游戏流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 以详细说明解决"新游戏不显示任何画面"错误的架构调整。这包括对游戏状态初始化 (`GameState.initial()`)、[`GameScreen`](lib/ui_screens/game_screen.dart:1) 渲染逻辑和导航守卫的澄清。
 * [2025-05-26 12:51:56] - **代码实现 (账号删除流程修复):**
 * [{{YYYY-MM-DD HH:MM:SS}}] - **文档更新 (账号删除流程):** 更新了 [`memory-bank/architecture.md`](memory-bank/architecture.md:0) 以准确反映账号删除成功后的新行为。文档现在明确了用户登出、通过 [`LocalStorageService.clearAllUserData()`](lib/services/local_storage_service.dart:44) 清除本地数据、重置 Riverpod Providers 以及导航至初始屏幕 [`/splash`](lib/ui_screens/splash_screen.dart:1) 的完整流程。关键代码点包括 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44), [`lib/services/user_service.dart`](lib/services/user_service.dart:1), 和 [`lib/ui_screens/settings_screen.dart`](lib/ui_screens/settings_screen.dart:1)。
     *   [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:44): 添加 `clearAllUserData()` 方法。
@@ -67,7 +74,7 @@
 * [2025-05-25 06:15:00] - **架构更新:** 针对 Flutter 应用中 Firebase 匿名认证后 UI 加载状态持续存在的问题，更新了 Memory Bank ([`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/progress.md`](memory-bank/progress.md), [`memory-bank/systemPatterns.md`](memory-bank/systemPatterns.md), [`memory-bank/activeContext.md`](memory-bank/activeContext.md)).
 * [2025-05-25 05:42:31] - **Bug Fix:** Implemented Firebase anonymous sign-in on app startup in [`lib/main.dart`](lib/main.dart:1) to resolve "认证失败，请重启应用" error. This ensures `currentUser` is not null during username setup. Updated [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1) and [`memory-bank/architecture.md`](memory-bank/architecture.md:1).
 * [2025-05-25 05:10:02] - Updated [`.gitignore`](.gitignore) to include `node_modules/`.
-* [2025-05-24 15:06:27] - **翻译文件准备完成:** 为德语 (de), 西班牙语 (es), 法语 (fr), 日语 (ja), 俄语 (ru) 更新了 `.arb` 文件。添加了缺失的键，并确保需要翻译的键已标记 `(NEEDS TRANSLATION)`。执行了 `flutter gen-l10n`。
+* [2025-05-24 15:06:27] - **翻译文件准备完成:** 为德语 (de), 西班牙语 (es), 法语 (fr), 日语 (ja), 俄语 (ru) 更新了 `.arb` 文件。添加了缺失的键，并确保需要翻译的键已标记 `(NEEDS TRANSLATION)`。执行了 `flutter gen-l10n`.
 * [2025-05-24 14:55:00] - 评估项目中未完成的翻译任务。此任务主要影响本地化文件，对整体架构影响较小。
 
 * [2025-05-23 02:56:59] - Memory Bank initialized with core files.
@@ -123,7 +130,7 @@
 * [2025-05-23 08:08:27] - Updated home screen to show "Continue Game" button if a game is in progress. Updated game screen exit button to 'X' icon and added a confirmation dialog before exiting a game. Updated relevant localization files.
 * [2025-05-23 08:12:11] - Fixed bug where "Continue Game" button was still shown after exiting a game. Implemented `setToInitialState` in `GameStateNotifier` to correctly reset `isGameInProgress` to false when exiting.
 * [2025-05-23 08:51:29] - Updated localization files (de, es, ja, ru, fr) with new entries for 'continueGame' and 'exitGameConfirmation'.
-* [2025-05-24 13:07:00] - 审查并确认了“游戏结束后排行榜未显示成绩”问题的规范和伪代码。解决方案与现有架构一致，准备实施。
+* [2025-05-24 13:07:00] - 审查并确认了"游戏结束后排行榜未显示成绩"问题的规范和伪代码。解决方案与现有架构一致，准备实施。
 * [2025-05-24 13:08:59] - Modified `lib/ui_screens/game_screen.dart` to save score to leaderboard when game is over. Added calls to `leaderboardService.addScore` and `ref.refresh(leaderboardProvider)` within the `isGameOverProvider` listener.
 * [2025-05-24 13:34:29] - Updated [`lib/services/leaderboard_service.dart`](lib/services/leaderboard_service.dart) to add `getPersonalBestScore` method.
 * [2025-05-24 13:34:29] - Created [`lib/state_management/providers/personal_best_score_provider.dart`](lib/state_management/providers/personal_best_score_provider.dart) for personal best score.
@@ -135,7 +142,7 @@
 * [2025-05-25 04:58:34] - Firebase Cloud Functions successfully migrated from TypeScript to JavaScript. Related configurations and documentation updated.
 * [2025-05-25 05:27:56] - [Debug Status Update: Resolved] Build failure due to missing `lib/firebase_options.dart` resolved by running `flutterfire configure --project=yacht-f816d -y`.
 * [2025-05-25 05:39:35] - [Debug Status Update: Issue Identified] Identified root cause of "认证失败，请重启应用" error: Missing Firebase anonymous sign-in call during app startup in `lib/main.dart`. This leads to `currentUser` being null in `UsernameSetupScreen`.
-* [2025-05-25 10:17:12] - 修复了因 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart) 中本地化键 (`loadingLabel`, `errorLabel`, `retryButtonLabel`, `signInFailedGeneric`) 缺失或值不正确导致的 Flutter 构建错误。更新了 [`lib/l10n/app_en.arb`](lib/l10n/app_en.arb) 中的 `signInFailedGeneric` 值。检查并确认了其他语言文件 ([`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)) 中的键已存在且已正确翻译。清理了 [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb) 中的重复条目并修复了其 JSON 格式问题。成功执行了 `flutter gen-l10n`。
+* [2025-05-25 10:17:12] - 修复了因 [`lib/ui_screens/splash_screen.dart`](lib/ui_screens/splash_screen.dart) 中本地化键 (`loadingLabel`, `errorLabel`, `retryButtonLabel`, `signInFailedGeneric`) 缺失或值不正确导致的 Flutter 构建错误。更新了 [`lib/l10n/app_en.arb`](lib/l10n/app_en.arb) 中的 `signInFailedGeneric` 值。检查并确认了其他语言文件 ([`lib/l10n/app_de.arb`](lib/l10n/app_de.arb), [`lib/l10n/app_es.arb`](lib/l10n/app_es.arb), [`lib/l10n/app_fr.arb`](lib/l10n/app_fr.arb), [`lib/l10n/app_ja.arb`](lib/l10n/app_ja.arb), [`lib/l10n/app_ru.arb`](lib/l10n/app_ru.arb)) 中的键已存在且已正确翻译。清理了 [`lib/l10n/app_zh.arb`](lib/l10n/app_zh.arb) 中的重复条目并修复了其 JSON 格式问题。成功执行了 `flutter gen-l10n`.
 * [2025-05-25 10:31:24] - 手动修复生成的本地化文件 ([`lib/generated/app_localizations.dart`](lib/generated/app_localizations.dart) 及各语言版本如 [`lib/generated/app_localizations_en.dart`](lib/generated/app_localizations_en.dart))，以包含缺失的 `loadingLabel`, `errorLabel`, `retryButtonLabel`, `signInFailedGeneric` 的抽象声明和具体实现。此前 `flutter gen-l10n` 未能正确生成这些键，尽管 `.arb` 文件看起来配置正确。
 * [2025-05-25 11:34:07] - **架构决策:** 采纳了解决 SplashScreen 卡顿和路由循环问题的方案。核心是在 [`SplashScreen`](lib/ui_screens/splash_screen.dart:1) 中，当匿名登录成功后，使用显式导航（例如 `context.go('/home')`）替代 `GoRouter.refresh()`，以避免不必要的路由刷新和组件重建循环。相关决策已记录在 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1)。
 * [2025-05-25 13:05:00] - [Debug Status Update: Issue Investigation] 开始调查 "failedToSaveUsername" 错误。日志分析指出 `GoogleApiManager SecurityException: Unknown calling package name 'com.google.android.gms'` 和 `ProviderInstaller module load failure` 可能是根本原因。将优先排查 Google Play 服务集成和配置问题。
