@@ -269,10 +269,10 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                 final customToken = tokenResponse.data['token'] as String;
                 print("DEBUG: 获取到自定义令牌，开始登录...");
                 
-                // 使用自定义令牌登录
-                final userCredential = await authService.signInWithCustomToken(customToken);
+                // 使用自定义令牌登录 - 注意这里返回的是 User? 而不是 UserCredential
+                final user = await authService.signInWithCustomToken(customToken);
                 
-                if (userCredential.user != null) {
+                if (user != null) {
                   print("DEBUG: 自定义令牌登录成功");
                   
                   // 等待一下让认证状态更新
@@ -308,33 +308,8 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                 throw Exception('获取自定义令牌失败');
               }
             } catch (tokenError) {
-              print("DEBUG: 自定义令牌登录失败，尝试备用方案: $tokenError");
-              
-              // 备用方案：重新匿名登录并更新用户数据
-              final newUser = await authService.signInAnonymously();
-              if (newUser != null && mounted) {
-                // 这里可以添加将恢复的用户数据复制到新用户的逻辑
-                print("DEBUG: 备用方案：重新匿名登录成功");
-                
-                ref.refresh(usernameProvider);
-                ref.refresh(userProfileProvider);
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('账号恢复成功！欢迎回来，$username'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                
-                // 跳转到主界面
-                Future.delayed(Duration(milliseconds: 1000), () {
-                  if (mounted && context.mounted) {
-                    context.go('/');
-                  }
-                });
-              } else {
-                throw Exception('备用登录方案失败');
-              }
+              print("DEBUG: 自定义令牌登录失败: $tokenError");
+              throw tokenError; // 重新抛出错误，让外层处理
             }
           }
         }
