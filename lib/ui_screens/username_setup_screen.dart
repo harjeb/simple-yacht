@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:myapp/state_management/providers/user_providers.dart';
 import 'package:myapp/generated/app_localizations.dart'; // For localization
 import 'package:cloud_firestore/cloud_firestore.dart'; // For FirebaseException
-// import 'package:myapp/services/auth_service.dart'; // No longer needed for provider here
+import 'package:myapp/services/auth_service.dart'; // For authStateChangesProvider
 import 'package:myapp/services/user_service.dart'; // For userAccountServiceProvider, functionsProvider
 import 'package:cloud_functions/cloud_functions.dart'; // For FirebaseFunctionsException, HttpsCallable
 import 'package:myapp/services/local_storage_service.dart'; // For local username storage
