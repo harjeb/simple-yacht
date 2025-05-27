@@ -1,5 +1,5 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -22,8 +22,8 @@ exports.generateCustomAuthToken = functions.https.onCall(
 
       if (!uid) {
         throw new functions.https.HttpsError(
-            "invalid-argument",
-            "The function must be called with a \"uid\" argument.",
+            'invalid-argument',
+            'The function must be called with a "uid" argument.',
         );
       }
 
@@ -31,10 +31,10 @@ exports.generateCustomAuthToken = functions.https.onCall(
         const customToken = await admin.auth().createCustomToken(uid);
         return {token: customToken};
       } catch (error) {
-        console.error("Error creating custom token:", error);
+        console.error('Error creating custom token:', error);
         throw new functions.https.HttpsError(
-            "internal",
-            "Unable to create custom token.",
+            'internal',
+            'Unable to create custom token.',
             error,
         );
       }
@@ -53,117 +53,117 @@ exports.generateCustomAuthToken = functions.https.onCall(
  * provided or if deletion fails.
  */
 exports.deleteUserData = functions.https.onCall(async (data, context) => {
-  console.log("=== deleteUserData Cloud Function 调用开始 ===");
+  console.log('=== deleteUserData Cloud Function 调用开始 ===');
 
   // 安全地记录接收到的数据，避免循环引用
-  console.log("原始传入 data 对象:", data);
+  console.log('原始传入 data 对象:', data);
   try {
-    console.log("序列化后的 data 对象:", JSON.stringify(data));
+    console.log('序列化后的 data 对象:', JSON.stringify(data));
   } catch (jsonError) {
-    console.warn("警告: 序列化 data 对象失败:", jsonError.message);
-    console.log("data 对象 (无法序列化):", data);
+    console.warn('警告: 序列化 data 对象失败:', jsonError.message);
+    console.log('data 对象 (无法序列化):', data);
   }
 
-  if (data && typeof data === "object") {
-    console.log("data 对象键:", Object.keys(data));
-    if ("data" in data && data.data && typeof data.data === "object") {
-      console.log("嵌套的 data.data 对象键:", Object.keys(data.data));
+  if (data && typeof data === 'object') {
+    console.log('data 对象键:', Object.keys(data));
+    if ('data' in data && data.data && typeof data.data === 'object') {
+      console.log('嵌套的 data.data 对象键:', Object.keys(data.data));
     }
   }
 
   // 安全地记录上下文信息，避免循环引用
-  console.log("上下文信息:", {
+  console.log('上下文信息:', {
     auth: context.auth ? {
       uid: context.auth.uid,
       token: !!context.auth.token,
     } : null,
     app: context.app ? {
-      appId: context.app.appId || "unknown",
-      projectId: context.app.projectId || "unknown",
+      appId: context.app.appId || 'unknown',
+      projectId: context.app.projectId || 'unknown',
     } : null,
     hasRawRequest: !!context.rawRequest,
-    instanceIdToken: context.instanceIdToken ? "present" : "absent",
+    instanceIdToken: context.instanceIdToken ? 'present' : 'absent',
   });
 
   // 尝试从 data.uid 或 data.data.uid 提取 uid
   let uid = null;
-  if (data && typeof data === "object") {
+  if (data && typeof data === 'object') {
     if (data.uid) {
       uid = data.uid;
-      console.log("从 data.uid 提取的 UID:", uid);
-    } else if (data.data && typeof data.data === "object" && data.data.uid) {
+      console.log('从 data.uid 提取的 UID:', uid);
+    } else if (data.data && typeof data.data === 'object' && data.data.uid) {
       uid = data.data.uid;
-      console.log("从 data.data.uid 提取的 UID:", uid);
+      console.log('从 data.data.uid 提取的 UID:', uid);
     }
   }
 
-  console.log("最终提取的 UID:", uid);
+  console.log('最终提取的 UID:', uid);
 
   if (!uid) {
-    console.error("错误: 最终未能提取到 uid 参数。请检查客户端调用和传入的 data 结构。");
+    console.error('错误: 最终未能提取到 uid 参数。请检查客户端调用和传入的 data 结构。');
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "The function must be called with a \"uid\" argument.",
+        'invalid-argument',
+        'The function must be called with a "uid" argument.',
     );
   }
 
   // 在开发环境中，如果没有认证上下文，允许继续执行（用于调试）
   if (!context.auth) {
-    console.warn("警告: 没有认证上下文，这可能是 App Check 验证失败导致的");
-    console.warn("在开发环境中继续执行...");
+    console.warn('警告: 没有认证上下文，这可能是 App Check 验证失败导致的');
+    console.warn('在开发环境中继续执行...');
   } else if (context.auth.uid !== uid) {
-    console.error("权限错误: 认证用户 UID 与请求 UID 不匹配");
-    console.error("认证 UID:", context.auth.uid, "请求 UID:", uid);
+    console.error('权限错误: 认证用户 UID 与请求 UID 不匹配');
+    console.error('认证 UID:', context.auth.uid, '请求 UID:', uid);
     throw new functions.https.HttpsError(
-        "permission-denied",
-        "You do not have permission to delete this user.",
+        'permission-denied',
+        'You do not have permission to delete this user.',
     );
   }
 
   try {
-    console.log("开始删除用户数据...");
+    console.log('开始删除用户数据...');
 
     // 1. 删除 Firestore 用户文档
-    console.log("步骤 1: 删除 Firestore 用户文档");
-    const userDocRef = db.collection("users").doc(uid);
+    console.log('步骤 1: 删除 Firestore 用户文档');
+    const userDocRef = db.collection('users').doc(uid);
 
     // 检查文档是否存在
     const userDoc = await userDocRef.get();
     if (userDoc.exists) {
-      console.log("用户文档存在，开始删除...");
+      console.log('用户文档存在，开始删除...');
       await userDocRef.delete();
-      console.log("Firestore 用户文档删除成功");
+      console.log('Firestore 用户文档删除成功');
     } else {
-      console.log("用户文档不存在，跳过 Firestore 删除");
+      console.log('用户文档不存在，跳过 Firestore 删除');
     }
 
     // 2. 删除 Firebase Auth 用户
-    console.log("步骤 2: 删除 Firebase Auth 用户");
+    console.log('步骤 2: 删除 Firebase Auth 用户');
     try {
       await admin.auth().deleteUser(uid);
-      console.log("Firebase Auth 用户删除成功");
+      console.log('Firebase Auth 用户删除成功');
     } catch (authError) {
-      console.error("删除 Firebase Auth 用户时出错:", authError);
+      console.error('删除 Firebase Auth 用户时出错:', authError);
       // 如果用户已经不存在，继续执行
-      if (authError.code === "auth/user-not-found") {
-        console.log("用户在 Firebase Auth 中不存在，继续执行");
+      if (authError.code === 'auth/user-not-found') {
+        console.log('用户在 Firebase Auth 中不存在，继续执行');
       } else {
         throw authError; // 重新抛出其他认证错误
       }
     }
 
     console.log(`成功删除用户数据，UID: ${uid}`);
-    return {success: true, message: "User data deleted successfully."};
+    return {success: true, message: 'User data deleted successfully.'};
   } catch (error) {
     console.error(`删除用户数据时发生错误，UID: ${uid}`);
-    console.error("错误详情:", error);
-    console.error("错误类型:", error.constructor.name);
-    console.error("错误代码:", error.code);
-    console.error("错误消息:", error.message);
+    console.error('错误详情:', error);
+    console.error('错误类型:', error.constructor.name);
+    console.error('错误代码:', error.code);
+    console.error('错误消息:', error.message);
 
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to delete user data: " + error.message,
+        'internal',
+        'Unable to delete user data: ' + error.message,
         {
           originalError: error.message,
           errorCode: error.code,
@@ -181,33 +181,33 @@ exports.setUniqueUsername = functions.https.onCall(async (data, context) => {
   // 验证认证
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
   const {username} = data;
   const userId = context.auth.uid;
 
-  if (!username || typeof username !== "string") {
+  if (!username || typeof username !== 'string') {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Username must be a non-empty string.",
+        'invalid-argument',
+        'Username must be a non-empty string.',
     );
   }
 
   // 验证用户名格式
   if (username.length < 3 || username.length > 15) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Username must be between 3 and 15 characters.",
+        'invalid-argument',
+        'Username must be between 3 and 15 characters.',
     );
   }
 
   if (!/^[a-zA-Z0-9_]+$/.test(username)) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Username can only contain letters, numbers, and underscores.",
+        'invalid-argument',
+        'Username can only contain letters, numbers, and underscores.',
     );
   }
 
@@ -217,36 +217,36 @@ exports.setUniqueUsername = functions.https.onCall(async (data, context) => {
     const result = await db.runTransaction(async (transaction) => {
       // 检查用户名是否已存在
       const usernameDoc = await transaction.get(
-          db.collection("usernames").doc(normalizedUsername),
+          db.collection('usernames').doc(normalizedUsername),
       );
 
       if (usernameDoc.exists && usernameDoc.data().userId !== userId) {
         throw new functions.https.HttpsError(
-            "already-exists",
-            "Username is already taken.",
+            'already-exists',
+            'Username is already taken.',
         );
       }
 
       // 获取用户当前数据
-      const userDoc = await transaction.get(db.collection("users").doc(userId));
+      const userDoc = await transaction.get(db.collection('users').doc(userId));
       const userData = userDoc.exists ? userDoc.data() : {};
 
       // 如果用户已有用户名，需要清理旧的用户名记录
       if (userData.normalizedUsername &&
           userData.normalizedUsername !== normalizedUsername) {
         transaction.delete(
-            db.collection("usernames").doc(userData.normalizedUsername),
+            db.collection('usernames').doc(userData.normalizedUsername),
         );
       }
 
       // 设置新的用户名记录
-      transaction.set(db.collection("usernames").doc(normalizedUsername), {
+      transaction.set(db.collection('usernames').doc(normalizedUsername), {
         userId: userId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       // 更新用户文档
-      transaction.set(db.collection("users").doc(userId), {
+      transaction.set(db.collection('users').doc(userId), {
         ...userData,
         username: username,
         normalizedUsername: normalizedUsername,
@@ -264,13 +264,13 @@ exports.setUniqueUsername = functions.https.onCall(async (data, context) => {
 
     return result;
   } catch (error) {
-    console.error("Error setting username:", error);
+    console.error('Error setting username:', error);
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to set username.",
+        'internal',
+        'Unable to set username.',
     );
   }
 });
@@ -301,21 +301,21 @@ function calculateDynamicEloRange(queueEntry) {
 exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
   const userId = context.auth.uid;
-  const {gameMode = "random"} = data;
+  const {gameMode = 'random'} = data;
 
   try {
     // 获取用户信息
-    const userDoc = await db.collection("users").doc(userId).get();
+    const userDoc = await db.collection('users').doc(userId).get();
     if (!userDoc.exists) {
       throw new functions.https.HttpsError(
-          "not-found",
-          "User profile not found.",
+          'not-found',
+          'User profile not found.',
       );
     }
 
@@ -323,21 +323,21 @@ exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, cont
     const userElo = userData.elo || 1200;
 
     // 检查是否已在队列中
-    const existingQueue = await db.collection("matchmakingQueue")
+    const existingQueue = await db.collection('matchmakingQueue')
         .doc(userId).get();
     if (existingQueue.exists) {
       return {
         success: true,
-        message: "Already in queue",
+        message: 'Already in queue',
         queueId: userId,
       };
     }
 
     // 获取所有等待中的队列条目，按等待时间排序
-    const waitingQueue = await db.collection("matchmakingQueue")
-        .where("gameMode", "==", gameMode)
-        .where("status", "==", "waiting")
-        .orderBy("createdAt", "asc")
+    const waitingQueue = await db.collection('matchmakingQueue')
+        .where('gameMode', '==', gameMode)
+        .where('status', '==', 'waiting')
+        .orderBy('createdAt', 'asc')
         .get();
 
     let matchedOpponent = null;
@@ -375,7 +375,7 @@ exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, cont
         player2: opponentId,
         players: [userId, opponentId],
         gameMode: gameMode,
-        status: "active",
+        status: 'active',
         currentPlayer: userId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastActivity: admin.firestore.FieldValue.serverTimestamp(),
@@ -383,7 +383,8 @@ exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, cont
           player1Elo: userElo,
           player2Elo: opponentData.elo,
           eloDistance: Math.abs(userElo - opponentData.elo),
-          opponentWaitTime: admin.firestore.Timestamp.now().toMillis() - opponentData.createdAt.toMillis(),
+          opponentWaitTime: admin.firestore.Timestamp.now().toMillis() -
+              opponentData.createdAt.toMillis(),
           matchRange: calculateDynamicEloRange(opponentData),
         },
         gameState: {
@@ -397,10 +398,10 @@ exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, cont
       // 使用事务创建房间并清理队列
       await db.runTransaction(async (transaction) => {
         // 创建游戏房间
-        transaction.set(db.collection("gameRooms").doc(roomId), gameRoomData);
+        transaction.set(db.collection('gameRooms').doc(roomId), gameRoomData);
 
         // 删除队列条目
-        transaction.delete(db.collection("matchmakingQueue").doc(userId));
+        transaction.delete(db.collection('matchmakingQueue').doc(userId));
         transaction.delete(matchedOpponent.doc.ref);
       });
 
@@ -422,7 +423,7 @@ exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, cont
         username: userData.username,
         elo: userElo,
         gameMode: gameMode,
-        status: "waiting",
+        status: 'waiting',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastActivity: admin.firestore.FieldValue.serverTimestamp(),
         // 新增字段用于统计和监控
@@ -435,22 +436,22 @@ exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, cont
         },
       };
 
-      await db.collection("matchmakingQueue").doc(userId).set(queueData);
+      await db.collection('matchmakingQueue').doc(userId).set(queueData);
 
       return {
         success: true,
         matched: false,
-        message: "Added to matchmaking queue",
+        message: 'Added to matchmaking queue',
         queueId: userId,
         currentRange: 100,
-        estimatedWaitTime: "30-60 seconds",
+        estimatedWaitTime: '30-60 seconds',
       };
     }
   } catch (error) {
-    console.error("Error joining matchmaking queue:", error);
+    console.error('Error joining matchmaking queue:', error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to join matchmaking queue.",
+        'internal',
+        'Unable to join matchmaking queue.',
     );
   }
 });
@@ -461,21 +462,21 @@ exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, cont
 exports.getMatchmakingStatus = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
   const userId = context.auth.uid;
 
   try {
-    const queueDoc = await db.collection("matchmakingQueue").doc(userId).get();
+    const queueDoc = await db.collection('matchmakingQueue').doc(userId).get();
 
     if (!queueDoc.exists) {
       return {
         success: true,
         inQueue: false,
-        message: "Not in queue",
+        message: 'Not in queue',
       };
     }
 
@@ -485,7 +486,7 @@ exports.getMatchmakingStatus = functions.https.onCall(async (data, context) => {
     const waitTimeSeconds = Math.floor(waitTimeMs / 1000);
 
     // 更新队列条目的当前范围
-    await db.collection("matchmakingQueue").doc(userId).update({
+    await db.collection('matchmakingQueue').doc(userId).update({
       currentMatchRange: currentRange,
       lastActivity: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -501,10 +502,10 @@ exports.getMatchmakingStatus = functions.https.onCall(async (data, context) => {
       onlinePlayersCount: await getOnlinePlayersCount(queueData.gameMode),
     };
   } catch (error) {
-    console.error("Error getting matchmaking status:", error);
+    console.error('Error getting matchmaking status:', error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to get matchmaking status.",
+        'internal',
+        'Unable to get matchmaking status.',
     );
   }
 });
@@ -514,10 +515,10 @@ exports.getMatchmakingStatus = functions.https.onCall(async (data, context) => {
  */
 async function getQueuePosition(userId, gameMode) {
   try {
-    const queueSnapshot = await db.collection("matchmakingQueue")
-        .where("gameMode", "==", gameMode)
-        .where("status", "==", "waiting")
-        .orderBy("createdAt", "asc")
+    const queueSnapshot = await db.collection('matchmakingQueue')
+        .where('gameMode', '==', gameMode)
+        .where('status', '==', 'waiting')
+        .orderBy('createdAt', 'asc')
         .get();
 
     let position = 1;
@@ -529,7 +530,7 @@ async function getQueuePosition(userId, gameMode) {
     }
     return -1; // 不在队列中
   } catch (error) {
-    console.error("Error getting queue position:", error);
+    console.error('Error getting queue position:', error);
     return -1;
   }
 }
@@ -540,13 +541,13 @@ async function getQueuePosition(userId, gameMode) {
 async function getOnlinePlayersCount(gameMode) {
   try {
     const [queueSnapshot, activeRoomsSnapshot] = await Promise.all([
-      db.collection("matchmakingQueue")
-          .where("gameMode", "==", gameMode)
-          .where("status", "==", "waiting")
+      db.collection('matchmakingQueue')
+          .where('gameMode', '==', gameMode)
+          .where('status', '==', 'waiting')
           .get(),
-      db.collection("gameRooms")
-          .where("gameMode", "==", gameMode)
-          .where("status", "==", "active")
+      db.collection('gameRooms')
+          .where('gameMode', '==', gameMode)
+          .where('status', '==', 'active')
           .get(),
     ]);
 
@@ -555,7 +556,7 @@ async function getOnlinePlayersCount(gameMode) {
 
     return queueCount + activePlayersCount;
   } catch (error) {
-    console.error("Error getting online players count:", error);
+    console.error('Error getting online players count:', error);
     return 0;
   }
 }
@@ -566,21 +567,21 @@ async function getOnlinePlayersCount(gameMode) {
 exports.leaveMatchmakingQueue = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
   const userId = context.auth.uid;
 
   try {
-    await db.collection("matchmakingQueue").doc(userId).delete();
-    return {success: true, message: "Left matchmaking queue"};
+    await db.collection('matchmakingQueue').doc(userId).delete();
+    return {success: true, message: 'Left matchmaking queue'};
   } catch (error) {
-    console.error("Error leaving matchmaking queue:", error);
+    console.error('Error leaving matchmaking queue:', error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to leave matchmaking queue.",
+        'internal',
+        'Unable to leave matchmaking queue.',
     );
   }
 });
@@ -591,8 +592,8 @@ exports.leaveMatchmakingQueue = functions.https.onCall(async (data, context) => 
 exports.createFriendBattle = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
@@ -601,37 +602,37 @@ exports.createFriendBattle = functions.https.onCall(async (data, context) => {
 
   if (!friendId) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Friend ID is required.",
+        'invalid-argument',
+        'Friend ID is required.',
     );
   }
 
   try {
     // 验证好友关系
-    const friendshipQuery = await db.collection("friendships")
-        .where("user1", "in", [userId, friendId])
-        .where("user2", "in", [userId, friendId])
-        .where("status", "==", "accepted")
+    const friendshipQuery = await db.collection('friendships')
+        .where('user1', 'in', [userId, friendId])
+        .where('user2', 'in', [userId, friendId])
+        .where('status', '==', 'accepted')
         .limit(1)
         .get();
 
     if (friendshipQuery.empty) {
       throw new functions.https.HttpsError(
-          "permission-denied",
-          "You are not friends with this user.",
+          'permission-denied',
+          'You are not friends with this user.',
       );
     }
 
     // 获取双方用户信息
     const [userDoc, friendDoc] = await Promise.all([
-      db.collection("users").doc(userId).get(),
-      db.collection("users").doc(friendId).get(),
+      db.collection('users').doc(userId).get(),
+      db.collection('users').doc(friendId).get(),
     ]);
 
     if (!userDoc.exists || !friendDoc.exists) {
       throw new functions.https.HttpsError(
-          "not-found",
-          "User profile not found.",
+          'not-found',
+          'User profile not found.',
       );
     }
 
@@ -642,8 +643,8 @@ exports.createFriendBattle = functions.https.onCall(async (data, context) => {
       player1: userId,
       player2: null, // 等待好友加入
       players: [userId],
-      gameMode: "friend",
-      status: "waiting",
+      gameMode: 'friend',
+      status: 'waiting',
       invitedPlayer: friendId,
       currentPlayer: userId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -656,21 +657,21 @@ exports.createFriendBattle = functions.https.onCall(async (data, context) => {
       },
     };
 
-    await db.collection("gameRooms").doc(roomId).set(gameRoomData);
+    await db.collection('gameRooms').doc(roomId).set(gameRoomData);
 
     return {
       success: true,
       roomId: roomId,
-      message: "Friend battle room created",
+      message: 'Friend battle room created',
     };
   } catch (error) {
-    console.error("Error creating friend battle:", error);
+    console.error('Error creating friend battle:', error);
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to create friend battle.",
+        'internal',
+        'Unable to create friend battle.',
     );
   }
 });
@@ -681,8 +682,8 @@ exports.createFriendBattle = functions.https.onCall(async (data, context) => {
 exports.joinFriendBattle = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
@@ -691,21 +692,21 @@ exports.joinFriendBattle = functions.https.onCall(async (data, context) => {
 
   if (!roomId) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Room ID is required.",
+        'invalid-argument',
+        'Room ID is required.',
     );
   }
 
   try {
     const result = await db.runTransaction(async (transaction) => {
       const roomDoc = await transaction.get(
-          db.collection("gameRooms").doc(roomId),
+          db.collection('gameRooms').doc(roomId),
       );
 
       if (!roomDoc.exists) {
         throw new functions.https.HttpsError(
-            "not-found",
-            "Game room not found.",
+            'not-found',
+            'Game room not found.',
         );
       }
 
@@ -714,39 +715,39 @@ exports.joinFriendBattle = functions.https.onCall(async (data, context) => {
       // 验证用户是否被邀请
       if (roomData.invitedPlayer !== userId) {
         throw new functions.https.HttpsError(
-            "permission-denied",
-            "You are not invited to this room.",
+            'permission-denied',
+            'You are not invited to this room.',
         );
       }
 
       // 验证房间状态
-      if (roomData.status !== "waiting") {
+      if (roomData.status !== 'waiting') {
         throw new functions.https.HttpsError(
-            "failed-precondition",
-            "Room is not available for joining.",
+            'failed-precondition',
+            'Room is not available for joining.',
         );
       }
 
       // 更新房间状态
-      transaction.update(db.collection("gameRooms").doc(roomId), {
+      transaction.update(db.collection('gameRooms').doc(roomId), {
         player2: userId,
         players: [roomData.player1, userId],
-        status: "active",
+        status: 'active',
         lastActivity: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      return {success: true, message: "Joined friend battle"};
+      return {success: true, message: 'Joined friend battle'};
     });
 
     return result;
   } catch (error) {
-    console.error("Error joining friend battle:", error);
+    console.error('Error joining friend battle:', error);
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to join friend battle.",
+        'internal',
+        'Unable to join friend battle.',
     );
   }
 });
@@ -757,8 +758,8 @@ exports.joinFriendBattle = functions.https.onCall(async (data, context) => {
 exports.submitGameResult = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
@@ -767,21 +768,21 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
 
   if (!roomId || playerScore === undefined || opponentScore === undefined) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Room ID and scores are required.",
+        'invalid-argument',
+        'Room ID and scores are required.',
     );
   }
 
   try {
     const result = await db.runTransaction(async (transaction) => {
       const roomDoc = await transaction.get(
-          db.collection("gameRooms").doc(roomId),
+          db.collection('gameRooms').doc(roomId),
       );
 
       if (!roomDoc.exists) {
         throw new functions.https.HttpsError(
-            "not-found",
-            "Game room not found.",
+            'not-found',
+            'Game room not found.',
         );
       }
 
@@ -790,16 +791,16 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
       // 验证用户是否是房间参与者
       if (!roomData.players.includes(userId)) {
         throw new functions.https.HttpsError(
-            "permission-denied",
-            "You are not a participant in this room.",
+            'permission-denied',
+            'You are not a participant in this room.',
         );
       }
 
       // 验证游戏是否已结束
-      if (roomData.status === "completed") {
+      if (roomData.status === 'completed') {
         throw new functions.https.HttpsError(
-            "failed-precondition",
-            "Game has already been completed.",
+            'failed-precondition',
+            'Game has already been completed.',
         );
       }
 
@@ -810,8 +811,8 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
 
       // 获取双方用户数据
       const [player1Doc, player2Doc] = await Promise.all([
-        transaction.get(db.collection("users").doc(player1Id)),
-        transaction.get(db.collection("users").doc(player2Id)),
+        transaction.get(db.collection('users').doc(player1Id)),
+        transaction.get(db.collection('users').doc(player2Id)),
       ]);
 
       const player1Data = player1Doc.data();
@@ -819,7 +820,7 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
 
       // 计算ELO变化（仅对随机匹配）
       let eloChanges = {player1: 0, player2: 0};
-      if (roomData.gameMode === "random") {
+      if (roomData.gameMode === 'random') {
         eloChanges = calculateEloChange(
             player1Data.elo || 1200,
             player2Data.elo || 1200,
@@ -838,8 +839,8 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
       }
 
       // 更新房间状态
-      transaction.update(db.collection("gameRooms").doc(roomId), {
-        status: "completed",
+      transaction.update(db.collection('gameRooms').doc(roomId), {
+        status: 'completed',
         winner: winner,
         finalScores: {
           [player1Id]: isPlayer1 ? playerScore : opponentScore,
@@ -859,7 +860,7 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
         lastGameAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
-      if (roomData.gameMode === "random") {
+      if (roomData.gameMode === 'random') {
         updatePlayer1Stats.elo = (player1Data.elo || 1200) + eloChanges.player1;
         updatePlayer2Stats.elo = (player2Data.elo || 1200) + eloChanges.player2;
       }
@@ -876,15 +877,15 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
         updatePlayer2Stats.draws = (player2Data.draws || 0) + 1;
       }
 
-      transaction.update(db.collection("users").doc(player1Id), updatePlayer1Stats);
-      transaction.update(db.collection("users").doc(player2Id), updatePlayer2Stats);
+      transaction.update(db.collection('users').doc(player1Id), updatePlayer1Stats);
+      transaction.update(db.collection('users').doc(player2Id), updatePlayer2Stats);
 
       // 记录ELO历史（仅对随机匹配）
-      if (roomData.gameMode === "random") {
+      if (roomData.gameMode === 'random') {
         const matchId = `${roomId}_${Date.now()}`;
         transaction.set(
-            db.collection("eloHistory").doc(player1Id)
-                .collection("matches").doc(matchId),
+            db.collection('eloHistory').doc(player1Id)
+                .collection('matches').doc(matchId),
             {
               opponentId: player2Id,
               opponentUsername: player2Data.username,
@@ -892,15 +893,15 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
               opponentScore: isPlayer1 ? opponentScore : playerScore,
               eloChange: eloChanges.player1,
               newElo: (player1Data.elo || 1200) + eloChanges.player1,
-              result: winner === player1Id ? "win" : (winner === null ? "draw" : "loss"),
+              result: winner === player1Id ? 'win' : (winner === null ? 'draw' : 'loss'),
               gameMode: roomData.gameMode,
               timestamp: admin.firestore.FieldValue.serverTimestamp(),
             },
         );
 
         transaction.set(
-            db.collection("eloHistory").doc(player2Id)
-                .collection("matches").doc(matchId),
+            db.collection('eloHistory').doc(player2Id)
+                .collection('matches').doc(matchId),
             {
               opponentId: player1Id,
               opponentUsername: player1Data.username,
@@ -908,7 +909,7 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
               opponentScore: isPlayer1 ? playerScore : opponentScore,
               eloChange: eloChanges.player2,
               newElo: (player2Data.elo || 1200) + eloChanges.player2,
-              result: winner === player2Id ? "win" : (winner === null ? "draw" : "loss"),
+              result: winner === player2Id ? 'win' : (winner === null ? 'draw' : 'loss'),
               gameMode: roomData.gameMode,
               timestamp: admin.firestore.FieldValue.serverTimestamp(),
             },
@@ -918,7 +919,7 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
       return {
         success: true,
         winner: winner,
-        eloChanges: roomData.gameMode === "random" ? eloChanges : null,
+        eloChanges: roomData.gameMode === 'random' ? eloChanges : null,
         finalScores: {
           [player1Id]: isPlayer1 ? playerScore : opponentScore,
           [player2Id]: isPlayer1 ? opponentScore : playerScore,
@@ -928,13 +929,13 @@ exports.submitGameResult = functions.https.onCall(async (data, context) => {
 
     return result;
   } catch (error) {
-    console.error("Error submitting game result:", error);
+    console.error('Error submitting game result:', error);
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to submit game result.",
+        'internal',
+        'Unable to submit game result.',
     );
   }
 });
@@ -984,17 +985,17 @@ function calculateEloChange(player1Elo, player2Elo, player1Score, player2Score, 
 exports.getGlobalLeaderboard = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
-  const {limit = 50, gameMode = "random"} = data;
+  const {limit = 50} = data;
 
   try {
-    const leaderboardQuery = await db.collection("users")
-        .where("totalGames", ">", 0)
-        .orderBy("elo", "desc")
+    const leaderboardQuery = await db.collection('users')
+        .where('totalGames', '>', 0)
+        .orderBy('elo', 'desc')
         .limit(Math.min(limit, 100))
         .get();
 
@@ -1023,73 +1024,14 @@ exports.getGlobalLeaderboard = functions.https.onCall(async (data, context) => {
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     };
   } catch (error) {
-    console.error("Error getting global leaderboard:", error);
+    console.error('Error getting global leaderboard:', error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to get global leaderboard.",
+        'internal',
+        'Unable to get global leaderboard.',
     );
   }
 });
-
-/**
- * 清理过期的匹配队列条目
- * 定时触发函数，每5分钟执行一次
- */
-exports.cleanupExpiredQueue = functions.pubsub
-    .schedule("every 5 minutes")
-    .onRun(async (context) => {
-      const fiveMinutesAgo = admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() - 5 * 60 * 1000),
-      );
-
-      try {
-        const expiredEntries = await db.collection("matchmakingQueue")
-            .where("lastActivity", "<", fiveMinutesAgo)
-            .get();
-
-        const batch = db.batch();
-        expiredEntries.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-        console.log(`Cleaned up ${expiredEntries.size} expired queue entries`);
-      } catch (error) {
-        console.error("Error cleaning up expired queue entries:", error);
-      }
-    });
-
-/**
- * 清理过期的游戏房间
- * 定时触发函数，每小时执行一次
- */
-exports.cleanupExpiredRooms = functions.pubsub
-    .schedule("every 1 hours")
-    .onRun(async (context) => {
-      const oneHourAgo = admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() - 60 * 60 * 1000),
-      );
-
-      try {
-        const expiredRooms = await db.collection("gameRooms")
-            .where("lastActivity", "<", oneHourAgo)
-            .where("status", "in", ["waiting", "active"])
-            .get();
-
-        const batch = db.batch();
-        expiredRooms.forEach((doc) => {
-          batch.update(doc.ref, {
-            status: "expired",
-            expiredAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-        });
-
-        await batch.commit();
-        console.log(`Marked ${expiredRooms.size} rooms as expired`);
-      } catch (error) {
-        console.error("Error cleaning up expired rooms:", error);
-      }
-    });
+//
 
 /**
  * 测试匹配系统 - 创建模拟用户进行匹配测试
@@ -1097,32 +1039,32 @@ exports.cleanupExpiredRooms = functions.pubsub
 exports.testMatchmakingSystem = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
-  const {testMode = "basic"} = data;
+  const {testMode = 'basic'} = data;
 
   try {
     const userId = context.auth.uid;
 
     // 获取当前用户信息
-    const userDoc = await db.collection("users").doc(userId).get();
+    const userDoc = await db.collection('users').doc(userId).get();
     if (!userDoc.exists) {
       throw new functions.https.HttpsError(
-          "not-found",
-          "User profile not found.",
+          'not-found',
+          'User profile not found.',
       );
     }
 
     const userData = userDoc.data();
 
-    if (testMode === "basic") {
+    if (testMode === 'basic') {
       // 基础测试：检查匹配队列状态
-      const queueSnapshot = await db.collection("matchmakingQueue")
-          .where("gameMode", "==", "random")
-          .where("status", "==", "waiting")
+      const queueSnapshot = await db.collection('matchmakingQueue')
+          .where('gameMode', '==', 'random')
+          .where('status', '==', 'waiting')
           .get();
 
       const queueStats = {
@@ -1140,7 +1082,7 @@ exports.testMatchmakingSystem = functions.https.onCall(async (data, context) => 
 
       return {
         success: true,
-        testMode: "basic",
+        testMode: 'basic',
         userInfo: {
           username: userData.username,
           elo: userData.elo || 1200,
@@ -1149,14 +1091,14 @@ exports.testMatchmakingSystem = functions.https.onCall(async (data, context) => 
         queueStats: queueStats,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
-    } else if (testMode === "simulation") {
+    } else if (testMode === 'simulation') {
       // 模拟测试：创建虚拟对手进行匹配
       const simulatedOpponent = {
         userId: `sim_${Date.now()}`,
         username: `TestBot_${Math.floor(Math.random() * 1000)}`,
         elo: (userData.elo || 1200) + Math.floor(Math.random() * 200) - 100,
-        gameMode: "random",
-        status: "waiting",
+        gameMode: 'random',
+        status: 'waiting',
         createdAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 45000)), // 45秒前
       };
 
@@ -1165,7 +1107,7 @@ exports.testMatchmakingSystem = functions.https.onCall(async (data, context) => 
 
       return {
         success: true,
-        testMode: "simulation",
+        testMode: 'simulation',
         userInfo: {
           username: userData.username,
           elo: userData.elo || 1200,
@@ -1183,13 +1125,13 @@ exports.testMatchmakingSystem = functions.https.onCall(async (data, context) => 
 
     return {
       success: false,
-      message: "Invalid test mode",
+      message: 'Invalid test mode',
     };
   } catch (error) {
-    console.error("Error testing matchmaking system:", error);
+    console.error('Error testing matchmaking system:', error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to test matchmaking system.",
+        'internal',
+        'Unable to test matchmaking system.',
     );
   }
 });
@@ -1200,15 +1142,15 @@ exports.testMatchmakingSystem = functions.https.onCall(async (data, context) => 
 exports.getMatchmakingStatistics = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
   try {
     // 获取队列统计
-    const queueSnapshot = await db.collection("matchmakingQueue")
-        .where("status", "==", "waiting")
+    const queueSnapshot = await db.collection('matchmakingQueue')
+        .where('status', '==', 'waiting')
         .get();
 
     // 获取最近24小时的游戏统计
@@ -1216,9 +1158,9 @@ exports.getMatchmakingStatistics = functions.https.onCall(async (data, context) 
         new Date(Date.now() - 24 * 60 * 60 * 1000),
     );
 
-    const recentGamesSnapshot = await db.collection("gameRooms")
-        .where("createdAt", ">", oneDayAgo)
-        .where("gameMode", "==", "random")
+    const recentGamesSnapshot = await db.collection('gameRooms')
+        .where('createdAt', '>', oneDayAgo)
+        .where('gameMode', '==', 'random')
         .get();
 
     const statistics = {
@@ -1242,11 +1184,12 @@ exports.getMatchmakingStatistics = functions.https.onCall(async (data, context) 
     let totalWaitTime = 0;
     queueSnapshot.forEach((doc) => {
       const data = doc.data();
-      const gameMode = data.gameMode || "random";
+      const gameMode = data.gameMode || 'random';
       statistics.queue.byGameMode[gameMode] = (statistics.queue.byGameMode[gameMode] || 0) + 1;
 
       const eloRange = Math.floor((data.elo || 1200) / 100) * 100;
-      statistics.queue.eloDistribution[eloRange] = (statistics.queue.eloDistribution[eloRange] || 0) + 1;
+      statistics.queue.eloDistribution[eloRange] =
+          (statistics.queue.eloDistribution[eloRange] || 0) + 1;
 
       const waitTime = admin.firestore.Timestamp.now().toMillis() - data.createdAt.toMillis();
       totalWaitTime += waitTime;
@@ -1263,7 +1206,7 @@ exports.getMatchmakingStatistics = functions.https.onCall(async (data, context) 
 
     recentGamesSnapshot.forEach((doc) => {
       const data = doc.data();
-      if (data.status === "completed") {
+      if (data.status === 'completed') {
         statistics.recentGames.completed++;
         completedGames++;
 
@@ -1275,13 +1218,14 @@ exports.getMatchmakingStatistics = functions.https.onCall(async (data, context) 
         if (data.matchingInfo && data.matchingInfo.eloDistance) {
           totalEloDistance += data.matchingInfo.eloDistance;
         }
-      } else if (data.status === "active") {
+      } else if (data.status === 'active') {
         statistics.recentGames.active++;
       }
     });
 
     if (completedGames > 0) {
-      statistics.recentGames.averageGameDuration = Math.floor(totalGameDuration / completedGames / 1000 / 60); // 分钟
+      statistics.recentGames.averageGameDuration =
+          Math.floor(totalGameDuration / completedGames / 1000 / 60);
       statistics.recentGames.averageEloDistance = Math.floor(totalEloDistance / completedGames);
     }
 
@@ -1290,10 +1234,10 @@ exports.getMatchmakingStatistics = functions.https.onCall(async (data, context) 
       statistics: statistics,
     };
   } catch (error) {
-    console.error("Error getting matchmaking statistics:", error);
+    console.error('Error getting matchmaking statistics:', error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to get matchmaking statistics.",
+        'internal',
+        'Unable to get matchmaking statistics.',
     );
   }
 });
@@ -1304,8 +1248,8 @@ exports.getMatchmakingStatistics = functions.https.onCall(async (data, context) 
 exports.cleanupTestData = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
@@ -1313,18 +1257,18 @@ exports.cleanupTestData = functions.https.onCall(async (data, context) => {
     const userId = context.auth.uid;
 
     // 清理用户的队列条目
-    await db.collection("matchmakingQueue").doc(userId).delete();
+    await db.collection('matchmakingQueue').doc(userId).delete();
 
     // 清理用户的活跃游戏房间
-    const activeRoomsSnapshot = await db.collection("gameRooms")
-        .where("players", "array-contains", userId)
-        .where("status", "in", ["waiting", "active"])
+    const activeRoomsSnapshot = await db.collection('gameRooms')
+        .where('players', 'array-contains', userId)
+        .where('status', 'in', ['waiting', 'active'])
         .get();
 
     const batch = db.batch();
     activeRoomsSnapshot.forEach((doc) => {
       batch.update(doc.ref, {
-        status: "cancelled",
+        status: 'cancelled',
         cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
         cancelledBy: userId,
       });
@@ -1334,17 +1278,17 @@ exports.cleanupTestData = functions.https.onCall(async (data, context) => {
 
     return {
       success: true,
-      message: "Test data cleaned up successfully",
+      message: 'Test data cleaned up successfully',
       cleanedItems: {
         queueEntries: 1,
         gameRooms: activeRoomsSnapshot.size,
       },
     };
   } catch (error) {
-    console.error("Error cleaning up test data:", error);
+    console.error('Error cleaning up test data:', error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to cleanup test data.",
+        'internal',
+        'Unable to cleanup test data.',
     );
   }
 });
@@ -1355,20 +1299,20 @@ exports.cleanupTestData = functions.https.onCall(async (data, context) => {
 exports.updateLeaderboard = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "The function must be called while authenticated.",
+        'unauthenticated',
+        'The function must be called while authenticated.',
     );
   }
 
-  const {leaderboardType = "global", forceUpdate = false} = data;
+  const {leaderboardType = 'global', forceUpdate = false} = data;
   const userId = context.auth.uid;
 
   try {
-    const userDoc = await db.collection("users").doc(userId).get();
+    const userDoc = await db.collection('users').doc(userId).get();
     if (!userDoc.exists) {
       throw new functions.https.HttpsError(
-          "not-found",
-          "User profile not found.",
+          'not-found',
+          'User profile not found.',
       );
     }
 
@@ -1378,7 +1322,7 @@ exports.updateLeaderboard = functions.https.onCall(async (data, context) => {
     if (!forceUpdate && (userData.totalGames || 0) === 0) {
       return {
         success: false,
-        message: "No games played yet",
+        message: 'No games played yet',
       };
     }
 
@@ -1396,23 +1340,23 @@ exports.updateLeaderboard = functions.https.onCall(async (data, context) => {
     };
 
     // 更新排行榜
-    await db.collection("leaderboards")
+    await db.collection('leaderboards')
         .doc(leaderboardType)
-        .collection("scores")
+        .collection('scores')
         .doc(userId)
         .set(scoreData, {merge: true});
 
     return {
       success: true,
-      message: "Leaderboard updated successfully",
+      message: 'Leaderboard updated successfully',
       leaderboardType: leaderboardType,
       scoreData: scoreData,
     };
   } catch (error) {
-    console.error("Error updating leaderboard:", error);
+    console.error('Error updating leaderboard:', error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Unable to update leaderboard.",
+        'internal',
+        'Unable to update leaderboard.',
     );
   }
 });
