@@ -276,10 +276,29 @@ exports.setUniqueUsername = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * 加入匹配队列
- * 随机匹配功能
+ * 计算动态ELO匹配范围
+ * @param {object} queueEntry 队列条目
+ * @return {number} 当前匹配范围
  */
-exports.joinMatchmakingQueue = functions.https.onCall(async (data, context) => {
+function calculateDynamicEloRange(queueEntry) {
+  const now = admin.firestore.Timestamp.now();
+  const joinedAt = queueEntry.createdAt;
+  const waitTimeMs = now.toMillis() - joinedAt.toMillis();
+  const waitTimeSeconds = Math.floor(waitTimeMs / 1000);
+  
+  // 每30秒扩大100分，初始范围100分
+  const intervals = Math.floor(waitTimeSeconds / 30);
+  const baseRange = 100;
+  const expansion = intervals * 100;
+  const maxRange = 500;
+  
+  return Math.min(baseRange + expansion, maxRange);
+}
+
+/**
+ * 加入匹配队列 (优化版本)
+ */
+exports.joinMatchmakingQueueOptimized = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -314,21 +333,39 @@ exports.joinMatchmakingQueue = functions.https.onCall(async (data, context) => {
       };
     }
 
-    // 寻找合适的对手（ELO差距在200以内）
-    const eloRange = 200;
-    const potentialOpponents = await db.collection("matchmakingQueue")
+    // 获取所有等待中的队列条目，按等待时间排序
+    const waitingQueue = await db.collection("matchmakingQueue")
         .where("gameMode", "==", gameMode)
         .where("status", "==", "waiting")
-        .where("elo", ">=", userElo - eloRange)
-        .where("elo", "<=", userElo + eloRange)
-        .limit(1)
+        .orderBy("createdAt", "asc")
         .get();
 
-    if (!potentialOpponents.empty) {
+    let matchedOpponent = null;
+
+    // 遍历队列，寻找合适的对手
+    for (const queueDoc of waitingQueue.docs) {
+      const queueData = queueDoc.data();
+      const opponentElo = queueData.elo;
+      
+      // 计算对手的动态匹配范围
+      const opponentRange = calculateDynamicEloRange(queueData);
+      
+      // 检查双方是否在彼此的匹配范围内
+      const eloDistance = Math.abs(userElo - opponentElo);
+      if (eloDistance <= opponentRange) {
+        matchedOpponent = {
+          id: queueData.userId,
+          data: queueData,
+          doc: queueDoc
+        };
+        break;
+      }
+    }
+
+    if (matchedOpponent) {
       // 找到对手，创建游戏房间
-      const opponentDoc = potentialOpponents.docs[0];
-      const opponentData = opponentDoc.data();
-      const opponentId = opponentData.userId;
+      const opponentId = matchedOpponent.id;
+      const opponentData = matchedOpponent.data;
 
       // 创建游戏房间
       const roomId = `${userId}_${opponentId}_${Date.now()}`;
@@ -339,9 +376,16 @@ exports.joinMatchmakingQueue = functions.https.onCall(async (data, context) => {
         players: [userId, opponentId],
         gameMode: gameMode,
         status: "active",
-        currentPlayer: userId, // 随机选择先手
+        currentPlayer: userId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastActivity: admin.firestore.FieldValue.serverTimestamp(),
+        matchingInfo: {
+          player1Elo: userElo,
+          player2Elo: opponentData.elo,
+          eloDistance: Math.abs(userElo - opponentData.elo),
+          opponentWaitTime: admin.firestore.Timestamp.now().toMillis() - opponentData.createdAt.toMillis(),
+          matchRange: calculateDynamicEloRange(opponentData)
+        },
         gameState: {
           round: 1,
           player1Score: 0,
@@ -357,7 +401,7 @@ exports.joinMatchmakingQueue = functions.https.onCall(async (data, context) => {
 
         // 删除队列条目
         transaction.delete(db.collection("matchmakingQueue").doc(userId));
-        transaction.delete(db.collection("matchmakingQueue").doc(opponentId));
+        transaction.delete(matchedOpponent.doc.ref);
       });
 
       return {
@@ -369,10 +413,11 @@ exports.joinMatchmakingQueue = functions.https.onCall(async (data, context) => {
           username: opponentData.username,
           elo: opponentData.elo,
         },
+        matchingInfo: gameRoomData.matchingInfo
       };
     } else {
       // 没有找到对手，加入队列
-      await db.collection("matchmakingQueue").doc(userId).set({
+      const queueData = {
         userId: userId,
         username: userData.username,
         elo: userElo,
@@ -380,13 +425,25 @@ exports.joinMatchmakingQueue = functions.https.onCall(async (data, context) => {
         status: "waiting",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastActivity: admin.firestore.FieldValue.serverTimestamp(),
-      });
+        // 新增字段用于统计和监控
+        currentMatchRange: 100, // 初始范围
+        matchAttempts: 0,
+        statistics: {
+          totalWaitTime: 0,
+          averageWaitTime: 0,
+          matchSuccessRate: 0
+        }
+      };
+
+      await db.collection("matchmakingQueue").doc(userId).set(queueData);
 
       return {
         success: true,
         matched: false,
         message: "Added to matchmaking queue",
         queueId: userId,
+        currentRange: 100,
+        estimatedWaitTime: "30-60 seconds"
       };
     }
   } catch (error) {
@@ -397,6 +454,111 @@ exports.joinMatchmakingQueue = functions.https.onCall(async (data, context) => {
     );
   }
 });
+
+/**
+ * 获取匹配队列状态
+ */
+exports.getMatchmakingStatus = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
+  }
+
+  const userId = context.auth.uid;
+
+  try {
+    const queueDoc = await db.collection("matchmakingQueue").doc(userId).get();
+    
+    if (!queueDoc.exists) {
+      return {
+        success: true,
+        inQueue: false,
+        message: "Not in queue"
+      };
+    }
+
+    const queueData = queueDoc.data();
+    const currentRange = calculateDynamicEloRange(queueData);
+    const waitTimeMs = admin.firestore.Timestamp.now().toMillis() - queueData.createdAt.toMillis();
+    const waitTimeSeconds = Math.floor(waitTimeMs / 1000);
+
+    // 更新队列条目的当前范围
+    await db.collection("matchmakingQueue").doc(userId).update({
+      currentMatchRange: currentRange,
+      lastActivity: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return {
+      success: true,
+      inQueue: true,
+      status: queueData.status,
+      currentRange: currentRange,
+      waitTime: waitTimeSeconds,
+      estimatedTimeToMaxRange: Math.max(0, 120 - waitTimeSeconds), // 2分钟到最大范围
+      queuePosition: await getQueuePosition(userId, queueData.gameMode),
+      onlinePlayersCount: await getOnlinePlayersCount(queueData.gameMode)
+    };
+  } catch (error) {
+    console.error("Error getting matchmaking status:", error);
+    throw new functions.https.HttpsError(
+        "internal",
+        "Unable to get matchmaking status.",
+    );
+  }
+});
+
+/**
+ * 获取队列中的位置
+ */
+async function getQueuePosition(userId, gameMode) {
+  try {
+    const queueSnapshot = await db.collection("matchmakingQueue")
+        .where("gameMode", "==", gameMode)
+        .where("status", "==", "waiting")
+        .orderBy("createdAt", "asc")
+        .get();
+
+    let position = 1;
+    for (const doc of queueSnapshot.docs) {
+      if (doc.id === userId) {
+        return position;
+      }
+      position++;
+    }
+    return -1; // 不在队列中
+  } catch (error) {
+    console.error("Error getting queue position:", error);
+    return -1;
+  }
+}
+
+/**
+ * 获取在线玩家数量
+ */
+async function getOnlinePlayersCount(gameMode) {
+  try {
+    const [queueSnapshot, activeRoomsSnapshot] = await Promise.all([
+      db.collection("matchmakingQueue")
+          .where("gameMode", "==", gameMode)
+          .where("status", "==", "waiting")
+          .get(),
+      db.collection("gameRooms")
+          .where("gameMode", "==", gameMode)
+          .where("status", "==", "active")
+          .get()
+    ]);
+
+    const queueCount = queueSnapshot.size;
+    const activePlayersCount = activeRoomsSnapshot.size * 2; // 每个房间2个玩家
+
+    return queueCount + activePlayersCount;
+  } catch (error) {
+    console.error("Error getting online players count:", error);
+    return 0;
+  }
+}
 
 /**
  * 离开匹配队列
