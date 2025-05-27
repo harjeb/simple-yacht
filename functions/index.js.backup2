@@ -1421,4 +1421,3 @@ exports.updateLeaderboardCache = functions.https.onCall(async (data, context) =>
   }
 });
 // 新增排行榜功能
-

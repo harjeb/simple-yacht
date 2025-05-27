@@ -7,10 +7,10 @@ service cloud.firestore {
     match /users/{userId} {
       // 用户只能读写自己的数据
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      // 其他用户可以读取基本信息（用于显示对手信息）
+      // 其他用户可以读取基本信息（用于显示对手信息和排行榜）
       allow read: if request.auth != null && 
         resource.data.keys().hasAll(['username', 'elo']) &&
-        request.query.limit <= 1;
+        request.query.limit <= 100; // 增加限制以支持排行榜查询
     }
     
     // ===== 用户名唯一性集合 =====
@@ -164,6 +164,22 @@ service cloud.firestore {
     // ===== 匹配统计规则 (新增) =====
     match /matchmakingStats/{statId} {
       // 读取：认证用户可以读取统计信息
+      allow read: if request.auth != null;
+      // 写入：只能通过Cloud Functions操作
+      allow write: if false;
+    }
+    
+    // ===== 排行榜缓存规则 =====
+    match /leaderboardCache/{leaderboardType} {
+      // 读取：所有认证用户可以读取排行榜缓存
+      allow read: if request.auth != null;
+      // 写入：只能通过Cloud Functions操作
+      allow write: if false;
+    }
+    
+    // ===== 天梯统计规则 =====
+    match /ladderStats/{statType} {
+      // 读取：认证用户可以读取天梯统计
       allow read: if request.auth != null;
       // 写入：只能通过Cloud Functions操作
       allow write: if false;
