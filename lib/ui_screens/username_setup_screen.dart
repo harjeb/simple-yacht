@@ -229,20 +229,35 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       
       print("DEBUG: Cloud Function 调用成功");
       print("DEBUG: 响应数据: ${response.data}");
+      print("DEBUG: 响应数据类型: ${response.data.runtimeType}");
+      print("DEBUG: 响应数据完整内容: ${response.data.toString()}");
+      print("DEBUG: success 字段: ${response.data['success']}");
+      print("DEBUG: success 字段类型: ${response.data['success'].runtimeType}");
+      print("DEBUG: requiresAuthentication 字段: ${response.data['requiresAuthentication']}");
+      print("DEBUG: requiresAuthentication 字段类型: ${response.data['requiresAuthentication'].runtimeType}");
+      print("DEBUG: userData 字段: ${response.data['userData']}");
       
       if (response.data['success'] == true) {
+        print("DEBUG: 进入 success == true 分支");
         final userData = response.data['userData'] as Map<String, dynamic>;
         final username = userData['username'] as String;
+        print("DEBUG: 提取的用户名: $username");
         
         // 检查是否需要认证
+        print("DEBUG: 检查 requiresAuthentication 字段...");
         if (response.data['requiresAuthentication'] == true) {
-          print("DEBUG: 需要认证，先进行匿名登录");
+          print("DEBUG: requiresAuthentication == true，需要认证，先进行匿名登录");
           
           // 确保用户已认证（匿名登录）
           final authService = ref.read(authServiceProvider);
+          print("DEBUG: 当前用户状态: ${authService.currentUser}");
+          
           if (authService.currentUser == null) {
             print("DEBUG: 用户未登录，进行匿名登录");
             await authService.signInAnonymously();
+            print("DEBUG: 匿名登录完成，新用户ID: ${authService.currentUser?.uid}");
+          } else {
+            print("DEBUG: 用户已登录，用户ID: ${authService.currentUser?.uid}");
           }
           
           print("DEBUG: 用户已认证，重新调用函数进行数据迁移");
@@ -256,17 +271,50 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
           
           if (migrationResponse.data['success'] == true) {
             print("DEBUG: 数据迁移成功 - 用户名: $username");
+            
+            // 强制刷新用户数据
+            print("DEBUG: 强制刷新用户相关的 providers");
+            ref.invalidate(usernameProvider);
+            ref.invalidate(userProfileProvider);
+            ref.invalidate(authStateChangesProvider);
+            
+            // 等待数据同步
+            print("DEBUG: 等待数据同步...");
+            await Future.delayed(Duration(seconds: 2));
+            
+            // 验证数据是否已同步
+            try {
+              final newUsername = await ref.read(usernameProvider.future);
+              print("DEBUG: 验证用户名同步结果: $newUsername");
+              if (newUsername == null || newUsername.isEmpty) {
+                print("DEBUG: 警告 - 用户名同步失败，但继续流程");
+              }
+            } catch (e) {
+              print("DEBUG: 验证用户名时出错: $e");
+            }
           } else {
             throw Exception('数据迁移失败: ${migrationResponse.data['message'] ?? '未知错误'}');
           }
         } else {
-          print("DEBUG: 数据迁移成功 - 用户名: $username");
+          print("DEBUG: 不需要认证或数据迁移已完成 - 用户名: $username");
         }
         
         // 刷新所有相关的 providers
         if (mounted) {
+          print("DEBUG: 开始刷新 providers");
           ref.refresh(usernameProvider);
           ref.refresh(userProfileProvider);
+          
+          // 再次验证数据状态
+          print("DEBUG: 验证最终数据状态...");
+          try {
+            final finalUsername = await ref.read(usernameProvider.future);
+            final hasUsername = ref.read(hasUsernameProvider);
+            print("DEBUG: 最终用户名: $finalUsername");
+            print("DEBUG: hasUsername 状态: $hasUsername");
+          } catch (e) {
+            print("DEBUG: 验证最终数据状态时出错: $e");
+          }
           
           // 显示成功消息
           ScaffoldMessenger.of(context).showSnackBar(
@@ -280,16 +328,23 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
           print("DEBUG: 等待 providers 更新...");
           
           // 等待 providers 更新后跳转到主界面
-          await Future.delayed(Duration(milliseconds: 1500));
+          await Future.delayed(Duration(milliseconds: 3000)); // 增加等待时间
           
           if (mounted && context.mounted) {
-            print("DEBUG: 跳转到主界面");
+            print("DEBUG: 准备跳转到主界面");
+            print("DEBUG: 当前路由: ${GoRouter.of(context).routerDelegate.currentConfiguration}");
             context.go('/');
+            print("DEBUG: 跳转命令已执行");
+          } else {
+            print("DEBUG: 无法跳转 - mounted: $mounted, context.mounted: ${context.mounted}");
           }
+        } else {
+          print("DEBUG: Widget 未挂载，无法刷新 providers");
         }
         
         print("DEBUG: 账号恢复流程完成");
       } else {
+        print("DEBUG: Cloud Function 返回失败");
         throw Exception('恢复失败: ${response.data['message'] ?? '未知错误'}');
       }
       
@@ -297,6 +352,7 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       print("=== DEBUG: FirebaseFunctionsException 捕获 ===");
       print("DEBUG: 错误代码: ${e.code}");
       print("DEBUG: 错误消息: ${e.message}");
+      print("DEBUG: 错误详情: ${e.details}");
       
       if (mounted) {
         setState(() {
@@ -317,7 +373,9 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       }
     } catch (e) {
       print("=== DEBUG: 通用异常捕获 ===");
+      print("DEBUG: 异常类型: ${e.runtimeType}");
       print("DEBUG: 异常消息: $e");
+      print("DEBUG: 异常堆栈: ${StackTrace.current}");
       
       if (mounted) {
         setState(() {

@@ -1342,7 +1342,7 @@ exports.getLadderDistribution = functions.https.onCall(async (data, context) => 
   try {
     const usersSnapshot = await db.collection('users')
         .where('totalGames', '>', 0)
-            .get();
+        .get();
 
     const distribution = {
       bronze: 0,
@@ -1381,14 +1381,14 @@ exports.getLadderDistribution = functions.https.onCall(async (data, context) => 
       totalPlayers: totalPlayers,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     };
-      } catch (error) {
+  } catch (error) {
     console.error('Error getting ladder distribution:', error);
     throw new functions.https.HttpsError(
         'internal',
         'Unable to get ladder distribution.',
     );
-      }
-    });
+  }
+});
 
 /**
  * 更新排行榜缓存 (定时任务)
@@ -1531,7 +1531,7 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
         // 检查是否有认证，未认证用户只返回验证结果
         if (!currentUserId) {
           console.log('未认证用户，返回验证结果，不进行数据迁移');
-          return {
+          const response = {
             success: true,
             message: 'Transfer code validated successfully',
             userData: {
@@ -1550,6 +1550,8 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
             requiresAuthentication: true,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
           };
+          console.log('返回响应数据:', JSON.stringify(response, null, 2));
+          return response;
         }
         // 4. 使用事务进行数据迁移
         await db.runTransaction(async (transaction) => {
@@ -1559,7 +1561,7 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
 
           // 检查当前用户是否已有数据
           const currentUserDoc = await transaction.get(currentUserRef);
-          
+
           if (currentUserDoc.exists) {
             const currentData = currentUserDoc.data();
             // 如果当前用户已有用户名，说明已经设置过，不允许覆盖
@@ -1572,7 +1574,7 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
           }
 
           // 更新当前用户数据
-          transaction.set(currentUserRef, migrationData, { merge: true });
+          transaction.set(currentUserRef, migrationData, {merge: true});
 
           // 标记原用户数据为已迁移
           transaction.update(originalUserRef, {
@@ -1626,7 +1628,6 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
           },
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
         };
-
       } catch (error) {
         console.error('账号恢复过程中发生错误:', error);
         if (error instanceof functions.https.HttpsError) {
