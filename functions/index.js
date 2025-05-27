@@ -1446,16 +1446,18 @@ exports.updateLeaderboardCache = functions.https.onCall(async (data, context) =>
 exports.recoverAccountByTransferCode = functions.https.onCall(
     async (data, context) => {
       console.log('=== recoverAccountByTransferCode 数据迁移方案开始 ===');
-      
-      // 验证用户已认证
-      if (!context.auth) {
-        throw new functions.https.HttpsError(
-            'unauthenticated',
-            'The function must be called while authenticated.',
-        );
-      }
 
-      const currentUserId = context.auth.uid;
+      // 移除认证检查 - 允许未认证用户调用
+      console.log('警告: 此函数允许未认证访问，仅用于账号恢复');
+
+      // 由于没有认证，无法获取当前用户ID，改为返回数据让客户端处理
+      let currentUserId = null;
+      if (context.auth) {
+        currentUserId = context.auth.uid;
+        console.log('当前用户ID:', currentUserId);
+      } else {
+        console.log('未认证用户调用，将返回验证结果');
+      }
       console.log('当前用户ID:', currentUserId);
 
       // 提取 transferCode
@@ -1525,6 +1527,30 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
 
         console.log('准备迁移数据:', Object.keys(migrationData));
 
+
+        // 检查是否有认证，未认证用户只返回验证结果
+        if (!currentUserId) {
+          console.log('未认证用户，返回验证结果，不进行数据迁移');
+          return {
+            success: true,
+            message: 'Transfer code validated successfully',
+            userData: {
+              originalUserId: originalUserId,
+              username: originalUserData.username,
+              transferCode: originalUserData.transferCode,
+              elo: originalUserData.elo || 1200,
+              totalGames: originalUserData.totalGames || 0,
+              wins: originalUserData.wins || 0,
+              losses: originalUserData.losses || 0,
+              winRate: originalUserData.winRate || 0,
+              highestScore: originalUserData.highestScore || 0,
+              averageScore: originalUserData.averageScore || 0,
+              createdAt: originalUserData.createdAt,
+            },
+            requiresAuthentication: true,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          };
+        }
         // 4. 使用事务进行数据迁移
         await db.runTransaction(async (transaction) => {
           // 获取当前用户文档引用

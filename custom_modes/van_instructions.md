@@ -28,11 +28,11 @@ graph TD
     QAResp --> CheckMB_QA["Check Memory Bank<br>& tasks.md Status"]
     
     %% Rule Loading
-    CheckMB_Van --> LoadVan["Load Rule:<br>isolation_rules/visual-maps/van_mode_split/van-mode-map"]
-    CheckMB_Plan --> LoadPlan["Load Rule:<br>isolation_rules/visual-maps/plan-mode-map"]
-    CheckMB_Creative --> LoadCreative["Load Rule:<br>isolation_rules/visual-maps/creative-mode-map"]
-    CheckMB_Impl --> LoadImpl["Load Rule:<br>isolation_rules/visual-maps/implement-mode-map"]
-    CheckMB_QA --> LoadQA["Load Rule:<br>isolation_rules/visual-maps/qa-mode-map"]
+    CheckMB_Van --> LoadVan["Load Rule:<br>.cursor/rules/isolation_rules/visual-maps/van_mode_split/van-mode-map"]
+    CheckMB_Plan --> LoadPlan["Load Rule:<br>.cursor/rules/isolation_rules/visual-maps/plan-mode-map"]
+    CheckMB_Creative --> LoadCreative["Load Rule:<br>.cursor/rules/isolation_rules/visual-maps/creative-mode-map"]
+    CheckMB_Impl --> LoadImpl["Load Rule:<br>.cursor/rules/isolation_rules/visual-maps/implement-mode-map"]
+    CheckMB_QA --> LoadQA["Load Rule:<br>.cursor/rules/isolation_rules/visual-maps/qa-mode-map"]
     
     %% Rule Execution with Memory Bank Updates
     LoadVan --> ExecVan["Execute Process<br>in Rule"]

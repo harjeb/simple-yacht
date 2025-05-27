@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import '../models/matchmaking_queue.dart';
 import '../models/game_room.dart';
 
@@ -38,21 +37,6 @@ class MatchmakingService {
         .collection('matchmakingQueue')
         .doc(user.uid)
         .set(queue.toFirestore());
-  }
-
-  // 计算动态ELO范围（客户端预览）
-  int calculateCurrentEloRange(DateTime joinedAt) {
-    final waitTimeSeconds = DateTime.now().difference(joinedAt).inSeconds;
-    final intervals = waitTimeSeconds ~/ _rangeExpansionInterval;
-    const baseRange = 100;
-    final expansion = intervals * _rangeExpansionAmount;
-    return min(baseRange + expansion, _maxRangeDifference);
-  }
-
-  // 检查是否超时
-  bool isMatchmakingTimeout(DateTime joinedAt) {
-    final waitTimeMinutes = DateTime.now().difference(joinedAt).inMinutes;
-    return waitTimeMinutes >= _maxWaitTimeMinutes;
   }
 
   // 离开匹配队列
