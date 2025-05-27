@@ -232,9 +232,9 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       
       if (response.data['success'] == true) {
         print("DEBUG: 进入 success == true 分支");
-        final userData = response.data['userData'] as Map<String, dynamic>;
-        final username = userData['username'] as String;
-        print("DEBUG: 提取的用户名: $username");
+        Map<String, dynamic> finalUserData = response.data['userData'] as Map<String, dynamic>;
+        String recoveredUsername = finalUserData['username'] as String;
+        print("DEBUG: 初始提取的用户名: $recoveredUsername");
         
         // 检查是否需要认证
         if (response.data['requiresAuthentication'] == true) {
@@ -264,8 +264,9 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
           if (migrationResponse.data['success'] != true) {
             throw Exception('数据迁移失败: ${migrationResponse.data['message'] ?? '未知错误'}');
           }
-          
-          print("DEBUG: 数据迁移成功");
+          finalUserData = migrationResponse.data['userData'] as Map<String, dynamic>; // 更新 finalUserData
+          recoveredUsername = finalUserData['username'] as String; // 更新 recoveredUsername
+          print("DEBUG: 数据迁移成功，更新后的用户名: $recoveredUsername");
         }
         
         // 检查widget状态
@@ -273,8 +274,18 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
           print("DEBUG: Widget已销毁，停止处理");
           return;
         }
+
+        // 1. 将用户名显式保存到本地存储
+        final localStorageService = ref.read(localStorageServiceProvider);
+        try {
+          await localStorageService.saveUsername(recoveredUsername);
+          print("DEBUG: 用户名 '$recoveredUsername' 已成功保存到本地存储。");
+        } catch (e) {
+          print("DEBUG: 保存用户名到本地存储失败: $e");
+          // 根据伪代码，即使本地保存失败也应尝试继续，但记录错误
+        }
         
-        // 刷新providers
+        // 2. 刷新providers
         print("DEBUG: 刷新 providers");
         ref.refresh(usernameProvider);
         ref.refresh(userProfileProvider);
@@ -283,15 +294,15 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
         if (mounted && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('账号恢复成功！欢迎回来，$username'),
+              content: Text('账号恢复成功！欢迎回来，$recoveredUsername'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
         
         // 等待一下然后跳转
-        await Future.delayed(Duration(milliseconds: 1000));
+        await Future.delayed(const Duration(milliseconds: 1000));
         
         // 最终检查并跳转
         if (mounted && context.mounted) {

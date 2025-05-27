@@ -229,3 +229,11 @@ The rules file was already up to date.
 - 归档文档: memory-bank/archive/feature-matchmaking-optimization_20241218.md
 - 任务状态: COMPLETED & ARCHIVED
 - Memory Bank已重置，准备下一个任务
+* [2025-05-27 14:47:00] - **调试任务完成 (账号恢复后无法跳转主界面):**
+  1. **问题定位**: 用户在账号恢复流程成功后未能跳转到主界面，日志显示 `usernameProvider` 未找到用户名。
+  2. **根本原因**: 在 `_recoverAccount` 方法 (位于 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart)) 中，从 Cloud Function 恢复的用户名在刷新 `usernameProvider` 前未保存到本地存储。
+  3. **修复措施**:
+     - 修改了 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart) 中的 `_recoverAccount` 方法。
+     - 在成功从 Cloud Function 获取恢复的用户名后，但在 `ref.refresh(usernameProvider)` 之前，添加了对 `localStorageService.saveUsername(recoveredUsername)` 的调用。
+  4. **结果**: 确保了恢复的用户名在 `usernameProvider` 刷新前已持久化，解决了跳转问题。
+  5. **Memory Bank 更新**: 已更新 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/progress.md`](memory-bank/progress.md)。

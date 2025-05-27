@@ -805,3 +805,21 @@ The `deleteUserData` Cloud Function ([`functions/index.js`](functions/index.js:5
 - Cloud Function 能够正确提取 `uid` 参数，无论其是否被嵌套。
 - 增强的日志将提供足够的信息来诊断任何进一步的参数传递问题。
 - 解决 `invalid-argument` 错误。
+
+---
+### Decision (Debug)
+[2025-05-27 14:45:00] - [Bug Fix Strategy: 账号恢复后 usernameProvider 未更新导致无法跳转主界面]
+
+**Rationale:**
+用户报告在账号恢复流程成功后未能跳转到主界面。关键日志为 `dart.developer.log {message: "No username found in Firebase or local storage", name: "usernameProvider", level: 0}`。
+根本原因是在 `_recoverAccount` 方法 (位于 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:207)) 中，从 Cloud Function 成功恢复用户数据（包括用户名）后，在调用 `ref.refresh(usernameProvider)` 刷新状态提供者之前，未能将恢复的用户名显式保存到本地存储 (`LocalStorageService`)。这导致 `usernameProvider` 在刷新时无法从本地存储中读取到新的用户名，因此保持为空或旧状态，阻止了后续的导航逻辑。
+
+**Details:**
+- **Affected File:** [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart) (特别是 `_recoverAccount` 方法)。
+- **Proposed Fix (based on provided pseudocode):**
+  1. 在 `_recoverAccount` 方法中，当 Cloud Function `recoverAccountByTransferCode` 调用成功并提取到 `recoveredUsername` 后。
+  2. 在执行 `ref.refresh(usernameProvider)` 和 `ref.refresh(userProfileProvider)` 之前。
+  3. 插入逻辑以获取 `LocalStorageService` 实例 (通过 `ref.read(localStorageServiceProvider)`).
+  4. 调用 `await localStorageService.saveUsername(recoveredUsername);` 将恢复的用户名保存到本地。
+  5. 添加相应的调试日志。
+- 此修复确保 `usernameProvider` 在刷新时能够从本地存储中获取到最新的、已恢复的用户名。
