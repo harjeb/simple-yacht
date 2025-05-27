@@ -1448,9 +1448,22 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
       console.log('=== recoverAccountByTransferCode Cloud Function 调用开始 ===');
       console.log('原始传入 data 对象:', data);
 
-      const {transferCode} = data;
+      // 尝试从不同位置提取 transferCode
+      let transferCode = null;
+      if (data && typeof data === 'object') {
+        if (data.transferCode) {
+          transferCode = data.transferCode;
+          console.log('从 data.transferCode 提取:', transferCode);
+        } else if (data.data && typeof data.data === 'object' && data.data.transferCode) {
+          transferCode = data.data.transferCode;
+          console.log('从 data.data.transferCode 提取:', transferCode);
+        }
+      }
+
+      console.log('最终提取的 transferCode:', transferCode);
 
       if (!transferCode) {
+        console.error('错误: 未能提取到 transferCode 参数');
         throw new functions.https.HttpsError(
             'invalid-argument',
             'Transfer code is required.',

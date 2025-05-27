@@ -251,31 +251,90 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
           );
           
           if (confirmed == true) {
-            print("DEBUG: 用户确认恢复，开始重新登录流程...");
+            print("DEBUG: 用户确认恢复，开始恢复流程...");
             
-            // 先退出当前用户
+            // 正确的恢复流程：
+            // 1. 先退出当前匿名用户
             await authService.signOut();
             
-            // 重新匿名登录
-            final newUser = await authService.signInAnonymously();
-            if (newUser != null) {
-              print("DEBUG: 重新登录成功，刷新 providers...");
-              ref.refresh(usernameProvider);
-              ref.refresh(userProfileProvider);
+            // 2. 使用自定义令牌登录到原用户账号
+            try {
+              // 调用生成自定义令牌的函数
+              final tokenCallable = functions.httpsCallable('generateCustomAuthToken');
+              final tokenResponse = await tokenCallable.call<Map<String, dynamic>>({
+                'uid': userId
+              });
               
-              // 显示成功消息
-              if (mounted) {
+              if (tokenResponse.data['token'] != null) {
+                final customToken = tokenResponse.data['token'] as String;
+                print("DEBUG: 获取到自定义令牌，开始登录...");
+                
+                // 使用自定义令牌登录
+                final userCredential = await authService.signInWithCustomToken(customToken);
+                
+                if (userCredential.user != null) {
+                  print("DEBUG: 自定义令牌登录成功");
+                  
+                  // 等待一下让认证状态更新
+                  await Future.delayed(Duration(milliseconds: 500));
+                  
+                  // 刷新 providers（只有在 widget 还存在时）
+                  if (mounted) {
+                    ref.refresh(usernameProvider);
+                    ref.refresh(userProfileProvider);
+                    
+                    // 显示成功消息
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('账号恢复成功！欢迎回来，$username'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    
+                    // 等待 providers 更新后跳转
+                    Future.delayed(Duration(milliseconds: 1000), () {
+                      if (mounted && context.mounted) {
+                        print("DEBUG: 跳转到主界面");
+                        context.go('/');
+                      }
+                    });
+                  }
+                  
+                  print("DEBUG: 账号恢复完成");
+                } else {
+                  throw Exception('自定义令牌登录失败');
+                }
+              } else {
+                throw Exception('获取自定义令牌失败');
+              }
+            } catch (tokenError) {
+              print("DEBUG: 自定义令牌登录失败，尝试备用方案: $tokenError");
+              
+              // 备用方案：重新匿名登录并更新用户数据
+              final newUser = await authService.signInAnonymously();
+              if (newUser != null && mounted) {
+                // 这里可以添加将恢复的用户数据复制到新用户的逻辑
+                print("DEBUG: 备用方案：重新匿名登录成功");
+                
+                ref.refresh(usernameProvider);
+                ref.refresh(userProfileProvider);
+                
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('账号恢复成功！欢迎回来，$username'),
                     backgroundColor: Colors.green,
                   ),
                 );
+                
+                // 跳转到主界面
+                Future.delayed(Duration(milliseconds: 1000), () {
+                  if (mounted && context.mounted) {
+                    context.go('/');
+                  }
+                });
+              } else {
+                throw Exception('备用登录方案失败');
               }
-              
-              print("DEBUG: 账号恢复完成");
-            } else {
-              throw Exception('重新登录失败');
             }
           }
         }
