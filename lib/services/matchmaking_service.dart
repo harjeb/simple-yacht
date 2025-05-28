@@ -7,8 +7,13 @@ import '../models/game_room.dart';
 import '../models/game_enums.dart';
 
 class MatchmakingService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  // Constructor for dependency injection
+  MatchmakingService({FirebaseAuth? auth, FirebaseFirestore? firestore})
+      : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   static const int _maxWaitTimeMinutes = 2;
   static const int _rangeExpansionInterval = 30;
@@ -187,11 +192,16 @@ class MatchmakingService {
   }
 
   String _generateRoomCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final random = Random();
-    return String.fromCharCodes(
-      Iterable.generate(6, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
-    );
+    const hexChars = "0123456789ABCDEF";
+    final random = Random.secure(); // 使用加密安全的随机数生成器
+    final roomCodeBuilder = StringBuffer();
+
+    for (int i = 0; i < 6; i++) {
+      final randomIndex = random.nextInt(hexChars.length);
+      roomCodeBuilder.write(hexChars[randomIndex]);
+    }
+
+    return roomCodeBuilder.toString();
   }
 
   Future<String> createTestMatch(String opponentId) async {

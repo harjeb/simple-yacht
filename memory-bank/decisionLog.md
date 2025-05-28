@@ -78,3 +78,46 @@ The error logs indicated `AppLocalizations` was undefined and `package:flutter_g
 - Modified `l10n.yaml` to include `untranslated-messages-file: untranslated_messages.txt`.
 - Updated import statements in `lib/ui_screens/home_screen.dart`, `lib/ui_screens/multiplayer_game_screen.dart`, `lib/widgets/scoreboard_widget.dart` from `package:flutter_gen/gen_l10n/app_localizations.dart` to `package:myapp/generated/app_localizations.dart`.
 - Executed `flutter pub get`, `flutter gen-l10n`, `flutter clean`, and `flutter pub get` again.
+
+---
+### Decision (Matchmaking)
+[2025-05-28] - 更改游戏房间代码生成逻辑为6位十六进制格式。
+
+**Rationale:**
+为了简化房间代码的格式，使其更易于用户记忆和输入（相对于可能更长或包含混合大小写字母和特殊字符的代码）。6位十六进制提供了超过1600万个唯一ID，在当前项目规模下被认为是足够的。
+
+**Implementation Details:**
+- 修改 `lib/services/matchmaking_service.dart` 中的 `_generateRoomCode()` 方法。
+- 使用 "0123456789ABCDEF" 作为字符集。
+- 生成一个长度为6的随机字符串。
+- 包含一个可选的 `isRoomIdTaken()` 检查以确保ID的唯一性，防止在高并发情况下发生冲突。
+- 客户端UI (`multiplayer_room_screen.dart`) 预计不受直接影响，因为它应将房间代码视为不透明字符串。
+
+**Impact Assessment:**
+- **数据存储**: `gameRooms` 集合中 `roomId` 的格式将统一为6位十六进制。
+- **唯一性**: 16^6 (~16.7M) 个可用ID。如果未来并发量或房间总数大幅增加，可能需要重新评估此方案。
+- **向后兼容性**: 如果系统中存在旧格式的房间ID，此更改不会自动迁移它们。新旧房间ID将共存，除非进行数据迁移。对于新创建的房间，将使用新格式。
+
+---
+### Decision (Code)
+[2025-05-28 13:25:58] - Implemented 6-digit hexadecimal room code generation
+
+**Rationale:**
+As per prior decision logged on [2025-05-28] (see above entry "更改游戏房间代码生成逻辑为6位十六进制格式"). This change simplifies room codes for better user experience.
+
+**Details:**
+- Modified `_generateRoomCode()` in [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart:189) to use "0123456789ABCDEF" and generate a 6-character string.
+- Verified that `createTestMatch()` in the same file correctly utilizes the updated `_generateRoomCode()` for new room IDs.
+
+---
+**Timestamp:** 2025-05-28 13:59:56
+**Decision:** Enhanced security for game room ID generation and access.
+**Rationale:**
+1.  **Room ID Generation:** Changed `_generateRoomCode` in `lib/services/matchmaking_service.dart` to use `Random.secure()` instead of `Random()`. This provides cryptographically stronger random numbers, making room IDs significantly harder to predict or enumerate.
+2.  **Firestore Access Control:** Strengthened Firestore rules for the `gameRooms` collection in `firestore.rules`.
+    *   `create`: Allowed only if `request.auth.uid` matches `request.resource.data.hostId`.
+    *   `read`: Allowed only if `request.auth.uid` is either `resource.data.hostId` or `resource.data.guestId`.
+    *   `update`: Allowed only if `request.auth.uid` is either `resource.data.hostId` or `resource.data.guestId`, and critical fields (`hostId`, `guestId`, `createdAt`) are not modified.
+    *   `delete`: Allowed only if `request.auth.uid` is `resource.data.hostId`.
+**Impact:** Reduced risk of unauthorized game room access, data tampering, and denial-of-service attacks related to room creation.
+---

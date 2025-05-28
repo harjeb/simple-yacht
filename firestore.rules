@@ -17,7 +17,25 @@ service cloud.firestore {
     
     // ===== 游戏房间规则 =====
     match /gameRooms/{roomId} {
-      allow read, write: if request.auth != null;
+      // 允许创建：用户必须是房主
+      allow create: if request.auth != null && request.resource.data.hostId == request.auth.uid;
+      
+      // 允许读取：用户必须是房主或访客
+      allow read: if request.auth != null &&
+                     (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid);
+                     
+      // 允许更新：用户必须是房主或访客
+      // 进一步限制：关键字段（如 hostId, guestId, createdAt）不应被客户端直接修改
+      // 考虑使用云函数进行受控更新，或添加更细致的字段级验证
+      allow update: if request.auth != null &&
+                      (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid) &&
+                      // 防止修改不可变字段
+                      request.resource.data.hostId == resource.data.hostId &&
+                      request.resource.data.guestId == resource.data.guestId &&
+                      request.resource.data.createdAt == resource.data.createdAt;
+                      
+      // 允许删除：只允许房主删除
+      allow delete: if request.auth != null && resource.data.hostId == request.auth.uid;
     }
     
     // ===== 匹配队列规则 =====
