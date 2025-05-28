@@ -66,3 +66,15 @@
 - ✅ Firebase 集成稳定
 - ✅ 安全规则完善
 - 🔧 代码细节优化进行中 (84个问题)
+
+---
+### Decision (Debug)
+[2025-05-28 10:09:00] - Bug Fix Strategy: Resolved Flutter localization build error by updating l10n.yaml, correcting import statements, and regenerating localization files.
+
+**Rationale:**
+The error logs indicated `AppLocalizations` was undefined and `package:flutter_gen/gen_l10n/app_localizations.dart` could not be resolved. This pointed to issues with localization file generation or incorrect import paths. The project name 'myapp' was confirmed, and the import path needed to reflect this. Adding `untranslated-messages-file` to `l10n.yaml` helps in tracking missing translations.
+
+**Details:**
+- Modified `l10n.yaml` to include `untranslated-messages-file: untranslated_messages.txt`.
+- Updated import statements in `lib/ui_screens/home_screen.dart`, `lib/ui_screens/multiplayer_game_screen.dart`, `lib/widgets/scoreboard_widget.dart` from `package:flutter_gen/gen_l10n/app_localizations.dart` to `package:myapp/generated/app_localizations.dart`.
+- Executed `flutter pub get`, `flutter gen-l10n`, `flutter clean`, and `flutter pub get` again.
