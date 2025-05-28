@@ -7,6 +7,10 @@ import 'package:myapp/ui_screens/game_screen.dart';
 import 'package:myapp/ui_screens/settings_screen.dart';
 import 'package:myapp/ui_screens/leaderboard_screen.dart';
 import 'package:myapp/ui_screens/username_setup_screen.dart';
+import 'package:myapp/ui_screens/multiplayer_lobby_screen.dart';
+import 'package:myapp/ui_screens/multiplayer_room_screen.dart';
+import 'package:myapp/ui_screens/multiplayer_game_screen.dart';
+import 'package:myapp/ui_screens/matchmaking/matchmaking_screen.dart';
 import 'package:myapp/state_management/providers/user_providers.dart'; // Import user providers
 import 'package:myapp/ui_screens/splash_screen.dart'; // Import SplashScreen
 import 'package:myapp/services/auth_service.dart'; // Import for authStateChangesProvider
@@ -105,6 +109,33 @@ class AppRouter {
               path: 'settings',
               builder: (BuildContext context, GoRouterState state) {
                 return const SettingsScreen();
+              },
+            ),
+            // 多人游戏相关路由
+            GoRoute(
+              path: 'multiplayer_lobby',
+              builder: (BuildContext context, GoRouterState state) {
+                return const MultiplayerLobbyScreen();
+              },
+            ),
+            GoRoute(
+              path: 'matchmaking',
+              builder: (BuildContext context, GoRouterState state) {
+                return const MatchmakingScreen();
+              },
+            ),
+            GoRoute(
+              path: 'multiplayer_room/:roomId',
+              builder: (BuildContext context, GoRouterState state) {
+                final roomId = state.pathParameters['roomId']!;
+                return MultiplayerRoomScreen(roomId: roomId);
+              },
+            ),
+            GoRoute(
+              path: 'multiplayer_game/:roomId',
+              builder: (BuildContext context, GoRouterState state) {
+                final roomId = state.pathParameters['roomId']!;
+                return MultiplayerGameScreen(roomId: roomId);
               },
             ),
           ],

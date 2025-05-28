@@ -337,5 +337,126 @@
   "clearLocalDataErrorMessage": "Failed to clear local data",
   "@clearLocalDataErrorMessage": {
     "description": "Snackbar message when local data clearing fails."
+  },
+  "multiplayerLobby": "Multiplayer Lobby",
+  "@multiplayerLobby": {
+    "description": "Title for the multiplayer lobby screen"
+  },
+  "quickMatch": "Quick Match",
+  "@quickMatch": {
+    "description": "Label for quick match button"
+  },
+  "createRoom": "Create Room",
+  "@createRoom": {
+    "description": "Label for create room button"
+  },
+  "joinRoom": "Join Room",
+  "@joinRoom": {
+    "description": "Label for join room button"
+  },
+  "onlinePlayers": "Online Players: {count}",
+  "@onlinePlayers": {
+    "description": "Display online player count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "roomCode": "Room Code",
+  "@roomCode": {
+    "description": "Room code label"
+  },
+  "waitingForPlayers": "Waiting for players to join...",
+  "@waitingForPlayers": {
+    "description": "Message when waiting for other players to join room"
+  },
+  "gameStarting": "Game starting",
+  "@gameStarting": {
+    "description": "Message before game starts"
+  },
+  "yourTurn": "Your turn",
+  "@yourTurn": {
+    "description": "Message when it's current player's turn"
+  },
+  "opponentTurn": "Opponent's turn",
+  "@opponentTurn": {
+    "description": "Message when it's opponent's turn"
+  },
+  "multiplayerGame": "Multiplayer Game",
+  "@multiplayerGame": {
+    "description": "Multiplayer game button label"
+  },
+  "playerReady": "Ready",
+  "@playerReady": {
+    "description": "Player ready status"
+  },
+  "playerNotReady": "Not Ready",
+  "@playerNotReady": {
+    "description": "Player not ready status"
+  },
+  "startGame": "Start Game",
+  "@startGame": {
+    "description": "Start game button"
+  },
+  "leaveRoom": "Leave Room",
+  "@leaveRoom": {
+    "description": "Leave room button"
+  },
+  "roomHost": "Host",
+  "@roomHost": {
+    "description": "Room host identifier"
+  },
+  "copyRoomCode": "Copy Room Code",
+  "@copyRoomCode": {
+    "description": "Copy room code button"
+  },
+  "roomCodeCopied": "Room code copied",
+  "@roomCodeCopied": {
+    "description": "Room code copied success message"
+  },
+  "enterRoomCode": "Enter room code",
+  "@enterRoomCode": {
+    "description": "Enter room code prompt"
+  },
+  "invalidRoomCode": "Invalid room code",
+  "@invalidRoomCode": {
+    "description": "Invalid room code message"
+  },
+  "roomNotFound": "Room not found",
+  "@roomNotFound": {
+    "description": "Room not found message"
+  },
+  "connectionLost": "Connection lost",
+  "@connectionLost": {
+    "description": "Connection lost message"
+  },
+  "reconnecting": "Reconnecting...",
+  "@reconnecting": {
+    "description": "Reconnecting message"
+  },
+  "gameResult": "Game Result",
+  "@gameResult": {
+    "description": "Game result title"
+  },
+  "youWin": "You Win!",
+  "@youWin": {
+    "description": "Win message"
+  },
+  "youLose": "You Lose",
+  "@youLose": {
+    "description": "Lose message"
+  },
+  "gameDraw": "Draw",
+  "@gameDraw": {
+    "description": "Draw message"
+  },
+  "playAgain": "Play Again",
+  "@playAgain": {
+    "description": "Play again button"
+  },
+  "backToLobby": "Back to Lobby",
+  "@backToLobby": {
+    "description": "Back to lobby button"
   }
 }

@@ -108,6 +108,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> { // Changed to Consume
               child: Text(localizations.startGame), // Text is now always "Start Game" or "New Game"
             ),
             const SizedBox(height: 20),
+            // 双人游戏按钮
+            ElevatedButton.icon(
+              onPressed: () {
+                context.push('/multiplayer_lobby');
+              },
+              icon: const Icon(Icons.people),
+              label: Text(localizations.multiplayerGame),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 context.go('/leaderboard'); // Navigate to leaderboard screen

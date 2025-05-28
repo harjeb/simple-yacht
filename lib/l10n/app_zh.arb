@@ -337,5 +337,126 @@
   "clearLocalDataErrorMessage": "清除本地数据失败",
   "@clearLocalDataErrorMessage": {
     "description": "本地数据清除失败时的提示消息。"
+  },
+  "multiplayerLobby": "多人游戏大厅",
+  "@multiplayerLobby": {
+    "description": "多人游戏大厅界面的标题"
+  },
+  "quickMatch": "快速匹配",
+  "@quickMatch": {
+    "description": "快速匹配按钮的标签"
+  },
+  "createRoom": "创建房间",
+  "@createRoom": {
+    "description": "创建房间按钮的标签"
+  },
+  "joinRoom": "加入房间",
+  "@joinRoom": {
+    "description": "加入房间按钮的标签"
+  },
+  "onlinePlayers": "在线玩家: {count}",
+  "@onlinePlayers": {
+    "description": "显示在线玩家数量",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "roomCode": "房间码",
+  "@roomCode": {
+    "description": "房间码标签"
+  },
+  "waitingForPlayers": "等待玩家加入...",
+  "@waitingForPlayers": {
+    "description": "等待其他玩家加入房间时的提示"
+  },
+  "gameStarting": "游戏即将开始",
+  "@gameStarting": {
+    "description": "游戏开始前的提示"
+  },
+  "yourTurn": "轮到你了",
+  "@yourTurn": {
+    "description": "轮到当前玩家时的提示"
+  },
+  "opponentTurn": "对手回合",
+  "@opponentTurn": {
+    "description": "轮到对手时的提示"
+  },
+  "multiplayerGame": "双人游戏",
+  "@multiplayerGame": {
+    "description": "双人游戏按钮标签"
+  },
+  "playerReady": "准备就绪",
+  "@playerReady": {
+    "description": "玩家准备状态"
+  },
+  "playerNotReady": "未准备",
+  "@playerNotReady": {
+    "description": "玩家未准备状态"
+  },
+  "startGame": "开始游戏",
+  "@startGame": {
+    "description": "开始游戏按钮"
+  },
+  "leaveRoom": "离开房间",
+  "@leaveRoom": {
+    "description": "离开房间按钮"
+  },
+  "roomHost": "房主",
+  "@roomHost": {
+    "description": "房主标识"
+  },
+  "copyRoomCode": "复制房间码",
+  "@copyRoomCode": {
+    "description": "复制房间码按钮"
+  },
+  "roomCodeCopied": "房间码已复制",
+  "@roomCodeCopied": {
+    "description": "房间码复制成功提示"
+  },
+  "enterRoomCode": "输入房间码",
+  "@enterRoomCode": {
+    "description": "输入房间码提示"
+  },
+  "invalidRoomCode": "无效的房间码",
+  "@invalidRoomCode": {
+    "description": "房间码无效提示"
+  },
+  "roomNotFound": "房间不存在",
+  "@roomNotFound": {
+    "description": "房间不存在提示"
+  },
+  "connectionLost": "连接断开",
+  "@connectionLost": {
+    "description": "连接断开提示"
+  },
+  "reconnecting": "正在重连...",
+  "@reconnecting": {
+    "description": "重连中提示"
+  },
+  "gameResult": "游戏结果",
+  "@gameResult": {
+    "description": "游戏结果标题"
+  },
+  "youWin": "你赢了！",
+  "@youWin": {
+    "description": "获胜提示"
+  },
+  "youLose": "你输了",
+  "@youLose": {
+    "description": "失败提示"
+  },
+  "gameDraw": "平局",
+  "@gameDraw": {
+    "description": "平局提示"
+  },
+  "playAgain": "再玩一局",
+  "@playAgain": {
+    "description": "再玩一局按钮"
+  },
+  "backToLobby": "返回大厅",
+  "@backToLobby": {
+    "description": "返回大厅按钮"
   }
 }
