@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:myapp/l10n/app_localizations.dart';
+import 'package:myapp/generated/app_localizations.dart';
 import 'package:myapp/state_management/providers/user_providers.dart';
 
 class MultiplayerRoomScreen extends ConsumerStatefulWidget {
@@ -170,7 +170,7 @@ class _MultiplayerRoomScreenState extends ConsumerState<MultiplayerRoomScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context)!.cancelButtonLabel),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),

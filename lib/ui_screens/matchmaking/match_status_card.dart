@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/matchmaking_queue.dart';
+import '../../models/game_enums.dart';
 
 class MatchStatusCard extends StatelessWidget {
   final MatchmakingQueue? matchmakingStatus;

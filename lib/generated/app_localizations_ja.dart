@@ -1,5 +1,3 @@
-// ignore: unused_import
-import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -352,4 +350,90 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clearLocalDataErrorMessage => 'Failed to clear local data';
+
+  @override
+  String get multiplayerLobby => 'Multiplayer Lobby';
+
+  @override
+  String get quickMatch => 'Quick Match';
+
+  @override
+  String get createRoom => 'Create Room';
+
+  @override
+  String get joinRoom => 'Join Room';
+
+  @override
+  String onlinePlayers(int count) {
+    return 'Online Players: $count';
+  }
+
+  @override
+  String get roomCode => 'Room Code';
+
+  @override
+  String get waitingForPlayers => 'Waiting for players to join...';
+
+  @override
+  String get gameStarting => 'Game starting';
+
+  @override
+  String get yourTurn => 'Your turn';
+
+  @override
+  String get opponentTurn => 'Opponent\'s turn';
+
+  @override
+  String get multiplayerGame => 'Multiplayer Game';
+
+  @override
+  String get playerReady => 'Ready';
+
+  @override
+  String get playerNotReady => 'Not Ready';
+
+  @override
+  String get leaveRoom => 'Leave Room';
+
+  @override
+  String get roomHost => 'Host';
+
+  @override
+  String get copyRoomCode => 'Copy Room Code';
+
+  @override
+  String get roomCodeCopied => 'Room code copied';
+
+  @override
+  String get enterRoomCode => 'Enter room code';
+
+  @override
+  String get invalidRoomCode => 'Invalid room code';
+
+  @override
+  String get roomNotFound => 'Room not found';
+
+  @override
+  String get connectionLost => 'Connection lost';
+
+  @override
+  String get reconnecting => 'Reconnecting...';
+
+  @override
+  String get gameResult => 'Game Result';
+
+  @override
+  String get youWin => 'You Win!';
+
+  @override
+  String get youLose => 'You Lose';
+
+  @override
+  String get gameDraw => 'Draw';
+
+  @override
+  String get playAgain => 'Play Again';
+
+  @override
+  String get backToLobby => 'Back to Lobby';
 }

@@ -4,6 +4,7 @@ import '../../services/matchmaking_service.dart';
 import '../../models/game_room.dart';
 import '../../models/multiplayer_game_state.dart';
 import '../../models/matchmaking_queue.dart';
+import '../../models/game_enums.dart';
 
 // 服务提供者
 final multiplayerServiceProvider = Provider<MultiplayerService>((ref) {
@@ -27,12 +28,6 @@ final currentMatchmakingQueueProvider = StateProvider<MatchmakingQueue?>((ref) =
 final roomStreamProvider = StreamProvider.family<GameRoom?, String>((ref, roomId) {
   final service = ref.read(multiplayerServiceProvider);
   return service.watchRoom(roomId);
-});
-
-// 多人游戏监听提供者
-final multiplayerGameStreamProvider = StreamProvider.family<MultiplayerGameState?, String>((ref, gameId) {
-  final service = ref.read(multiplayerServiceProvider);
-  return service.watchMultiplayerGame(gameId);
 });
 
 // 匹配状态监听提供者
@@ -77,7 +72,10 @@ class MultiplayerController extends StateNotifier<AsyncValue<void>> {
   Future<String?> createRoom(GameMode gameMode) async {
     state = const AsyncValue.loading();
     try {
-      final roomId = await _multiplayerService.createRoom(gameMode: gameMode);
+      final roomId = await _multiplayerService.createRoom(
+        roomName: 'Game Room',
+        gameMode: gameMode,
+      );
       state = const AsyncValue.data(null);
       return roomId;
     } catch (error, stackTrace) {
@@ -90,9 +88,9 @@ class MultiplayerController extends StateNotifier<AsyncValue<void>> {
   Future<bool> joinRoom(String roomId) async {
     state = const AsyncValue.loading();
     try {
-      final success = await _multiplayerService.joinRoom(roomId);
+      await _multiplayerService.joinRoom(roomId);
       state = const AsyncValue.data(null);
-      return success;
+      return true;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       return false;
@@ -111,15 +109,13 @@ class MultiplayerController extends StateNotifier<AsyncValue<void>> {
   }
 
   // 开始游戏
-  Future<String?> startGame(String roomId) async {
+  Future<void> startGame(String roomId) async {
     state = const AsyncValue.loading();
     try {
-      final gameId = await _multiplayerService.startGame(roomId);
+      await _multiplayerService.startGame(roomId);
       state = const AsyncValue.data(null);
-      return gameId;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
-      return null;
     }
   }
 
@@ -171,22 +167,4 @@ final multiplayerControllerProvider = StateNotifierProvider<MultiplayerControlle
   final multiplayerService = ref.read(multiplayerServiceProvider);
   final matchmakingService = ref.read(matchmakingServiceProvider);
   return MultiplayerController(multiplayerService, matchmakingService);
-});
-
-// 房间代码验证提供者
-final roomCodeValidationProvider = FutureProvider.family<bool, String>((ref, roomCode) async {
-  final service = ref.read(multiplayerServiceProvider);
-  return await service.isValidRoomCode(roomCode);
-});
-
-// 当前用户房间提供者
-final currentUserRoomProvider = FutureProvider<GameRoom?>((ref) async {
-  final service = ref.read(multiplayerServiceProvider);
-  return await service.getCurrentRoom();
-});
-
-// 当前用户多人游戏提供者
-final currentUserMultiplayerGameProvider = FutureProvider<MultiplayerGameState?>((ref) async {
-  final service = ref.read(multiplayerServiceProvider);
-  return await service.getCurrentMultiplayerGame();
-});
+}); 

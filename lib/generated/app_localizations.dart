@@ -23,7 +23,7 @@ import 'app_localizations_zh.dart';
 /// `supportedLocales` list. For example:
 ///
 /// ```dart
-/// import 'generated/app_localizations.dart';
+/// import 'gen_l10n/app_localizations.dart';
 ///
 /// return MaterialApp(
 ///   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -111,10 +111,10 @@ abstract class AppLocalizations {
   /// **'Yahtzee Game'**
   String get appTitle;
 
-  /// No description provided for @startGame.
+  /// Start game button
   ///
   /// In en, this message translates to:
-  /// **'Start New Game'**
+  /// **'Start Game'**
   String get startGame;
 
   /// No description provided for @leaderboard.
@@ -758,6 +758,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to clear local data'**
   String get clearLocalDataErrorMessage;
+
+  /// Title for the multiplayer lobby screen
+  ///
+  /// In en, this message translates to:
+  /// **'Multiplayer Lobby'**
+  String get multiplayerLobby;
+
+  /// Label for quick match button
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Match'**
+  String get quickMatch;
+
+  /// Label for create room button
+  ///
+  /// In en, this message translates to:
+  /// **'Create Room'**
+  String get createRoom;
+
+  /// Label for join room button
+  ///
+  /// In en, this message translates to:
+  /// **'Join Room'**
+  String get joinRoom;
+
+  /// Display online player count
+  ///
+  /// In en, this message translates to:
+  /// **'Online Players: {count}'**
+  String onlinePlayers(int count);
+
+  /// Room code label
+  ///
+  /// In en, this message translates to:
+  /// **'Room Code'**
+  String get roomCode;
+
+  /// Message when waiting for other players to join room
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for players to join...'**
+  String get waitingForPlayers;
+
+  /// Message before game starts
+  ///
+  /// In en, this message translates to:
+  /// **'Game starting'**
+  String get gameStarting;
+
+  /// Message when it's current player's turn
+  ///
+  /// In en, this message translates to:
+  /// **'Your turn'**
+  String get yourTurn;
+
+  /// Message when it's opponent's turn
+  ///
+  /// In en, this message translates to:
+  /// **'Opponent\'s turn'**
+  String get opponentTurn;
+
+  /// Multiplayer game button label
+  ///
+  /// In en, this message translates to:
+  /// **'Multiplayer Game'**
+  String get multiplayerGame;
+
+  /// Player ready status
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get playerReady;
+
+  /// Player not ready status
+  ///
+  /// In en, this message translates to:
+  /// **'Not Ready'**
+  String get playerNotReady;
+
+  /// Leave room button
+  ///
+  /// In en, this message translates to:
+  /// **'Leave Room'**
+  String get leaveRoom;
+
+  /// Room host identifier
+  ///
+  /// In en, this message translates to:
+  /// **'Host'**
+  String get roomHost;
+
+  /// Copy room code button
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Room Code'**
+  String get copyRoomCode;
+
+  /// Room code copied success message
+  ///
+  /// In en, this message translates to:
+  /// **'Room code copied'**
+  String get roomCodeCopied;
+
+  /// Enter room code prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Enter room code'**
+  String get enterRoomCode;
+
+  /// Invalid room code message
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid room code'**
+  String get invalidRoomCode;
+
+  /// Room not found message
+  ///
+  /// In en, this message translates to:
+  /// **'Room not found'**
+  String get roomNotFound;
+
+  /// Connection lost message
+  ///
+  /// In en, this message translates to:
+  /// **'Connection lost'**
+  String get connectionLost;
+
+  /// Reconnecting message
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting...'**
+  String get reconnecting;
+
+  /// Game result title
+  ///
+  /// In en, this message translates to:
+  /// **'Game Result'**
+  String get gameResult;
+
+  /// Win message
+  ///
+  /// In en, this message translates to:
+  /// **'You Win!'**
+  String get youWin;
+
+  /// Lose message
+  ///
+  /// In en, this message translates to:
+  /// **'You Lose'**
+  String get youLose;
+
+  /// Draw message
+  ///
+  /// In en, this message translates to:
+  /// **'Draw'**
+  String get gameDraw;
+
+  /// Play again button
+  ///
+  /// In en, this message translates to:
+  /// **'Play Again'**
+  String get playAgain;
+
+  /// Back to lobby button
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Lobby'**
+  String get backToLobby;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../services/matchmaking_service.dart';
 import '../../models/matchmaking_queue.dart';
+import '../../models/game_enums.dart';
 import 'match_status_card.dart';
 import 'match_info_panel.dart';
 import 'match_control_panel.dart';
@@ -90,7 +91,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
     try {
       await _matchmakingService.joinQueue(
         playerName: '玩家', // 这里应该从用户配置获取
-        gameMode: GameMode.casual,
+        gameMode: GameMode.multiplayer,
         eloRating: _currentEloRating,
       );
       

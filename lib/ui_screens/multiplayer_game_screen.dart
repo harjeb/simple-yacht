@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:myapp/l10n/app_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import 'package:myapp/models/game_room.dart';
 import 'package:myapp/state_management/providers/user_providers.dart';
 import 'package:myapp/state_management/providers/game_providers.dart';
-import 'package:myapp/ui_components/dice_widget.dart';
-import 'package:myapp/ui_components/scorecard_widget.dart';
+import 'package:myapp/widgets/dice_widget.dart';
+import 'package:myapp/widgets/scoreboard_widget.dart';
 
 class MultiplayerGameScreen extends ConsumerStatefulWidget {
   final String roomId;
@@ -44,7 +46,7 @@ class _MultiplayerGameScreenState extends ConsumerState<MultiplayerGameScreen> {
       // await ref.read(multiplayerServiceProvider).initializeGame(widget.roomId);
       
       // 初始化游戏状态
-      ref.read(gameStateProvider.notifier).startNewGame();
+      ref.read(gameStateProvider.notifier).resetAndStartNewGame();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -153,7 +155,7 @@ class _MultiplayerGameScreenState extends ConsumerState<MultiplayerGameScreen> {
       // await ref.read(multiplayerServiceProvider).requestRematch(widget.roomId);
       
       // 重置游戏状态
-      ref.read(gameStateProvider.notifier).startNewGame();
+      ref.read(gameStateProvider.notifier).resetAndStartNewGame();
       setState(() {
         _isMyTurn = true;
         _isGameOver = false;
@@ -180,7 +182,7 @@ class _MultiplayerGameScreenState extends ConsumerState<MultiplayerGameScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context)!.cancelButtonLabel),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -313,23 +315,13 @@ class _MultiplayerGameScreenState extends ConsumerState<MultiplayerGameScreen> {
               child: Column(
                 children: [
                   // 骰子区域
-                  DiceWidget(
-                    enabled: _isMyTurn && !_isGameOver,
-                  ),
+                  DiceWidget(),
                   
                   const SizedBox(height: 16),
                   
                   // 计分板
                   Expanded(
-                    child: ScorecardWidget(
-                      enabled: _isMyTurn && !_isGameOver,
-                      onScoreSelected: (category, score) {
-                        // 选择分数后自动结束回合
-                        if (_isMyTurn) {
-                          _endTurn();
-                        }
-                      },
-                    ),
+                    child: ScoreboardWidget(),
                   ),
                 ],
               ),

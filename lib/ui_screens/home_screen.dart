@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Added for Riverpod
-import 'package:myapp/generated/app_localizations.dart'; // Import generated localizations from new path
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations from new path
 import 'package:myapp/state_management/providers/game_providers.dart'; // Added for game providers
 import 'package:myapp/state_management/providers/user_providers.dart'; // Added for user providers
 import 'package:myapp/state_management/providers/personal_best_score_provider.dart'; // Added for personal best score

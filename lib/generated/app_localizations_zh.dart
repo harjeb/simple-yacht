@@ -1,5 +1,3 @@
-// ignore: unused_import
-import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -12,7 +10,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => '快艇骰子';
 
   @override
-  String get startGame => '开始新游戏';
+  String get startGame => '开始游戏';
 
   @override
   String get leaderboard => '排行榜';
@@ -352,4 +350,90 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearLocalDataErrorMessage => '清除本地数据失败';
+
+  @override
+  String get multiplayerLobby => '多人游戏大厅';
+
+  @override
+  String get quickMatch => '快速匹配';
+
+  @override
+  String get createRoom => '创建房间';
+
+  @override
+  String get joinRoom => '加入房间';
+
+  @override
+  String onlinePlayers(int count) {
+    return '在线玩家: $count';
+  }
+
+  @override
+  String get roomCode => '房间码';
+
+  @override
+  String get waitingForPlayers => '等待玩家加入...';
+
+  @override
+  String get gameStarting => '游戏即将开始';
+
+  @override
+  String get yourTurn => '轮到你了';
+
+  @override
+  String get opponentTurn => '对手回合';
+
+  @override
+  String get multiplayerGame => '双人游戏';
+
+  @override
+  String get playerReady => '准备就绪';
+
+  @override
+  String get playerNotReady => '未准备';
+
+  @override
+  String get leaveRoom => '离开房间';
+
+  @override
+  String get roomHost => '房主';
+
+  @override
+  String get copyRoomCode => '复制房间码';
+
+  @override
+  String get roomCodeCopied => '房间码已复制';
+
+  @override
+  String get enterRoomCode => '输入房间码';
+
+  @override
+  String get invalidRoomCode => '无效的房间码';
+
+  @override
+  String get roomNotFound => '房间不存在';
+
+  @override
+  String get connectionLost => '连接断开';
+
+  @override
+  String get reconnecting => '正在重连...';
+
+  @override
+  String get gameResult => '游戏结果';
+
+  @override
+  String get youWin => '你赢了！';
+
+  @override
+  String get youLose => '你输了';
+
+  @override
+  String get gameDraw => '平局';
+
+  @override
+  String get playAgain => '再玩一局';
+
+  @override
+  String get backToLobby => '返回大厅';
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/matchmaking_queue.dart';
+import '../../models/game_enums.dart';
 
 class MatchInfoPanel extends StatelessWidget {
   final MatchmakingQueue? matchmakingStatus;
@@ -56,7 +57,7 @@ class MatchInfoPanel extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 8),
-            _buildMatchmakingProgress(),
+            _buildMatchmakingProgress(context),
           ],
         ),
       ),
@@ -85,7 +86,7 @@ class MatchInfoPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildMatchmakingProgress() {
+  Widget _buildMatchmakingProgress(BuildContext context) {
     if (matchmakingStatus == null || matchmakingStatus!.status != MatchmakingStatus.searching) {
       return const SizedBox.shrink();
     }

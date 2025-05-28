@@ -9,21 +9,19 @@ import '../models/game_enums.dart';
 class MatchmakingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
-  // 匹配参数
-  static const int _maxWaitTimeMinutes = 2;  // 2分钟超时
-  static const int _rangeExpansionInterval = 30; // 每30秒扩大范围
-  static const int _rangeExpansionAmount = 100; // 每次扩大100分
-  static const int _maxRangeDifference = 500; // 最大允许500分差距
 
-  // 加入匹配队列
+  static const int _maxWaitTimeMinutes = 2;
+  static const int _rangeExpansionInterval = 30;
+  static const int _rangeExpansionAmount = 100;
+  static const int _maxRangeDifference = 500;
+
   Future<void> joinQueue({
     required String playerName,
     required GameMode gameMode,
     int eloRating = 1200,
   }) async {
     final user = _auth.currentUser;
-    if (user == null) throw Exception('用户未登录');
+    if (user == null) throw Exception('User not logged in');
 
     final queue = MatchmakingQueue(
       playerId: user.uid,
@@ -40,7 +38,6 @@ class MatchmakingService {
         .set(queue.toFirestore());
   }
 
-  // 计算动态ELO范围（客户端预览）
   int calculateCurrentEloRange(DateTime joinedAt) {
     final waitTimeSeconds = DateTime.now().difference(joinedAt).inSeconds;
     final intervals = waitTimeSeconds ~/ _rangeExpansionInterval;
@@ -49,13 +46,11 @@ class MatchmakingService {
     return min(baseRange + expansion, _maxRangeDifference);
   }
 
-  // 检查是否超时
   bool isMatchmakingTimeout(DateTime joinedAt) {
     final waitTimeMinutes = DateTime.now().difference(joinedAt).inMinutes;
     return waitTimeMinutes >= _maxWaitTimeMinutes;
   }
 
-  // 离开匹配队列
   Future<void> leaveQueue() async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -66,7 +61,6 @@ class MatchmakingService {
         .delete();
   }
 
-  // 监听匹配状态
   Stream<MatchmakingQueue?> watchMatchmakingStatus() {
     final user = _auth.currentUser;
     if (user == null) return Stream.value(null);
@@ -76,12 +70,11 @@ class MatchmakingService {
         .doc(user.uid)
         .snapshots()
         .map((doc) {
-      if (!doc.exists) return null;
-      return MatchmakingQueue.fromFirestore(doc);
-    });
+          if (!doc.exists) return null;
+          return MatchmakingQueue.fromFirestore(doc);
+        });
   }
 
-  // 取消匹配
   Future<void> cancelMatching() async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -90,12 +83,11 @@ class MatchmakingService {
         .collection('matchmakingQueue')
         .doc(user.uid)
         .update({
-      'status': 'cancelled',
-      'cancelledAt': FieldValue.serverTimestamp(),
-    });
+          'status': 'cancelled',
+          'cancelledAt': FieldValue.serverTimestamp(),
+        });
   }
 
-  // 获取当前ELO评分
   Future<int> getCurrentEloRating() async {
     final user = _auth.currentUser;
     if (user == null) return 1200;
@@ -111,7 +103,6 @@ class MatchmakingService {
     return 1200;
   }
 
-  // 更新ELO评分（仅用于本地计算预览）
   Future<void> updateEloRating(int newRating) async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -120,13 +111,12 @@ class MatchmakingService {
         .collection('eloRatings')
         .doc(user.uid)
         .set({
-      'rating': newRating,
-      'gamesPlayed': FieldValue.increment(1),
-      'lastUpdated': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+          'rating': newRating,
+          'gamesPlayed': FieldValue.increment(1),
+          'lastUpdated': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
   }
 
-  // 获取ELO排行榜
   Future<List<Map<String, dynamic>>> getEloLeaderboard({int limit = 50}) async {
     final snapshot = await _firestore
         .collection('eloRatings')
@@ -140,15 +130,14 @@ class MatchmakingService {
       final doc = snapshot.docs[i];
       final data = doc.data();
       
-      // 获取用户名
       final userDoc = await _firestore
           .collection('users')
           .doc(doc.id)
           .get();
       
       final userName = userDoc.exists 
-          ? userDoc.data()?['displayName'] ?? '未知用户'
-          : '未知用户';
+          ? (userDoc.data()?['displayName'] ?? 'Unknown User')
+          : 'Unknown User';
 
       leaderboard.add({
         'rank': i + 1,
@@ -163,20 +152,17 @@ class MatchmakingService {
     return leaderboard;
   }
 
-  // 计算ELO评分变化（预览）
   Map<String, int> calculateEloChange({
     required int player1Rating,
     required int player2Rating,
     required int player1Score,
     required int player2Score,
   }) {
-    const int K = 32; // ELO系数
+    const int K = 32;
 
-    // 计算期望得分
     final expected1 = 1 / (1 + pow(10, (player2Rating - player1Rating) / 400));
     final expected2 = 1 / (1 + pow(10, (player1Rating - player2Rating) / 400));
 
-    // 计算实际得分（0-1之间）
     double actual1, actual2;
     if (player1Score > player2Score) {
       actual1 = 1.0;
@@ -189,7 +175,6 @@ class MatchmakingService {
       actual2 = 0.5;
     }
 
-    // 计算新评分
     final newRating1 = (player1Rating + K * (actual1 - expected1)).round();
     final newRating2 = (player2Rating + K * (actual2 - expected2)).round();
 
@@ -201,7 +186,6 @@ class MatchmakingService {
     };
   }
 
-  // 生成房间代码
   String _generateRoomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = Random();
@@ -210,19 +194,17 @@ class MatchmakingService {
     );
   }
 
-  // 手动匹配（用于测试）
   Future<String> createTestMatch(String opponentId) async {
     final user = _auth.currentUser;
-    if (user == null) throw Exception('用户未登录');
+    if (user == null) throw Exception('User not logged in');
 
     final roomId = _generateRoomCode();
     
-    // 获取用户信息
     final userDoc = await _firestore.collection('users').doc(user.uid).get();
     final opponentDoc = await _firestore.collection('users').doc(opponentId).get();
     
-    final userName = userDoc.exists ? userDoc.data()?['displayName'] ?? '玩家1' : '玩家1';
-    final opponentName = opponentDoc.exists ? opponentDoc.data()?['displayName'] ?? '玩家2' : '玩家2';
+    final userName = userDoc.exists ? (userDoc.data()?['displayName'] ?? 'Player 1') : 'Player 1';
+    final opponentName = opponentDoc.exists ? (opponentDoc.data()?['displayName'] ?? 'Player 2') : 'Player 2';
 
     final gameRoom = GameRoom(
       id: roomId,
@@ -232,7 +214,7 @@ class MatchmakingService {
       status: GameRoomStatus.waiting,
       createdAt: DateTime.now(),
       gameState: {
-        'timeLimit': 15 * 60 * 1000, // 15分钟
+        'timeLimit': 15 * 60 * 1000,
         'rounds': 13,
         'hostName': userName,
         'guestName': opponentName,
@@ -247,7 +229,6 @@ class MatchmakingService {
     return roomId;
   }
 
-  // 获取匹配历史
   Future<List<Map<String, dynamic>>> getMatchHistory({int limit = 20}) async {
     final user = _auth.currentUser;
     if (user == null) return [];
@@ -279,7 +260,6 @@ class MatchmakingService {
     return history;
   }
 
-  // 获取匹配统计
   Future<Map<String, dynamic>> getMatchStats() async {
     final user = _auth.currentUser;
     if (user == null) return {};
@@ -322,4 +302,4 @@ class MatchmakingService {
       'highestScore': highestScore,
     };
   }
-}
+} 
