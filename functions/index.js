@@ -1019,15 +1019,15 @@ exports.getLeaderboard = functions.https.onCall(async (data, context) => {
     const now = new Date();
 
     switch (leaderboardType) {
-      case 'daily':
+      case 'daily': {
         // 日榜：今天的数据
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         query = db.collection('users')
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(todayStart))
             .orderBy('elo', 'desc');
         break;
-
-      case 'weekly':
+      }
+      case 'weekly': {
         // 周榜：本周的数据
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
@@ -1036,29 +1036,30 @@ exports.getLeaderboard = functions.https.onCall(async (data, context) => {
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(weekStart))
             .orderBy('elo', 'desc');
         break;
-
-      case 'monthly':
+      }
+      case 'monthly': {
         // 月榜：本月的数据
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         query = db.collection('users')
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(monthStart))
             .orderBy('elo', 'desc');
         break;
-
-      case 'ladder':
+      }
+      case 'ladder': {
         // 天梯分排名：按ELO分段
         query = db.collection('users')
             .where('totalGames', '>', 0)
             .orderBy('elo', 'desc');
         break;
-
+      }
       case 'total':
-      default:
+      default: {
         // 总榜：所有时间的数据
         query = db.collection('users')
             .where('totalGames', '>', 0)
             .orderBy('elo', 'desc');
         break;
+      }
     }
 
     const snapshot = await query
@@ -1246,15 +1247,15 @@ async function getUserRankInLeaderboard(userId, userElo, leaderboardType) {
     const now = new Date();
 
     switch (leaderboardType) {
-      case 'daily':
+      case 'daily': {
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         query = db.collection('users')
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(todayStart))
             .where('elo', '>', userElo)
             .orderBy('elo', 'desc');
         break;
-
-      case 'weekly':
+      }
+      case 'weekly': {
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
         weekStart.setHours(0, 0, 0, 0);
@@ -1263,22 +1264,23 @@ async function getUserRankInLeaderboard(userId, userElo, leaderboardType) {
             .where('elo', '>', userElo)
             .orderBy('elo', 'desc');
         break;
-
-      case 'monthly':
+      }
+      case 'monthly': {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         query = db.collection('users')
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(monthStart))
             .where('elo', '>', userElo)
             .orderBy('elo', 'desc');
         break;
-
+      }
       case 'total':
-      default:
+      default: {
         query = db.collection('users')
             .where('totalGames', '>', 0)
             .where('elo', '>', userElo)
             .orderBy('elo', 'desc');
         break;
+      }
     }
 
     const snapshot = await query.get();
@@ -1287,27 +1289,31 @@ async function getUserRankInLeaderboard(userId, userElo, leaderboardType) {
     // 获取总人数
     let totalQuery;
     switch (leaderboardType) {
-      case 'daily':
+      case 'daily': {
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         totalQuery = db.collection('users')
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(todayStart));
         break;
-      case 'weekly':
+      }
+      case 'weekly': {
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
         weekStart.setHours(0, 0, 0, 0);
         totalQuery = db.collection('users')
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(weekStart));
         break;
-      case 'monthly':
+      }
+      case 'monthly': {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         totalQuery = db.collection('users')
             .where('lastGameAt', '>=', admin.firestore.Timestamp.fromDate(monthStart));
         break;
+      }
       case 'total':
-      default:
+      default: {
         totalQuery = db.collection('users').where('totalGames', '>', 0);
         break;
+      }
     }
 
     const totalSnapshot = await totalQuery.get();
@@ -1405,7 +1411,7 @@ exports.updateLeaderboardCache = functions.https.onCall(async (data, context) =>
   }
 
   try {
-    const now = new Date();
+    // const now = new Date(); // ESLint: 'now' is assigned a value but never used.
     const leaderboardTypes = ['total', 'daily', 'weekly', 'monthly'];
 
     for (const type of leaderboardTypes) {
@@ -1510,6 +1516,57 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
         }
 
         // 3. 准备迁移数据
+        console.log('原始用户数据 (originalUserData):');
+        console.log(JSON.stringify(originalUserData, null, 2));
+
+        let pbsValue = null;
+        console.log('尝试从 originalUserData.personalBestScore 读取...');
+        if (originalUserData.personalBestScore !== undefined) {
+          pbsValue = originalUserData.personalBestScore;
+          console.log('从 originalUserData.personalBestScore 读取到的值:', pbsValue);
+        } else {
+          console.log('originalUserData.personalBestScore 未定义。');
+          console.log('尝试从 originalUserData.gameData.personalBestScore 读取...');
+          if (
+            originalUserData.gameData &&
+            originalUserData.gameData.personalBestScore !== undefined
+          ) {
+            pbsValue = originalUserData.gameData.personalBestScore;
+            console.log(
+                'gameData.pbs val:', // 大幅缩短字符串
+                pbsValue,
+            );
+          } else {
+            console.log('originalUserData.gameData.personalBestScore 未定义或 gameData 不存在.');
+          }
+        }
+        const personalBestScoreData = pbsValue;
+        console.log('最终 personalBestScoreData:', personalBestScoreData);
+
+        let pbsTsValue = null;
+        console.log('尝试从 originalUserData.personalBestScoreTimestamp 读取...');
+        if (originalUserData.personalBestScoreTimestamp !== undefined) {
+          pbsTsValue = originalUserData.personalBestScoreTimestamp;
+          console.log('从 originalUserData.personalBestScoreTimestamp 读取值:', pbsTsValue);
+        } else {
+          console.log('originalUserData.personalBestScoreTimestamp 未定义。');
+          console.log('尝试从 originalUserData.gameData.personalBestScoreTimestamp 读取...');
+          if (
+            originalUserData.gameData &&
+            originalUserData.gameData.personalBestScoreTimestamp !== undefined
+          ) {
+            pbsTsValue = originalUserData.gameData.personalBestScoreTimestamp;
+            console.log(
+                'gameData.pbsTs val:', // 大幅缩短字符串
+                pbsTsValue,
+            );
+          } else {
+            console.log('originalUserData.gameData.personalBestScoreTimestamp 未定义或 gameData 不存在.');
+          }
+        }
+        const personalBestScoreTimestampData = pbsTsValue;
+        console.log('最终 personalBestScoreTimestampData:', personalBestScoreTimestampData);
+
         const migrationData = {
           username: originalUserData.username,
           transferCode: originalUserData.transferCode,
@@ -1518,7 +1575,9 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
           wins: originalUserData.wins || 0,
           losses: originalUserData.losses || 0,
           winRate: originalUserData.winRate || 0,
-          highestScore: originalUserData.highestScore || 0,
+          highestScore: originalUserData.highestScore || 0, // 保留旧字段以兼容，或考虑移除
+          personalBestScore: personalBestScoreData,
+          personalBestScoreTimestamp: personalBestScoreTimestampData, // 新增字段
           averageScore: originalUserData.averageScore || 0,
           createdAt: originalUserData.createdAt,
           lastLoginAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -1536,6 +1595,7 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
             message: 'Transfer code validated successfully',
             userData: {
               originalUserId: originalUserId,
+              uid: originalUserId, // 添加 uid 字段以便客户端使用
               username: originalUserData.username,
               transferCode: originalUserData.transferCode,
               elo: originalUserData.elo || 1200,
@@ -1543,7 +1603,9 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
               wins: originalUserData.wins || 0,
               losses: originalUserData.losses || 0,
               winRate: originalUserData.winRate || 0,
-              highestScore: originalUserData.highestScore || 0,
+              highestScore: originalUserData.highestScore || 0, // 保留旧字段
+              personalBestScore: personalBestScoreData,
+              personalBestScoreTimestamp: personalBestScoreTimestampData, // 新增字段
               averageScore: originalUserData.averageScore || 0,
               createdAt: originalUserData.createdAt,
             },
@@ -1597,7 +1659,7 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
           if (!leaderboardSnapshot.empty) {
             const batch = db.batch();
             leaderboardSnapshot.docs.forEach((doc) => {
-              const scoreData = doc.data();
+              // const scoreData = doc.data(); // ESLint: 'scoreData' unused.
               // 更新排行榜记录的用户ID
               batch.update(doc.ref, {
                 userId: currentUserId,
@@ -1617,13 +1679,16 @@ exports.recoverAccountByTransferCode = functions.https.onCall(
           success: true,
           message: 'Account recovered successfully',
           userData: {
+            uid: currentUserId, // 添加 uid 字段
             username: migrationData.username,
             elo: migrationData.elo,
             totalGames: migrationData.totalGames,
             wins: migrationData.wins,
             losses: migrationData.losses,
             winRate: migrationData.winRate,
-            highestScore: migrationData.highestScore,
+            highestScore: migrationData.highestScore, // 保留旧字段
+            personalBestScore: migrationData.personalBestScore,
+            personalBestScoreTimestamp: migrationData.personalBestScoreTimestamp, // 新增字段
             averageScore: migrationData.averageScore,
           },
           timestamp: admin.firestore.FieldValue.serverTimestamp(),

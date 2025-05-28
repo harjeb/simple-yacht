@@ -14,7 +14,12 @@ import 'package:myapp/state_management/providers/service_providers.dart'; // Imp
 final leaderboardServiceProvider = Provider<LeaderboardService>((ref) {
   final firestore = ref.watch(firestoreProvider); // Get Firestore instance from user_service.dart providers
   final firebaseAuth = ref.watch(firebaseAuthProvider); // Get FirebaseAuth instance from auth_service.dart providers
-  return LeaderboardService(firestore: firestore, firebaseAuth: firebaseAuth);
+  final localStorageService = ref.watch(localStorageServiceProvider); // Get LocalStorageService instance
+  return LeaderboardService(
+    firestore: firestore,
+    firebaseAuth: firebaseAuth,
+    localStorageService: localStorageService, // Pass LocalStorageService
+  );
 });
 
 // Provider to get the leaderboard list

@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:myapp/core_logic/score_entry.dart';
-// LocalStorageService is no longer a direct dependency for core leaderboard functions.
+import 'package:myapp/services/local_storage_service.dart'; // Import LocalStorageService
 
 class LeaderboardService {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _firebaseAuth;
+  final LocalStorageService _localStorageService; // Add LocalStorageService
 
   // Define a constant for the leaderboard collection path for clarity
   static const String _leaderboardCollectionPath = 'leaderboards';
@@ -17,8 +18,10 @@ class LeaderboardService {
   LeaderboardService({
     required FirebaseFirestore firestore,
     required FirebaseAuth firebaseAuth,
+    required LocalStorageService localStorageService, // Add to constructor
   })  : _firestore = firestore,
-        _firebaseAuth = firebaseAuth;
+        _firebaseAuth = firebaseAuth,
+        _localStorageService = localStorageService; // Initialize LocalStorageService
 
   CollectionReference<Map<String, dynamic>> get _globalScoresCollection =>
       _firestore
@@ -103,47 +106,62 @@ class LeaderboardService {
     }
   }
 
-  /// Fetches the personal best score for the given username from their user document.
-  /// Note: This assumes the username corresponds to the currently authenticated user's profile
-  /// or that UserAccountService handles updating this field correctly.
-  /// For a more direct approach, this method could take a userId.
+  /// Fetches the personal best score for the given username from local storage.
   Future<ScoreEntry?> getPersonalBestScore(String username) async {
-    // This implementation now relies on the personal best being stored in the user's document.
-    // The `username` parameter is a bit indirect here if we fetch by current user's UID.
-    // If the intent is to fetch for *any* username, this needs a query on the `users` collection by username,
-    // which requires an index and might not be unique if usernames aren't enforced as unique.
-    // For simplicity and alignment with how `personal_best_score_provider` uses it,
-    // we'll assume it's for the *currently authenticated user* if their profile username matches.
-    
-    final user = _firebaseAuth.currentUser;
-    if (user == null) {
+    if (username.isEmpty) {
+      print('LeaderboardService: Username is empty, cannot fetch personal best score.');
       return null;
     }
-
     try {
-      final userDoc = await _usersCollection.doc(user.uid).get();
-      if (userDoc.exists) {
-        final data = userDoc.data();
-        final profileUsername = data?['username'] as String?;
-        
-        // Ensure the username matches if we are strictly using the passed 'username' parameter
-        // or simply fetch the current user's best score.
-        // For now, let's assume the provider passes the correct username for the current auth user.
-        if (profileUsername == username) {
-          final bestScore = data?['gameData']?['personalBestScore'] as int?;
-          final timestamp = data?['gameData']?['personalBestScoreTimestamp'] as Timestamp?;
-          if (bestScore != null && timestamp != null) {
-            return ScoreEntry(
-              username: username,
-              score: bestScore,
-              timestamp: timestamp.toDate(),
-            );
+      // Primary source for personal best score is now local storage after account recovery
+      final localBestScore = await _localStorageService.getSpecificUserPersonalBest(username);
+      if (localBestScore != null) {
+        print('LeaderboardService: Fetched personal best for $username from local storage: ${localBestScore.score}');
+        return localBestScore;
+      } else {
+        print('LeaderboardService: No personal best found in local storage for $username. Falling back to Firestore (if implemented).');
+        // Fallback: Optionally, try fetching from Firestore if not found locally.
+        // This part can be added if a sync mechanism is desired.
+        // For now, strictly adhere to reading what was saved locally during recovery.
+        final user = _firebaseAuth.currentUser;
+        if (user != null) {
+          final userDoc = await _usersCollection.doc(user.uid).get();
+          if (userDoc.exists) {
+            final data = userDoc.data();
+            final profileUsername = data?['username'] as String?;
+            if (profileUsername == username) { // Ensure it's the correct user
+              final gameData = data?['gameData'] as Map<String, dynamic>?;
+              final bestScoreData = gameData?['personalBestScore']; // This could be a map or a direct value
+              
+              if (bestScoreData is Map) { // If personalBestScore is a ScoreEntry like structure
+                final scoreValue = bestScoreData['score'] as int?;
+                final timestampValue = bestScoreData['timestamp'] as Timestamp?;
+                 if (scoreValue != null && timestampValue != null) {
+                  print('LeaderboardService: Fetched personal best for $username from Firestore: $scoreValue');
+                  return ScoreEntry(
+                    username: username,
+                    score: scoreValue,
+                    timestamp: timestampValue.toDate(),
+                  );
+                }
+              } else if (bestScoreData is int) { // If it's just an int (old format perhaps)
+                 final timestampValue = gameData?['personalBestScoreTimestamp'] as Timestamp?;
+                 if (timestampValue != null) {
+                    print('LeaderboardService: Fetched personal best (int) for $username from Firestore: $bestScoreData');
+                    return ScoreEntry(
+                      username: username,
+                      score: bestScoreData,
+                      timestamp: timestampValue.toDate(),
+                    );
+                 }
+              }
+            }
           }
         }
+        return null; // Not found in local storage or Firestore fallback
       }
-      return null;
     } catch (e) {
-      print('Error getting personal best score from Firestore user document: $e');
+      print('LeaderboardService: Error getting personal best score for $username: $e');
       return null;
     }
   }

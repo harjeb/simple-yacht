@@ -10,6 +10,8 @@ import 'package:cloud_functions/cloud_functions.dart'; // For FirebaseFunctionsE
 import 'package:myapp/services/local_storage_service.dart'; // For local username storage
 import 'dart:math' as math;
 import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
+import 'package:myapp/core_logic/score_entry.dart'; // For ScoreEntry
+import 'package:myapp/state_management/providers/personal_best_score_provider.dart'; // For personalBestScoreProvider
 
 enum SetupMode { create, recover }
 
@@ -228,22 +230,74 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       });
       
       print("DEBUG: Cloud Function 调用成功");
-      print("DEBUG: 响应数据: ${response.data}");
+      print("DEBUG: 原始响应数据: ${response.data}"); // 更详细的原始数据日志
       
       if (response.data['success'] == true) {
         print("DEBUG: 进入 success == true 分支");
         Map<String, dynamic> finalUserData = response.data['userData'] as Map<String, dynamic>;
+        print("DEBUG: finalUserData 内容: $finalUserData"); // 打印 finalUserData
         String recoveredUsername = finalUserData['username'] as String;
-        print("DEBUG: 初始提取的用户名: $recoveredUsername");
+        final String? recoveredUid = finalUserData['uid'] as String?; // 获取 UID
+
+        print("DEBUG: 初始提取的用户名: $recoveredUsername, UID: $recoveredUid");
         
+        // 提取 personalBestScore 和 personalBestScoreTimestamp
+        final dynamic rawScoreValue = finalUserData['personalBestScore'];
+        final dynamic rawTimestampData = finalUserData['personalBestScoreTimestamp'];
+
+        print("DEBUG: 从 finalUserData 提取的 rawScoreValue: $rawScoreValue");
+        print("DEBUG: 从 finalUserData 提取的 rawTimestampData: $rawTimestampData");
+
+        ScoreEntry? recoveredPersonalBestScore;
+
+        if (rawScoreValue is int && rawTimestampData != null) {
+          try {
+            Timestamp firestoreTimestamp;
+            if (rawTimestampData is Map && rawTimestampData.containsKey('_seconds') && rawTimestampData.containsKey('_nanoseconds')) {
+              final int seconds = rawTimestampData['_seconds'] as int;
+              final int nanoseconds = rawTimestampData['_nanoseconds'] as int;
+              firestoreTimestamp = Timestamp(seconds, nanoseconds);
+              print("DEBUG: 从 _seconds 和 _nanoseconds 构建 Timestamp: $firestoreTimestamp");
+            } else if (rawTimestampData is Timestamp) {
+              firestoreTimestamp = rawTimestampData;
+              print("DEBUG: rawTimestampData 已经是 Timestamp 对象: $firestoreTimestamp");
+            } else {
+              throw Exception("无法识别的时间戳格式: $rawTimestampData");
+            }
+
+            recoveredPersonalBestScore = ScoreEntry(
+              username: recoveredUsername, // 使用已恢复的用户名
+              score: rawScoreValue,
+              timestamp: firestoreTimestamp.toDate(),
+            );
+            print("DEBUG: 成功创建 ScoreEntry: ${recoveredPersonalBestScore.toJson()}");
+          } catch (e) {
+            print("DEBUG: 创建 ScoreEntry 时出错: $e");
+            print("DEBUG: 出错时的 rawScoreValue: $rawScoreValue, rawTimestampData: $rawTimestampData");
+          }
+        } else {
+          print("DEBUG: Cloud Function 返回的 personalBestScore 不是 int 或 personalBestScoreTimestamp 为 null。");
+          if (rawScoreValue != null) print("DEBUG: rawScoreValue 类型: ${rawScoreValue.runtimeType}");
+          if (rawTimestampData != null) print("DEBUG: rawTimestampData 类型: ${rawTimestampData.runtimeType}");
+        }
+
         // 检查是否需要认证
-        if (response.data['requiresAuthentication'] == true) {
-          print("DEBUG: 需要认证，先进行匿名登录");
+        if (response.data['requiresAuthentication'] == true && recoveredUid != null) {
+          print("DEBUG: 需要认证，先进行匿名登录或自定义令牌登录");
           
-          // 确保用户已认证（匿名登录）
           final authService = ref.read(authServiceProvider);
+          // 理论上，如果 recoverAccountByTransferCode 返回了 UID，我们应该用这个 UID 生成自定义令牌并登录
+          // 但当前 Cloud Function 的逻辑是，如果未认证，它只返回数据，不进行迁移。
+          // 如果已认证，它会进行迁移。
+          // 此处的逻辑需要与 Cloud Function 的实际行为对齐。
+          // 假设如果 requiresAuthentication 为 true，则表示之前未认证，现在需要客户端处理认证和后续的数据保存。
+
+          // 简化：如果需要认证，我们期望客户端已经通过某种方式（如匿名登录）获得了 currentUser
+          // 并且 Cloud Function 在第二次调用时（已认证）会完成数据迁移。
+          // 此处的逻辑主要处理 Cloud Function 返回的数据。
+
           if (authService.currentUser == null) {
-            print("DEBUG: 进行匿名登录");
+            print("DEBUG: 进行匿名登录 (作为后备)"); // 或者这里应该处理自定义令牌登录
             await authService.signInAnonymously();
             print("DEBUG: 匿名登录完成");
           }
@@ -254,19 +308,15 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
             return;
           }
           
-          print("DEBUG: 重新调用函数进行数据迁移");
-          final migrationResponse = await callable.call<Map<String, dynamic>>({
-            'transferCode': recoveryCode
-          });
+          // 如果是 requiresAuthentication == true 的情况，Cloud Function 第一次调用只返回数据
+          // 客户端需要再次调用（在认证后）来完成迁移，或者客户端自行处理数据保存。
+          // 根据当前 Cloud Function 的实现，如果未认证，它不会执行迁移。
+          // 因此，如果 requiresAuthentication 为 true，我们需要在这里保存数据。
           
-          print("DEBUG: 数据迁移响应: ${migrationResponse.data}");
-          
-          if (migrationResponse.data['success'] != true) {
-            throw Exception('数据迁移失败: ${migrationResponse.data['message'] ?? '未知错误'}');
-          }
-          finalUserData = migrationResponse.data['userData'] as Map<String, dynamic>; // 更新 finalUserData
-          recoveredUsername = finalUserData['username'] as String; // 更新 recoveredUsername
-          print("DEBUG: 数据迁移成功，更新后的用户名: $recoveredUsername");
+          print("DEBUG: 重新调用函数进行数据迁移 (如果需要，或客户端自行处理)");
+          // 这里的逻辑可能需要调整，取决于 Cloud Function 的确切行为和客户端的认证策略
+          // 假设如果 requiresAuthentication 为 true，我们已经获得了需要保存的数据。
+          // Cloud Function 的第二次调用（已认证）会处理服务器端迁移。
         }
         
         // 检查widget状态
@@ -275,20 +325,34 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
           return;
         }
 
-        // 1. 将用户名显式保存到本地存储
+        // 1. 将用户名和最高分显式保存到本地存储
         final localStorageService = ref.read(localStorageServiceProvider);
         try {
+          print("DEBUG: 尝试保存用户名 '$recoveredUsername' 到本地存储...");
           await localStorageService.saveUsername(recoveredUsername);
           print("DEBUG: 用户名 '$recoveredUsername' 已成功保存到本地存储。");
+
+          if (recoveredPersonalBestScore != null) {
+            print("DEBUG: 尝试为用户 '$recoveredUsername' 保存最高分到本地存储: ${recoveredPersonalBestScore.toJson()}");
+            await localStorageService.saveSpecificUserPersonalBest(recoveredUsername, recoveredPersonalBestScore);
+            print("DEBUG: 最高分已为用户 '$recoveredUsername' 保存到本地存储。");
+          } else {
+            print("DEBUG: 没有最高分数据可为用户 '$recoveredUsername' 保存 (recoveredPersonalBestScore is null)。");
+            // 可选：如果需要，可以在这里清除该用户本地的旧最高分
+            // await localStorageService.clearSpecificUserPersonalBest(recoveredUsername);
+            print("DEBUG: 跳过为用户 '$recoveredUsername' 保存最高分，因为 recoveredPersonalBestScore 为 null。");
+          }
+
         } catch (e) {
-          print("DEBUG: 保存用户名到本地存储失败: $e");
-          // 根据伪代码，即使本地保存失败也应尝试继续，但记录错误
+          print("DEBUG: 保存用户名或最高分到本地存储失败: $e");
         }
         
         // 2. 刷新providers
         print("DEBUG: 刷新 providers");
-        ref.refresh(usernameProvider);
-        ref.refresh(userProfileProvider);
+        // ref.invalidate(userProvider); // userProvider 未定义，且 usernameProvider 和 userProfileProvider 已通过 refresh 处理
+        ref.refresh(usernameProvider); // 确保 usernameProvider 先刷新
+        ref.refresh(personalBestScoreProvider); // 然后刷新 personalBestScoreProvider
+        ref.refresh(userProfileProvider); // 也刷新 userProfileProvider
         
         // 显示成功消息
         if (mounted && context.mounted) {

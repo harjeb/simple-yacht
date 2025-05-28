@@ -22,6 +22,16 @@ This file tracks the project's progress using a task list format.
 
 ## Completed Tasks
 
+* [2025-05-27 15:15:00] - **代码实现完成 (账户恢复后最高分未显示):**
+    *   **后端 ([`functions/index.js`](functions/index.js)):** 更新 `recoverAccountByTransferCode` 函数以从 `originalUserData.gameData?.personalBestScore` 读取最高分，并将其作为 `personalBestScore` 字段包含在返回给客户端的 `userData` 中。
+    *   **客户端 ([`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart)):**
+        *   在 `_recoverAccount` 方法中，正确解析从 Cloud Function 返回的 `personalBestScore` (包括处理 Firestore `Timestamp` 到 Dart `DateTime` 的转换)。
+        *   如果 `personalBestScore` 存在，则调用 `localStorageService.saveSpecificUserPersonalBest(recoveredUsername, recoveredPersonalBestScore)` 将其保存到本地。
+        *   确保在保存数据后刷新 `usernameProvider`、`personalBestScoreProvider` 和 `userProfileProvider`。移除了对未定义的 `userProvider` 的 `invalidate` 调用。
+    *   **服务层 ([`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart)):** 添加了 `saveSpecificUserPersonalBest`、`getSpecificUserPersonalBest` 和 `clearSpecificUserPersonalBest` 方法来处理用户特定的最高分数据。
+    *   **服务层 ([`lib/services/leaderboard_service.dart`](lib/services/leaderboard_service.dart)):** 修改 `getPersonalBestScore` 方法以从 `LocalStorageService` 读取个人最高分，并更新构造函数以接收 `LocalStorageService`。
+    *   **状态管理 ([`lib/state_management/providers/leaderboard_providers.dart`](lib/state_management/providers/leaderboard_providers.dart)):** 更新 `leaderboardServiceProvider` 以将 `LocalStorageService` 实例注入到 `LeaderboardService`。
+    *   **UI 层 ([`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart)):** 确认其已正确监听 `personalBestScoreProvider` 并能显示最高分。
 * [2025-05-26 19:50:00] - **代码实现完成 (新游戏流程错误修复):** 成功修复了“进入新游戏后不显示任何画面”的错误。
     *   [`lib/core_logic/game_state.dart`](lib/core_logic/game_state.dart:1): 添加了 `GameState.initial()` 工厂构造函数。
     *   [`lib/state_management/providers/game_providers.dart`](lib/state_management/providers/game_providers.dart:1): 更新 `GameStateNotifier.resetAndStartNewGame()` 以使用 `GameState.initial()`。
@@ -83,6 +93,8 @@ This file tracks the project's progress using a task list format.
 * [2025-05-24 14:03:00] - **架构设计完成 (Firebase & 引继码):** 设计了 Firebase 后端集成 (Authentication, Firestore, Functions) 和引继码系统的详细架构。更新了相关的内存银行文档 ([`memory-bank/architecture.md`](memory-bank/architecture.md:1), [`memory-bank/productContext.md`](memory-bank/productContext.md:1), [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md:1))。
 * [2025-05-25 06:15:00] - **架构定义完成 (UI 加载状态 Bug):** 诊断了 Firebase 匿名认证后 UI 加载状态持续存在的问题，并定义了解决方案。相关决策已记录在 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md)。
 ## Current Tasks
+* [2025-05-28 00:51:00] - **架构分析与内存银行更新 (账户恢复后最高分未显示 - 本地存储问题):** 根据 `spec-pseudocode` 的分析，用户 "uop" 账户恢复后最高分未显示的主要原因是在账户恢复流程中，最高分未从 Firestore 正确写入本地存储。Firestore 中存在用户 "uop" 的 `personalBestScore` (173)。已更新 [`memory-bank/activeContext.md`](memory-bank/activeContext.md) 和 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md) 以反映此分析。下一步是深入分析 Firestore 数据为何未显示，并提出架构建议。
+* [2025-05-27 15:03:50] - **架构定义完成 (账户恢复后最高分未显示):** 分析了用户在通过引继码成功恢复账户后，游戏界面未能显示其先前记录的个人最高分的问题。明确了涉及的后端 Cloud Function (`recoverAccountByTransferCode`)、客户端账户恢复逻辑 ([`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1))、本地存储服务 ([`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:1) - 特别是 `saveSpecificUserPersonalBest`)、状态提供者 (`personalBestScoreProvider` - [`lib/state_management/providers/personal_best_score_provider.dart`](lib/state_management/providers/personal_best_score_provider.dart:1)) 以及 UI 显示 (`HomeScreen` - [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1)) 之间的交互和数据同步要点。相关架构细节已更新到 [`memory-bank/architecture.md`](memory-bank/architecture.md:1)。
 
 * [2025-05-24 12:48:54] - Implemented fix for "Continue Game" button incorrectly shown for new users:
     * Modified [`lib/navigation/app_router.dart`](lib/navigation/app_router.dart:1) to reset game state via `gameStateProvider.notifier.setToInitialState()` after username setup.
@@ -237,3 +249,10 @@ The rules file was already up to date.
      - 在成功从 Cloud Function 获取恢复的用户名后，但在 `ref.refresh(usernameProvider)` 之前，添加了对 `localStorageService.saveUsername(recoveredUsername)` 的调用。
   4. **结果**: 确保了恢复的用户名在 `usernameProvider` 刷新前已持久化，解决了跳转问题。
   5. **Memory Bank 更新**: 已更新 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md), [`memory-bank/activeContext.md`](memory-bank/activeContext.md), [`memory-bank/progress.md`](memory-bank/progress.md)。
+
+## 2025-05-28 01:57:00 UTC - 文档更新完成 (账户恢复后最高分问题)
+- **任务:** 更新开发者文档和用户指南，以反映“账户恢复后个人最高分未显示”问题的根本原因、解决方案和修复状态。
+- **已完成:**
+    - 更新了 [`developer_notes.md`](developer_notes.md:1)，添加了关于此问题的详细技术说明、根本原因分析和解决方案。
+    - 更新了 [`user_guide.md`](user_guide.md:1)，在“引继码”部分后简要提及此问题已修复，以增强用户信心。
+- **状态:** 完成

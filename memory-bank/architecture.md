@@ -207,7 +207,48 @@
             3.  [`SettingsScreen._deleteAccount()`](lib/ui_screens/settings_screen.dart:1) 方法负责重置相关的 Riverpod Providers (例如通过 `ref.invalidate(providerName)` 或调用特定的重置方法)。
             4.  [`SettingsScreen._deleteAccount()`](lib/ui_screens/settings_screen.dart:1) 方法执行强制导航到初始屏幕 [`/splash`](lib/ui_screens/splash_screen.dart:1)，并清空导航堆栈。应用将从启动页开始，引导用户至账号创建/设置流程。
             5.  参考上述 `2.5. 用户会话结束、状态重置与导航` 部分的详细步骤。
-    *   Firestore 触发器 (例如，`onUserCreate`, `onScoreSubmit`) 可用于数据聚合或维护。
+     *   `callable_recoverAccountByTransferCode(data, context)`: (Cloud Function) 接收引继码，查询 Firestore `users` 集合以找到匹配的 `transferCode`。如果找到，则获取对应的 `userId` 和存储的 `personalBestScore` (以及其他需要恢复的数据如 `username`, `elo` 等)。返回包含这些数据的对象给客户端。
+     *   Firestore 触发器 (例如，`onUserCreate`, `onScoreSubmit`) 可用于数据聚合或维护。
+
+### 3.4. 账户恢复流程中的数据同步与状态更新 (最高分问题相关)
+
+**问题:** 用户通过引继码恢复账户后，最高分未在主屏幕显示。
+
+**核心流程与数据同步点:**
+
+1.  **客户端请求恢复 (Flutter - [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) 或相关服务):**
+    *   用户输入引继码。
+    *   客户端调用 Cloud Function `recoverAccountByTransferCode`，传递引继码。
+
+2.  **后端处理 (Cloud Function - `recoverAccountByTransferCode` - [`functions/index.js`](functions/index.js:1)):**
+    *   函数查询 Firestore `users` 集合，查找与引继码匹配的文档。
+    *   **关键:** 确保此函数在其返回给客户端的数据中包含 `personalBestScore` 字段 (以及 `username` 和其他必要数据)。
+
+3.  **客户端接收与处理 (Flutter - [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) - `_recoverAccount` 方法):**
+    *   成功从 Cloud Function 接收到恢复的数据 (包括 `recoveredUsername`, `recoveredPersonalBestScore`)。
+    *   **关键数据持久化:**
+        *   调用 `localStorageService.saveUsername(recoveredUsername)` 保存用户名。
+        *   调用 `localStorageService.saveSpecificUserPersonalBest(recoveredUsername, recoveredPersonalBestScore)` 将恢复的最高分保存到本地存储。**这是确保后续能正确读取最高分的关键步骤。**
+    *   **状态刷新:**
+        *   `ref.refresh(userProvider)` (或等效的 provider，如 `userProfileProvider`)。
+        *   `ref.refresh(usernameProvider)`。
+        *   `ref.refresh(personalBestScoreProvider)`。**此 provider 依赖于 `usernameProvider` 和 `LeaderboardService` (后者从本地存储读取最高分)。**
+
+4.  **状态管理 (`PersonalBestScoreProvider` - [`lib/state_management/providers/personal_best_score_provider.dart`](lib/state_management/providers/personal_best_score_provider.dart:1)):**
+    *   此 Provider 依赖于 `usernameProvider` 来获取当前用户名。
+    *   它调用 `LeaderboardService.getPersonalBestScore(String username)`。
+    *   **[`LeaderboardService.getPersonalBestScore(String username)`](lib/services/leaderboard_service.dart:1):** 此服务方法从本地存储 (通过 `LocalStorageService`) 读取指定用户的个人最高分。
+
+5.  **UI 显示 (`HomeScreen` - [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1)):**
+    *   `HomeScreen` 监听 `personalBestScoreProvider`。
+    *   当 `personalBestScoreProvider` 状态更新（在账户恢复并刷新后），UI 应能正确显示恢复的最高分。
+
+**诊断要点:**
+
+*   **后端数据返回:** 确认 `recoverAccountByTransferCode` Cloud Function 确实返回了 `personalBestScore`。
+*   **客户端数据保存 (核心问题点):** **首要确认在账户恢复逻辑 ([`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) `_recoverAccount` 方法) 中，从后端获取的 `personalBestScore` 是否被正确地、无遗漏地使用 `localStorageService.saveSpecificUserPersonalBest()` 保存到了本地存储。`spec-pseudocode` 分析指出这很可能是当前问题的根源。**
+*   **Provider 依赖与刷新顺序:** 确保 `personalBestScoreProvider` 在其依赖的 `usernameProvider` 更新之后，并且在本地最高分数据写入之后被刷新。
+*   **`LeaderboardService` 读取逻辑:** 确认 `LeaderboardService.getPersonalBestScore` 能从本地存储正确读取数据。
 
 ## 4. 数据流
 
@@ -224,3 +265,4 @@
 ---
 *上次更新: 2025-05-26 13:06:20 - 更新了账号删除流程的文档，以反映最新的代码更改：明确了 `LocalStorageService.clearAllUserData()` 的调用，`UserService` 对登出和本地数据清除的协调，以及 `SettingsScreen` 在成功删除账号后重置状态并导航到 `/splash` 的行为。*
 *上次更新: 2025-05-26 13:25:00 - 更新了前端架构部分，详细说明了新游戏开始时的游戏状态管理 (`GameState.initial()`)、`GameScreen` 的渲染逻辑（依赖 `isGameInProgress` 和 `gameOver` 标志）以及相关的导航守卫逻辑，以解决“新游戏不显示任何画面”的错误。*
+*上次更新: 2025-05-27 15:02:29 - 添加了 "3.4. 账户恢复流程中的数据同步与状态更新 (最高分问题相关)" 部分，详细描述了在账户恢复后确保最高分正确显示所需的后端、客户端数据持久化和状态管理流程。

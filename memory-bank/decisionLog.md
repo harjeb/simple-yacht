@@ -6,6 +6,53 @@ This file records architectural and implementation decisions using a list format
 *
 
 ---
+### Decision (Documentation)
+[2025-05-28 01:57:00] - 更新开发者文档和用户指南以反映“账户恢复后个人最高分未显示”问题的解决。
+
+**Rationale:**
+此问题已成功解决，根本原因涉及 Cloud Function 未返回必要字段以及客户端代码对返回数据的错误处理和本地存储的遗漏。为了帮助未来开发者理解此问题、避免类似错误，并增强用户信心，需要更新相关文档。
+
+**Implications/Details:**
+*   **开发者文档 ([`developer_notes.md`](developer_notes.md:1)):**
+    *   添加了一个新的故障排除条目，详细描述了“账户恢复后个人最高分未显示”的问题。
+    *   内容包括：问题描述、两个根本原因（Cloud Function 的初始问题和客户端代码的解析及本地存储问题）、详细的解决方案步骤（Cloud Function 和客户端代码的修复），以及关键教训（数据契约一致性、显式数据持久化、彻底测试、详细日志）。
+*   **用户指南 ([`user_guide.md`](user_guide.md:1)):**
+    *   在“引继码”部分之后新增了一个小节，简要告知用户此问题已修复，以提升用户体验和信任度。
+*   **内存银行 ([`memory-bank/progress.md`](memory-bank/progress.md:1)):**
+    *   添加了一个条目，记录了此文档更新任务的完成情况。
+---
+### Decision
+[2025-05-28 00:51:00] - 采纳 `spec-pseudocode` 的分析：账户恢复后最高分未显示的主要原因是在账户恢复流程中，从 Firestore 获取的 `personalBestScore` 未能正确写入本地存储。
+
+**Rationale:**
+用户 "uop" 在账户恢复后，尽管其 Firestore 数据中存在 `personalBestScore` (173) 和 `personalBestScoreTimestamp`，但应用未能显示此分数。日志显示本地存储回退到了 Firestore，这间接证实了本地数据缺失。`spec-pseudocode` 分析指出，账户恢复逻辑 ([`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) 中的 `_recoverAccount` 方法) 可能未调用 `localStorageService.saveSpecificUserPersonalBest`。
+
+**Implications/Details:**
+*   **调查重点:** 需要审查 [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) 中的 `_recoverAccount` 方法，确认在从 Cloud Function (`recoverAccountByTransferCode`) 接收到包含 `personalBestScore` 的数据后，是否以及如何调用了 [`lib/services/local_storage_service.dart`](lib/services/local_storage_service.dart:1) 中的 `saveSpecificUserPersonalBest` 方法。
+*   **数据同步:** 确保从 Firestore (通过 Cloud Function) 返回的 `personalBestScore` 和 `personalBestScoreTimestamp` 能够被正确解析并传递给本地存储服务。
+*   **状态刷新:** 确认在本地存储更新后，相关的状态提供者 (如 [`personalBestScoreProvider`](lib/state_management/providers/personal_best_score_provider.dart:1)) 被正确刷新，以便 UI 能够获取并显示更新后的分数。
+*   **Firestore 回退逻辑:** 虽然回退逻辑存在于 [`LeaderboardService.getPersonalBestScore`](lib/services/leaderboard_service.dart:1)，但首要目标应是确保数据在恢复时正确写入本地存储，以避免不必要的回退和潜在的延迟。
+---
+### Decision
+[2025-05-27 15:05:03] - 采纳关于“账户恢复后最高分未显示”问题的架构分析和解决方案方向。
+
+**Rationale:**
+用户报告在通过引继码成功恢复账户后，游戏界面（尤其是主屏幕）未能显示其先前记录的个人最高分。提供的规范和诊断方向指出了问题可能涉及后端数据返回、客户端数据持久化、状态管理刷新以及UI显示等多个环节。为了确保数据一致性和正确的用户体验，必须在账户恢复流程中明确定义数据同步点和状态更新顺序。
+
+**Implications/Details:**
+*   **后端 (Cloud Function - `recoverAccountByTransferCode` - [`functions/index.js`](functions/index.js:1)):**
+    *   必须确保此 Cloud Function 在成功恢复账户后，向客户端返回的数据中包含 `personalBestScore` 字段。
+*   **客户端 - 服务层 (账户恢复逻辑 - [`lib/ui_screens/username_setup_screen.dart`](lib/ui_screens/username_setup_screen.dart:1) `_recoverAccount` 方法):**
+    *   在从 Cloud Function 接收到恢复数据后，必须调用 `localStorageService.saveSpecificUserPersonalBest(recoveredUsername, recoveredPersonalBestScore)` 将恢复的最高分保存到本地存储。这是在刷新相关 Provider 之前必须完成的关键步骤。
+    *   确保 `localStorageService.saveUsername(recoveredUsername)` 也被调用。
+*   **状态管理 (`personalBestScoreProvider` - [`lib/state_management/providers/personal_best_score_provider.dart`](lib/state_management/providers/personal_best_score_provider.dart:1)):**
+    *   此 Provider 依赖 `usernameProvider` 和 `LeaderboardService`。
+    *   `LeaderboardService.getPersonalBestScore(String username)` ([`lib/services/leaderboard_service.dart`](lib/services/leaderboard_service.dart:1)) 必须能从本地存储正确读取由 `saveSpecificUserPersonalBest` 保存的数据。
+    *   刷新顺序很重要：应在 `usernameProvider` 更新且本地最高分数据已保存后，再刷新 `personalBestScoreProvider`。
+*   **UI 层 (`HomeScreen` - [`lib/ui_screens/home_screen.dart`](lib/ui_screens/home_screen.dart:1)):**
+    *   应正确监听 `personalBestScoreProvider` 的状态变化，并在数据可用时显示最高分。
+*   **架构文档更新:** 相关的数据流和组件交互已更新到 [`memory-bank/architecture.md`](memory-bank/architecture.md:1) 的 "3.4. 账户恢复流程中的数据同步与状态更新 (最高分问题相关)" 部分。
+---
 ### Decision
 [2025-05-27 01:50:28] - 采纳新的“清空本地数据”功能及其设计规范。
 
