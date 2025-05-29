@@ -55,6 +55,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '60143534744',
     projectId: 'yacht-f816d',
     authDomain: 'yacht-f816d.firebaseapp.com',
+    databaseURL: 'https://yacht-f816d.firebaseio.com',
     storageBucket: 'yacht-f816d.firebasestorage.app',
     measurementId: 'G-8CYTSC6VET',
   );

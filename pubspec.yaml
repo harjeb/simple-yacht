@@ -44,6 +44,7 @@ dependencies:
   firebase_auth: ^5.0.0 # Firebase 身份验证
   cloud_firestore: ^5.0.0 # Cloud Firestore
   cloud_functions: ^5.0.0 # Cloud Functions
+  firebase_database: ^11.0.0 # Firebase Realtime Database
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +53,7 @@ dev_dependencies:
   build_runner: ^2.4.11 # Added for code generation
   fake_cloud_firestore: ^3.1.0 # Added for Firestore mocking
   firebase_auth_mocks: ^0.14.0+1 # Added for Auth mocking
+  firebase_database_mocks: ^0.7.1 # Updated for Realtime Database mocking to resolve conflict
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -121,3 +121,95 @@ As per prior decision logged on [2025-05-28] (see above entry "更改游戏房�
     *   `delete`: Allowed only if `request.auth.uid` is `resource.data.hostId`.
 **Impact:** Reduced risk of unauthorized game room access, data tampering, and denial-of-service attacks related to room creation.
 ---
+
+---
+### 决策 (在线玩家计数架构)
+[2025-05-28] - 确定了“在线玩家数”功能的架构方案。
+
+**基本原理:**
+利用 Firebase Realtime Database 的实时能力和 `onDisconnect()` 机制，结合客户端 Flutter (通过 `PresenceService`) 和 Riverpod 状态管理，实现高效、近实时的在线玩家数量统计和显示。
+
+**架构详情:**
+1.  **Firebase Realtime Database (RTDB) 结构:**
+    *   `/online_users/{userId}`: (Boolean/Timestamp) 标记单个用户在线状态。
+        *   规则: 用户只能写入自己的状态 (`auth.uid == userId`)。
+    *   `/online_users_count`: (Integer) 存储在线用户总数。
+        *   规则: 禁止客户端直接写入；通过事务和 `onDisconnect` 的 `ServerValue.increment()` 进行原子更新。
+    *   `onDisconnect()` 钩子:
+        *   在 `/online_users/{userId}` 上设置 `onDisconnect().remove()`。
+        *   在 `/online_users_count` 上设置 `onDisconnect().set(ServerValue.increment(-1))`。
+
+2.  **客户端 Flutter (`PresenceService`):**
+    *   **`_goOnline(userId)`**: 用户认证后，设置 `/online_users/{userId}` 为 true，并通过事务递增 `/online_users_count`。同时设置上述 `onDisconnect()` 操作。
+    *   **`_goOffline(userId)`**: 用户主动下线时，移除 `/online_users/{userId}`，并通过事务递减 `/online_users_count`。
+    *   **`getOnlinePlayersCountStream() -> Stream<int>`**: 监听 `/online_users_count` 的变化，通过 Riverpod `StreamProvider` 供 UI 使用。
+
+3.  **前端 UI ([`MultiplayerLobbyScreen`](lib/ui_screens/multiplayer_lobby_screen.dart:0)):**
+    *   使用 Riverpod `ConsumerWidget` 监听 `onlinePlayersCountProvider` 以实时显示在线数量。
+
+**选择理由:**
+*   **实时性**: RTDB 非常适合高频更新和实时监听的场景。
+*   **可靠性**: `onDisconnect()` 机制能较好地处理客户端意外断开连接的情况，确保数据最终一致性。
+*   **原子性**: 使用 RTDB 事务和 `ServerValue.increment()` 保证计数更新的原子性，避免竞态条件。
+*   **客户端驱动**: 主要逻辑在客户端，减少了对 Cloud Functions 的依赖，简化了后端部署和维护（除非未来需要更复杂的服务器端逻辑）。
+
+**潜在风险与考虑:**
+*   **扩展性**: 对于超大规模用户量，纯粹依赖 `/online_users_count` 的单一计数器可能会遇到写入瓶颈。但对于当前项目规模，此方案足够。
+*   **准确性**: “近实时”，允许微小延迟。
+*   **安全性**: 依赖正确的 Firebase 安全规则配置来保护数据。
+
+---
+### Decision (Debug)
+[2025-05-29 00:57:00] - Bug Fix Strategy: Address `MissingPluginException(No implementation found for method Query#observe on channel plugins.flutter.io/firebase_database)`
+
+**Rationale:**
+The error indicates a failure in the native Android Firebase Realtime Database setup. The primary suspect is an incomplete or outdated `google-services.json` file, specifically missing the `firebase_url` entry which is essential for Realtime Database. A secondary check involves ensuring the `google-services` Gradle plugin classpath is correctly defined in the project-level `android/build.gradle.kts` (or `build.gradle`).
+
+**Details:**
+1.  **Verify and Update `google-services.json`**: Instructed user to re-download `google-services.json` from the Firebase console for the Android app (`com.example.myapp` within project `yacht-f816d`) and replace the existing file at [`android/app/google-services.json`](android/app/google-services.json). The new file must contain the `firebase_url` field.
+2.  **Verify Project-Level Gradle**: Instructed user to check `android/build.gradle.kts` (or `build.gradle`) for the correct `com.google.gms:google-services` classpath declaration in the `plugins` or `buildscript { dependencies }` block. Recommended version `4.4.1` or a similar recent stable version.
+3.  **Clean and Rebuild**: Recommended running `flutter clean`, `flutter pub get`, and then `flutter run`.
+
+---
+### Decision (Debug)
+[2025-05-29 01:10:19] - Corrected `firebase_url` format in `google-services.json`
+
+**Rationale:**
+The application was throwing a "firebase fatal error: cannot parse firebase url,please use https://yourfirebase.firebaseio.com" error. This indicated that the `firebase_url` in [`android/app/google-services.json`](android/app/google-services.json) was malformed. The previous value was "https://yacht-f816d-default-rtdb.firebaseio.com/", which includes an extra "-default-rtdb" segment and a trailing slash.
+
+**Details:**
+- Modified `firebase_url` in [`android/app/google-services.json`](android/app/google-services.json) from `"https://yacht-f816d-default-rtdb.firebaseio.com/"` to `"https://yacht-f816d.firebaseio.com"`.
+
+---
+### Decision (Debug)
+[2025-05-29 01:13:33] - Resolved Gradle plugin version conflict for `com.google.gms.google-services`.
+
+**Rationale:**
+The Android build failed with an error indicating a version mismatch for the `com.google.gms.google-services` plugin between the project-level ([`android/build.gradle.kts`](android/build.gradle.kts:1)) and app-level ([`android/app/build.gradle.kts`](android/app/build.gradle.kts:1)) Gradle files. The project-level file specified version `4.4.1`, while the app-level file had an unspecified version, leading to the conflict with a previously resolved version `4.3.15` on the classpath.
+
+**Details:**
+- Updated [`android/app/build.gradle.kts`](android/app/build.gradle.kts:1) to explicitly set the `com.google.gms.google-services` plugin version to `4.4.1`. Specifically, changed `id("com.google.gms.google-services")` to `id("com.google.gms.google-services") version "4.4.1"`.
+- Verified that the project-level [`android/build.gradle.kts`](android/build.gradle.kts:1) already correctly specified `id("com.google.gms.google-services") version "4.4.1" apply false`.
+
+---
+### Decision (Code)
+[2025-05-29 01:59:45] - Unified `com.google.gms.google-services` plugin version to `4.4.1` across Gradle files.
+
+**Rationale:**
+An Android build error `Error resolving plugin [id: 'com.google.gms.google-services', version: '4.4.1', apply: false] > The request for this plugin could not be satisfied because the plugin is already on the classpath with a different version (4.3.15)` indicated a version conflict. While project-level ([`android/build.gradle.kts`](android/build.gradle.kts:1)) and app-level ([`android/app/build.gradle.kts`](android/app/build.gradle.kts:1)) Gradle files correctly specified version `4.4.1`, the [`android/settings.gradle.kts`](android/settings.gradle.kts:1) file declared version `4.3.15`.
+
+**Details:**
+- Verified [`android/build.gradle.kts`](android/build.gradle.kts:1) uses `id("com.google.gms.google-services") version "4.4.1" apply false`.
+- Verified [`android/app/build.gradle.kts`](android/app/build.gradle.kts:1) uses `id("com.google.gms.google-services") version "4.4.1"`.
+- Updated [`android/settings.gradle.kts`](android/settings.gradle.kts:23) from `id("com.google.gms.google-services") version("4.3.15") apply false` to `id("com.google.gms.google-services") version("4.4.1") apply false`.
+
+---
+### Decision (Code)
+[2025-05-29 02:13:47] - Added `databaseURL` to Firebase Web options to resolve runtime error.
+
+**Rationale:**
+The application was encountering a `FIREBASE FATAL ERROR: Cannot parse Firebase url. Please use https://<YOUR FIREBASE>.firebaseio.com` on the web platform. This indicated that the `databaseURL` was missing or incorrect in the `FirebaseOptions` for the web in [`lib/firebase_options.dart`](lib/firebase_options.dart:1). The project ID is `yacht-f816d`.
+
+**Details:**
+- Added the `databaseURL` parameter to the `web` static constant in the `DefaultFirebaseOptions` class in [`lib/firebase_options.dart`](lib/firebase_options.dart:58).
+- Set the value of `databaseURL` to `"https://yacht-f816d.firebaseio.com"`.
