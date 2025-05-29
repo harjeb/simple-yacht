@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:myapp/state_management/providers/user_providers.dart';
-import 'package:myapp/generated/app_localizations.dart'; // For localization
+import 'package:simple_yacht/state_management/providers/user_providers.dart';
+import 'package:simple_yacht/generated/app_localizations.dart'; // For localization
 import 'package:cloud_firestore/cloud_firestore.dart'; // For FirebaseException
-import 'package:myapp/services/auth_service.dart'; // For authStateChangesProvider
-import 'package:myapp/services/user_service.dart'; // For userAccountServiceProvider, functionsProvider
+import 'package:simple_yacht/services/auth_service.dart'; // For authStateChangesProvider
+import 'package:simple_yacht/services/user_service.dart'; // For userAccountServiceProvider, functionsProvider
 import 'package:cloud_functions/cloud_functions.dart'; // For FirebaseFunctionsException, HttpsCallable
-import 'package:myapp/services/local_storage_service.dart'; // For local username storage
+import 'package:simple_yacht/services/local_storage_service.dart'; // For local username storage
 import 'dart:math' as math;
-import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
-import 'package:myapp/core_logic/score_entry.dart'; // For ScoreEntry
-import 'package:myapp/state_management/providers/personal_best_score_provider.dart'; // For personalBestScoreProvider
+import 'package:simple_yacht/state_management/providers/service_providers.dart'; // Import new service providers
+import 'package:simple_yacht/core_logic/score_entry.dart'; // For ScoreEntry
+import 'package:simple_yacht/state_management/providers/personal_best_score_provider.dart'; // For personalBestScoreProvider
 
 enum SetupMode { create, recover }
 

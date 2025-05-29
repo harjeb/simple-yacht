@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:myapp/core_logic/game_state.dart';
-import 'package:myapp/core_logic/scoring_rules.dart'; // Required for calculateScore
-// import 'package:myapp/services/local_storage_service.dart'; // No longer directly used here for high score
+import 'package:simple_yacht/core_logic/game_state.dart';
+import 'package:simple_yacht/core_logic/scoring_rules.dart'; // Required for calculateScore
+// import 'package:simple_yacht/services/local_storage_service.dart'; // No longer directly used here for high score
 
 // Notifier for the game state
 class GameStateNotifier extends StateNotifier<GameState> {

@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For Clipboard
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
-import 'package:myapp/state_management/providers/locale_provider.dart';
-import 'package:myapp/generated/app_localizations.dart';
-import 'package:myapp/state_management/providers/user_providers.dart'; // For userProfileProvider and usernameProvider
-import 'package:myapp/services/user_service.dart'; // For userAccountServiceProvider
-// import 'package:myapp/services/local_storage_service.dart'; // No longer needed, provider is central
-// import 'package:myapp/services/auth_service.dart'; // No longer needed, provider is central
-import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
+import 'package:simple_yacht/state_management/providers/locale_provider.dart';
+import 'package:simple_yacht/generated/app_localizations.dart';
+import 'package:simple_yacht/state_management/providers/user_providers.dart'; // For userProfileProvider and usernameProvider
+import 'package:simple_yacht/services/user_service.dart'; // For userAccountServiceProvider
+// import 'package:simple_yacht/services/local_storage_service.dart'; // No longer needed, provider is central
+// import 'package:simple_yacht/services/auth_service.dart'; // No longer needed, provider is central
+import 'package:simple_yacht/state_management/providers/service_providers.dart'; // Import new service providers
 // It's good practice to also invalidate game state if any exists
-import 'package:myapp/state_management/providers/game_providers.dart';
-import 'package:myapp/state_management/providers/leaderboard_providers.dart'; // Added for leaderboard reset
-import 'package:myapp/state_management/providers/personal_best_score_provider.dart'; // Added for personal best score reset
+import 'package:simple_yacht/state_management/providers/game_providers.dart';
+import 'package:simple_yacht/state_management/providers/leaderboard_providers.dart'; // Added for leaderboard reset
+import 'package:simple_yacht/state_management/providers/personal_best_score_provider.dart'; // Added for personal best score reset
 
 
 class SettingsScreen extends ConsumerWidget {

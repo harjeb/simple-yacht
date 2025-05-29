@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:myapp/core_logic/score_entry.dart';
-import 'package:myapp/services/local_storage_service.dart'; // Import LocalStorageService
+import 'package:simple_yacht/core_logic/score_entry.dart';
+import 'package:simple_yacht/services/local_storage_service.dart'; // Import LocalStorageService
 
 class LeaderboardService {
   final FirebaseFirestore _firestore;

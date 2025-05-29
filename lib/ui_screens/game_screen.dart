@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
-import 'package:myapp/widgets/dice_widget.dart';
-import 'package:myapp/widgets/scoreboard_widget.dart';
-import 'package:myapp/state_management/providers/game_providers.dart';
-import 'package:myapp/generated/app_localizations.dart'; // Import generated localizations from new path
-import 'package:myapp/widgets/game_over_dialog.dart'; // Import the GameOverDialog
-import 'package:myapp/state_management/providers/leaderboard_providers.dart';
-import 'package:myapp/state_management/providers/user_providers.dart';
-// import 'package:myapp/services/local_storage_service.dart'; // No longer needed, provider is central
-import 'package:myapp/services/leaderboard_service.dart'; // Ensure this is imported
-import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
+import 'package:simple_yacht/widgets/dice_widget.dart';
+import 'package:simple_yacht/widgets/scoreboard_widget.dart';
+import 'package:simple_yacht/state_management/providers/game_providers.dart';
+import 'package:simple_yacht/generated/app_localizations.dart'; // Import generated localizations from new path
+import 'package:simple_yacht/widgets/game_over_dialog.dart'; // Import the GameOverDialog
+import 'package:simple_yacht/state_management/providers/leaderboard_providers.dart';
+import 'package:simple_yacht/state_management/providers/user_providers.dart';
+// import 'package:simple_yacht/services/local_storage_service.dart'; // No longer needed, provider is central
+import 'package:simple_yacht/services/leaderboard_service.dart'; // Ensure this is imported
+import 'package:simple_yacht/state_management/providers/service_providers.dart'; // Import new service providers
 
 
 class GameScreen extends ConsumerWidget {

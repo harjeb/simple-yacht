@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:myapp/state_management/providers/game_providers.dart'; // 假设游戏状态提供者在这里
-// import 'package:myapp/l10n/app_localizations.dart'; // 如果需要本地化
+import 'package:simple_yacht/state_management/providers/game_providers.dart'; // 假设游戏状态提供者在这里
+// import 'package:simple_yacht/l10n/app_localizations.dart'; // 如果需要本地化
 
 class GameOverDialog extends ConsumerWidget {
   final int finalScore;

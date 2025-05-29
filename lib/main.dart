@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import ProviderScope
-import 'package:myapp/navigation/app_router.dart'; // Assuming myapp is the project name
+import 'package:simple_yacht/navigation/app_router.dart'; // Assuming myapp is the project name
 import 'package:flutter_localizations/flutter_localizations.dart'; // Import for localizations delegates
-import 'package:myapp/generated/app_localizations.dart'; // Import generated localizations from new path
-import 'package:myapp/state_management/providers/locale_provider.dart'; // Import locale provider
+import 'package:simple_yacht/generated/app_localizations.dart'; // Import generated localizations from new path
+import 'package:simple_yacht/state_management/providers/locale_provider.dart'; // Import locale provider
 import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 import 'services/online_presence_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -82,7 +82,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final router = AppRouter.createRouter(ref); // Create router instance here
 
     return MaterialApp.router(
-      title: 'Yahtzee Game', // This will be localized by MaterialApp if AppLocalizations.delegate is first and has appTitle
+      title: 'Simple Yacht',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import 'package:myapp/models/game_room.dart';
-import 'package:myapp/state_management/providers/user_providers.dart';
-import 'package:myapp/state_management/providers/game_providers.dart';
-import 'package:myapp/widgets/dice_widget.dart';
-import 'package:myapp/widgets/scoreboard_widget.dart';
+import 'package:simple_yacht/models/game_room.dart';
+import 'package:simple_yacht/state_management/providers/user_providers.dart';
+import 'package:simple_yacht/state_management/providers/game_providers.dart';
+import 'package:simple_yacht/widgets/dice_widget.dart';
+import 'package:simple_yacht/widgets/scoreboard_widget.dart';
 
 class MultiplayerGameScreen extends ConsumerStatefulWidget {
   final String roomId;

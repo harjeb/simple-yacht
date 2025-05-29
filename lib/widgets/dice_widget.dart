@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:myapp/state_management/providers/game_providers.dart';
+import 'package:simple_yacht/state_management/providers/game_providers.dart';
 import 'dart:math' as math;
 
 class DiceWidget extends ConsumerStatefulWidget {

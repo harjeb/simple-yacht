@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
-import 'package:myapp/state_management/providers/game_providers.dart'; // Import game providers
-import 'package:myapp/ui_screens/home_screen.dart';
-import 'package:myapp/ui_screens/game_screen.dart';
-import 'package:myapp/ui_screens/settings_screen.dart';
-import 'package:myapp/ui_screens/leaderboard_screen.dart';
-import 'package:myapp/ui_screens/username_setup_screen.dart';
-import 'package:myapp/ui_screens/multiplayer_lobby_screen.dart';
-import 'package:myapp/ui_screens/multiplayer_room_screen.dart';
-import 'package:myapp/ui_screens/multiplayer_game_screen.dart';
-import 'package:myapp/ui_screens/matchmaking/matchmaking_screen.dart';
-import 'package:myapp/state_management/providers/user_providers.dart'; // Import user providers
-import 'package:myapp/ui_screens/splash_screen.dart'; // Import SplashScreen
-import 'package:myapp/services/auth_service.dart'; // Import for authStateChangesProvider
+import 'package:simple_yacht/state_management/providers/game_providers.dart'; // Import game providers
+import 'package:simple_yacht/ui_screens/home_screen.dart';
+import 'package:simple_yacht/ui_screens/game_screen.dart';
+import 'package:simple_yacht/ui_screens/settings_screen.dart';
+import 'package:simple_yacht/ui_screens/leaderboard_screen.dart';
+import 'package:simple_yacht/ui_screens/username_setup_screen.dart';
+import 'package:simple_yacht/ui_screens/multiplayer_lobby_screen.dart';
+import 'package:simple_yacht/ui_screens/multiplayer_room_screen.dart';
+import 'package:simple_yacht/ui_screens/multiplayer_game_screen.dart';
+import 'package:simple_yacht/ui_screens/matchmaking/matchmaking_screen.dart';
+import 'package:simple_yacht/state_management/providers/user_providers.dart'; // Import user providers
+import 'package:simple_yacht/ui_screens/splash_screen.dart'; // Import SplashScreen
+import 'package:simple_yacht/services/auth_service.dart'; // Import for authStateChangesProvider
 
 class AppRouter {
   static GoRouter createRouter(WidgetRef ref) {

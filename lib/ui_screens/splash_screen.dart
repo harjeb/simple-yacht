@@ -2,8 +2,8 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:myapp/state_management/providers/user_providers.dart';
-import 'package:myapp/generated/app_localizations.dart';
+import 'package:simple_yacht/state_management/providers/user_providers.dart';
+import 'package:simple_yacht/generated/app_localizations.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});

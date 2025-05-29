@@ -3,11 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // For FirebaseException
-import 'package:myapp/services/auth_service.dart'; // For authStateChangesProvider
-import 'package:myapp/services/user_service.dart'; // For userAccountServiceProvider and UserProfile
+import 'package:simple_yacht/services/auth_service.dart'; // For authStateChangesProvider
+import 'package:simple_yacht/services/user_service.dart'; // For userAccountServiceProvider and UserProfile
 // LocalStorageService is now used as a fallback for username when Firebase fails
-// import 'package:myapp/services/local_storage_service.dart'; // No longer needed here
-import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
+// import 'package:simple_yacht/services/local_storage_service.dart'; // No longer needed here
+import 'package:simple_yacht/state_management/providers/service_providers.dart'; // Import new service providers
 
 // Provider for LocalStorageService - MOVED to service_providers.dart
 

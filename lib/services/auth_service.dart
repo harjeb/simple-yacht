@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:myapp/state_management/providers/service_providers.dart'; // Added import
+import 'package:simple_yacht/state_management/providers/service_providers.dart'; // Added import
 
 // firebaseAuthProvider is now defined in service_providers.dart, so it can be removed or kept if only used here.
 // For consistency, let's assume it's primarily used by authServiceProvider and thus defined with it.

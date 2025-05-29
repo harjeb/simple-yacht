@@ -1,6 +1,6 @@
 import 'dart:convert'; // Required for jsonEncode and jsonDecode
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:myapp/core_logic/score_entry.dart'; // Import ScoreEntry
+import 'package:simple_yacht/core_logic/score_entry.dart'; // Import ScoreEntry
 
 class LocalStorageService {
   static const String _leaderboardKey = 'leaderboard';

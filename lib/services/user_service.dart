@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // Correct package import
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:myapp/services/auth_service.dart'; // No longer needed for providers here
-// import 'package:myapp/services/local_storage_service.dart'; // No longer needed for provider here
-import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
-import 'package:myapp/services/auth_service.dart'; // Still needed for AuthService class if used directly
-import 'package:myapp/services/local_storage_service.dart'; // Still needed for LocalStorageService class if used directly
+// import 'package:simple_yacht/services/auth_service.dart'; // No longer needed for providers here
+// import 'package:simple_yacht/services/local_storage_service.dart'; // No longer needed for provider here
+import 'package:simple_yacht/state_management/providers/service_providers.dart'; // Import new service providers
+import 'package:simple_yacht/services/auth_service.dart'; // Still needed for AuthService class if used directly
+import 'package:simple_yacht/services/local_storage_service.dart'; // Still needed for LocalStorageService class if used directly
 
 
 // Provider for FirebaseFirestore instance

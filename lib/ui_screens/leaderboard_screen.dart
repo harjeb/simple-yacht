@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart'; // For date formatting
-import 'package:myapp/core_logic/score_entry.dart';
-import 'package:myapp/state_management/providers/leaderboard_providers.dart';
-import 'package:myapp/generated/app_localizations.dart'; // For localization
+import 'package:simple_yacht/core_logic/score_entry.dart';
+import 'package:simple_yacht/state_management/providers/leaderboard_providers.dart';
+import 'package:simple_yacht/generated/app_localizations.dart'; // For localization
 
 class LeaderboardScreen extends ConsumerWidget {
   const LeaderboardScreen({super.key});

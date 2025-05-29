@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:myapp/core_logic/score_entry.dart';
-import 'package:myapp/services/leaderboard_service.dart';
-import 'package:myapp/state_management/providers/leaderboard_providers.dart';
-import 'package:myapp/state_management/providers/user_providers.dart';
+import 'package:simple_yacht/core_logic/score_entry.dart';
+import 'package:simple_yacht/services/leaderboard_service.dart';
+import 'package:simple_yacht/state_management/providers/leaderboard_providers.dart';
+import 'package:simple_yacht/state_management/providers/user_providers.dart';
 
 final personalBestScoreProvider = FutureProvider.autoDispose<ScoreEntry?>((ref) async {
   // Await the actual username string from the usernameProvider future

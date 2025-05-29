@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:myapp/core_logic/score_entry.dart';
-import 'package:myapp/services/leaderboard_service.dart';
+import 'package:simple_yacht/core_logic/score_entry.dart';
+import 'package:simple_yacht/services/leaderboard_service.dart';
 // LocalStorageService is no longer used by LeaderboardService directly.
-// import 'package:myapp/services/local_storage_service.dart';
+// import 'package:simple_yacht/services/local_storage_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:firebase_auth/firebase_auth.dart';   // Import FirebaseAuth
-// import 'package:myapp/services/auth_service.dart';     // No longer needed for provider here
-import 'package:myapp/services/user_service.dart';     // For firestoreProvider (provides FirebaseFirestore instance)
-import 'package:myapp/state_management/providers/service_providers.dart'; // Import new service providers
+// import 'package:simple_yacht/services/auth_service.dart';     // No longer needed for provider here
+import 'package:simple_yacht/services/user_service.dart';     // For firestoreProvider (provides FirebaseFirestore instance)
+import 'package:simple_yacht/state_management/providers/service_providers.dart'; // Import new service providers
 
 
 // Provider for LeaderboardService

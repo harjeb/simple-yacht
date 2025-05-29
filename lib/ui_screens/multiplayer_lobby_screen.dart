@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:myapp/generated/app_localizations.dart';
-import 'package:myapp/state_management/providers/user_providers.dart';
-import 'package:myapp/services/multiplayer_service.dart';
+import 'package:simple_yacht/generated/app_localizations.dart';
+import 'package:simple_yacht/state_management/providers/user_providers.dart';
+import 'package:simple_yacht/services/multiplayer_service.dart';
 import '../services/online_presence_service.dart';
 
 class MultiplayerLobbyScreen extends ConsumerStatefulWidget {
