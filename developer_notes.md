@@ -72,3 +72,34 @@
 *   **显式数据持久化:** 在账户恢复等关键流程中，从后端获取的数据如果需要在本地持久化以供后续使用（例如，通过 Provider 读取），必须显式地调用相应的本地存储服务方法进行保存。不能仅仅依赖于 Provider 的刷新来自动获取和持久化数据。
 *   **彻底测试:** 针对账户恢复等复杂流程，应进行端到端的测试，覆盖各种数据场景，以确保数据在整个链路中正确传递、处理和显示。
 *   **详细日志:** 在关键的数据处理和状态更新节点添加详细日志，有助于快速定位和诊断类似问题。
+## 游戏房间代码格式更新
+
+**功能概述:**
+
+游戏房间代码的格式已从之前的实现更改为一个更简洁、易于使用的6位十六进制字符串（例如："A1B2C3"）。这一更改旨在提升用户在创建和加入游戏房间时的体验。
+
+**技术实现:**
+
+1.  **核心逻辑 (`MatchmakingService`):**
+    *   文件路径: [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart)
+    *   关键变更: `_generateRoomCode()` 函数已更新，现在生成一个6位的随机十六进制字符串。它使用 "0123456789ABCDEF" 作为字符集，并利用 `Random.secure()` 以增强安全性。该函数还包括一个可选的 `isRoomIdTaken()` 检查，以确保在高并发情况下房间ID的唯一性。
+
+2.  **调用方:**
+    *   `createTestMatch()` 方法（位于 [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart)）以及其他创建游戏房间的类似方法，现在都使用这个新格式的房间代码。
+
+3.  **单元测试:**
+    *   文件路径: [`test/services/matchmaking_service_test.dart`](test/services/matchmaking_service_test.dart)
+    *   描述: 相关的单元测试已更新或实现，以验证新的6位十六进制房间代码的生成逻辑和其在 `createTestMatch` 等方法中的正确使用。所有测试均已通过。
+
+**影响评估:**
+
+*   **开发者影响:**
+    *   任何直接与房间代码生成或验证逻辑交互的代码部分，如果之前依赖于旧的格式，可能需要调整。
+    *   后端（如 Firestore）存储的 `roomId` 字段现在将统一为6位十六进制格式。
+*   **用户影响:**
+    *   用户在分享或输入房间代码时，将使用更短、更易于辨认的6位十六进制代码。
+    *   客户端UI（例如 [`lib/ui_screens/multiplayer_room_screen.dart`](lib/ui_screens/multiplayer_room_screen.dart)）应将房间代码视为不透明字符串，因此预计不会受到直接影响，但显示时会展示新格式。
+
+**相关决策日志:**
+
+关于此更改的详细理由和讨论，请参阅 [`memory-bank/decisionLog.md`](memory-bank/decisionLog.md) 中日期为 [2025-05-28] 的相关条目。

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:myapp/generated/app_localizations.dart';
 
 import 'package:simple_yacht/models/game_room.dart';
 import 'package:simple_yacht/state_management/providers/user_providers.dart';

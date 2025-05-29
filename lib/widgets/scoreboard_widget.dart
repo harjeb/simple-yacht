@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simple_yacht/core_logic/game_state.dart'; // For ScoreCategory enum
-import 'package:simple_yacht/state_management/providers/game_providers.dart';
+import 'package:myapp/core_logic/game_state.dart'; // For ScoreCategory enum
+import 'package:myapp/state_management/providers/game_providers.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ScoreboardWidget extends ConsumerWidget {

@@ -4,6 +4,7 @@ import 'package:simple_yacht/navigation/app_router.dart'; // Assuming myapp is t
 import 'package:flutter_localizations/flutter_localizations.dart'; // Import for localizations delegates
 import 'package:simple_yacht/generated/app_localizations.dart'; // Import generated localizations from new path
 import 'package:simple_yacht/state_management/providers/locale_provider.dart'; // Import locale provider
+import 'package:simple_yacht/services/presence_service.dart'; // Import PresenceService provider
 import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 import 'services/online_presence_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -79,6 +80,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context, WidgetRef ref) { // Added WidgetRef
     final currentLocale = ref.watch(localeProvider);
+    ref.watch(presenceServiceProvider); // Initialize PresenceService
     final router = AppRouter.createRouter(ref); // Create router instance here
 
     return MaterialApp.router(

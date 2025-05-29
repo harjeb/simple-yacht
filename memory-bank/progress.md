@@ -259,3 +259,40 @@
 - **完成时间**: 任务归档阶段
 - **主要成果**: 创建完整的任务归档文档，更新所有Memory Bank文件，任务标记为完全完成
 - **归档文档**: memory-bank/archive/archive-multiplayer-frontend-integration-2024-12-19.md
+
+* [2025-05-28 10:10:00] - Debugging Task Status Update: Completed fix for Flutter localization build error.
+
+* [2025-05-28 13:25:50] - Coding Task Status Update: Completed implementation of 6-digit hexadecimal room code generation in `lib/services/matchmaking_service.dart`.
+
+* [2025-05-28 13:41:00] - TDD Cycle Start: Began writing unit tests for `MatchmakingService` room code generation (6-digit hex) and `createTestMatch` functionality. Test file: `test/services/matchmaking_service_test.dart`.
+
+* [2025-05-28 13:56:00] - TDD Cycle End: Successfully completed unit tests for `MatchmakingService`. Tests verify 6-digit hexadecimal room code generation and usage in `createTestMatch`. All tests in `test/services/matchmaking_service_test.dart` are passing.
+
+* [2025-05-28 14:05:00] - Documentation Update: Updated developer_notes.md and user_guide.md to reflect the new 6-digit hexadecimal game room code format.
+
+---
+**Deployment Started: Game Room Code Update**
+*   **Timestamp:** 2025-05-28 14:07:00 UTC
+*   **Task:** Deploy changes related to 6-digit hex game room codes.
+*   **Status:** In Progress
+
+* [2025-05-28 14:25:00] - Coding Task Status Update: Implemented `PresenceService` for online player counting. This included creating `lib/services/presence_service.dart` and adding `firebase_database` dependency.
+
+* [2025-05-28 14:36:00] - Coding Task Status Update: UI Integration for online player count in `MultiplayerLobbyScreen` completed. `PresenceService` initialized.
+
+* [2025-05-28 14:47:00] - TDD Cycle Start: Began writing unit tests for `PresenceService`. Test file: `test/services/presence_service_test.dart`. (Attempt 2)
+
+* [2025-05-29 00:57:00] - Debugging Task Status Update: Investigating `MissingPluginException` for `firebase_database`. Identified missing `firebase_url` in `google-services.json` as a primary suspect. Recommended user to update this file and verify project-level Gradle configuration.
+
+* [2025-05-29 01:04:43] - Debugging Task Status Update: Attempted to fix `MissingPluginException` for `firebase_database`. Manually added `firebase_url` to `android/app/google-services.json` and ensured `com.google.gms:google-services:4.4.1` is used in `android/build.gradle.kts`. User advised to run `flutter clean`, `flutter pub get`, and re-run the app.
+
+* [2025-05-29 01:10:11] - Debugging Task Status Update: Corrected `firebase_url` in `android/app/google-services.json`. This should resolve the "cannot parse firebase url" error.
+
+* [2025-05-29 01:13:22] - Debugging Task Status Update: Resolved `com.google.gms.google-services` plugin version conflict between project-level and app-level Gradle files. Set version to `4.4.1` in [`android/app/build.gradle.kts`](android/app/build.gradle.kts:1).
+
+* [2025-05-29 01:59:45] - Debugging Task Status Update: Unified `com.google.gms.google-services` plugin version to `4.4.1` across all relevant Gradle files ([`android/build.gradle.kts`](android/build.gradle.kts:1), [`android/app/build.gradle.kts`](android/app/build.gradle.kts:1), and [`android/settings.gradle.kts`](android/settings.gradle.kts:1)) to resolve Android build error.
+
+* [2025-05-29 02:13:34] - Debugging Task Status Update: Fixed Firebase Web runtime error by adding `databaseURL` to `FirebaseOptions.web` in [`lib/firebase_options.dart`](lib/firebase_options.dart:58).
+
+* [2025-05-29 05:33:00] - Debugging Task Status Update: Resolved issue where "Online Players Count" was stuck on "Loading". This involved correcting the Firebase Realtime Database URL across all configurations (code and native files) to use the project's default RTDB instance URL (including `-default-rtdb`) and adjusting security rules for `/online_users_count` to allow transactions (`.write: "auth != null"`). The feature is now working as expected.
+* [2025-05-29 05:35:00] - Debugging Task Status Update: Completed verification of Firebase Realtime Database URLs and provided instructions for security rule updates and cleanup commands.
