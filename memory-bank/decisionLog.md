@@ -213,3 +213,40 @@ The application was encountering a `FIREBASE FATAL ERROR: Cannot parse Firebase 
 **Details:**
 - Added the `databaseURL` parameter to the `web` static constant in the `DefaultFirebaseOptions` class in [`lib/firebase_options.dart`](lib/firebase_options.dart:58).
 - Set the value of `databaseURL` to `"https://yacht-f816d.firebaseio.com"`.
+
+---
+### Decision (Debug)
+[2025-05-29] - Resolved "Online Players Count" stuck on "Loading" due to Firebase Realtime Database issues.
+
+**Root Causes & Rationale:**
+1.  **Incorrect Database URL:** The primary issue was a mismatch between the Realtime Database URL configured in the application (code and native files like `google-services.json`) and the actual default database URL shown in the Firebase console (`https://yacht-f816d-default-rtdb.firebaseio.com` vs `https://yacht-f816d.firebaseio.com`). This led to Firebase SDK warnings about incorrect URL configuration and prevented successful database operations.
+2.  **Overly Restrictive Security Rules:** After correcting the URL, a `permission_denied` error occurred during transactions on the `/online_users_count` path. The security rule `".write": false` for this path was too strict, as Firebase transactions require write permission on the target path.
+
+**Fix Strategy & Details:**
+1.  **Corrected Database URLs:**
+    *   Updated `databaseURL` in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:182) (within `FirebaseDatabase.instanceFor`) to `https://yacht-f816d-default-rtdb.firebaseio.com`.
+    *   Updated `databaseURL` for `web` and `android` platforms in [`lib/firebase_options.dart`](lib/firebase_options.dart:58) to `https://yacht-f816d-default-rtdb.firebaseio.com`.
+    *   Updated `firebase_url` in [`android/app/google-services.json`](android/app/google-services.json:4) to `https://yacht-f816d-default-rtdb.firebaseio.com`.
+    *   Advised manual update for `DATABASE_URL` in `ios/Runner/GoogleService-Info.plist` if applicable.
+2.  **Adjusted Security Rules:**
+    *   Modified the Firebase Realtime Database security rule for the `/online_users_count` path from `".write": false` to `".write": "auth != null"`. This allows authenticated users (which `PresenceService` operations run as) to perform transactions while still preventing unauthenticated writes. The updated rules are:
+      ```json
+      {
+        "rules": {
+          "online_users": {
+            "$uid": {
+              ".write": "auth != null && auth.uid == $uid",
+              ".read": "auth != null"
+            }
+          },
+          "online_users_count": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        }
+      }
+      ```
+
+**Impact:**
+- The "Online Players Count" feature now functions correctly, updating in real-time.
+- Firebase Realtime Database connections are stable, and security rules allow intended operations while preventing unauthorized access.

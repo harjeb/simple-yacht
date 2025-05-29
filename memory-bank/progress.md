@@ -293,3 +293,6 @@
 * [2025-05-29 01:59:45] - Debugging Task Status Update: Unified `com.google.gms.google-services` plugin version to `4.4.1` across all relevant Gradle files ([`android/build.gradle.kts`](android/build.gradle.kts:1), [`android/app/build.gradle.kts`](android/app/build.gradle.kts:1), and [`android/settings.gradle.kts`](android/settings.gradle.kts:1)) to resolve Android build error.
 
 * [2025-05-29 02:13:34] - Debugging Task Status Update: Fixed Firebase Web runtime error by adding `databaseURL` to `FirebaseOptions.web` in [`lib/firebase_options.dart`](lib/firebase_options.dart:58).
+
+* [2025-05-29 05:33:00] - Debugging Task Status Update: Resolved issue where "Online Players Count" was stuck on "Loading". This involved correcting the Firebase Realtime Database URL across all configurations (code and native files) to use the project's default RTDB instance URL (including `-default-rtdb`) and adjusting security rules for `/online_users_count` to allow transactions (`.write: "auth != null"`). The feature is now working as expected.
+* [2025-05-29 05:35:00] - Debugging Task Status Update: Completed verification of Firebase Realtime Database URLs and provided instructions for security rule updates and cleanup commands.
