@@ -12,13 +12,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PresenceService {
   final FirebaseAuth _auth;
-  final FirebaseDatabase _database;
+  final FirebaseDatabase _database; // This will be initialized by the constructor
   User? _currentUser;
   StreamSubscription? _authSubscription;
   DatabaseReference? _userStatusRef;
   DatabaseReference? _onlineCountRef;
 
-  PresenceService(this._auth, this._database) {
+  PresenceService(this._auth, {FirebaseDatabase? database}) : _database = database ?? FirebaseDatabase.instance {
     print('[PresenceService] Constructor called.');
     _onlineCountRef = _database.ref('online_users_count');
     print('[PresenceService] online_users_count ref: ${_onlineCountRef?.path}');
@@ -75,22 +75,37 @@ class PresenceService {
     }
 
     try {
-      print('[PresenceService] Attempting to set ${_userStatusRef!.path} to true');
+      // Check if the user is already marked as online
+      final snapshot = await _userStatusRef!.get();
+      print('[PresenceService] Snapshot for ${_userStatusRef!.path} exists: ${snapshot.exists}, value: ${snapshot.value}');
+
+      if (snapshot.exists && snapshot.value == true) {
+        print('[PresenceService] User ${_currentUser!.uid} is already online. Ensuring onDisconnect handlers are set.');
+        // Ensure onDisconnect handlers are (re)set in case of service restart or previous failure
+        await _userStatusRef!.onDisconnect().remove();
+        await _onlineCountRef!.onDisconnect().set(ServerValue.increment(-1));
+        print('[PresenceService] onDisconnect handlers re-set for already online user ${_currentUser!.uid}.');
+        return; // Do not increment count if already online
+      }
+
+      print('[PresenceService] Attempting to set ${_userStatusRef!.path} to true (user was not online or node did not exist)');
       await _userStatusRef!.set(true);
       print('[PresenceService] Successfully set ${_userStatusRef!.path} to true');
-      print('[PresenceService] Attempting to run transaction on ${_onlineCountRef!.path}');
+      
+      print('[PresenceService] Attempting to run transaction on ${_onlineCountRef!.path} to increment count');
       await _onlineCountRef!.runTransaction((currentData) {
         final currentCount = currentData as num? ?? 0;
-        print('[PresenceService] Transaction: currentCount = $currentCount, newCount = ${currentCount + 1}');
+        print('[PresenceService] Transaction (increment): currentCount = $currentCount, newCount = ${currentCount + 1}');
         return Transaction.success(currentCount + 1);
       });
-      print('[PresenceService] Transaction completed on ${_onlineCountRef!.path}');
+      print('[PresenceService] Transaction (increment) completed on ${_onlineCountRef!.path}');
+      
       print('[PresenceService] Setting onDisconnect().remove() for ${_userStatusRef!.path}');
       await _userStatusRef!.onDisconnect().remove();
       // Use ServerValue.increment for atomic decrement on disconnect
       print('[PresenceService] Setting onDisconnect().set(ServerValue.increment(-1)) for ${_onlineCountRef!.path}');
       await _onlineCountRef!.onDisconnect().set(ServerValue.increment(-1));
-      print('[PresenceService] _goOnline completed successfully for ${_currentUser!.uid}.');
+      print('[PresenceService] _goOnline completed successfully for ${_currentUser!.uid} (marked as new online).');
     } catch (e) {
       // Log error or handle as needed
       print('[PresenceService] Error going online for ${_currentUser?.uid}: $e');
@@ -137,21 +152,41 @@ class PresenceService {
   }
 
   Stream<int> getOnlinePlayersCountStream() {
-    print('[PresenceService] getOnlinePlayersCountStream called. Ref: ${_onlineCountRef?.path}');
-    return _onlineCountRef?.onValue.map((event) {
-          final value = event.snapshot.value;
-          print('[PresenceService] onlinePlayersCountStream event: ${event.snapshot.key}, value: $value');
-          if (value is int) {
-            return value;
-          } else if (value is num) {
-            return value.toInt();
-          }
-          return 0; // Default to 0 if null or not a number
-        }).handleError((error) {
-          print("[PresenceService] Error in onlinePlayersCountStream: $error");
-          return 0; // Return 0 or some default on error
-        }) ??
-        Stream.value(0);
+    print('[PresenceService] getOnlinePlayersCountStream (int) called. Ref: ${_onlineCountRef?.path}');
+
+    if (_onlineCountRef == null) {
+      print('[PresenceService] _onlineCountRef is null, returning error stream.');
+      // Throw an error that StreamProvider can catch and convert to AsyncValue.error
+      return Stream.error(StateError('Online count reference is null'));
+    }
+
+    return _onlineCountRef!.onValue.map((event) {
+      final value = event.snapshot.value;
+      print('[PresenceService] onlinePlayersCountStream (int) event: ${event.snapshot.key}, value: $value, exists: ${event.snapshot.exists}');
+      if (value is int) {
+        return value;
+      } else if (value is num) {
+        return value.toInt();
+      } else if (value == null && event.snapshot.exists) {
+        // Node exists but value is null
+        return 0;
+      } else if (!event.snapshot.exists) {
+        // Node doesn't exist
+        return 0;
+      } else {
+        // Unexpected value type, throw an error
+        final errorMessage = "Unexpected data type for online count: ${value?.runtimeType}, value: $value";
+        print("[PresenceService] $errorMessage");
+        throw StateError(errorMessage);
+      }
+    }).handleError((error, stackTrace) {
+      // Log and rethrow, or transform into a specific error type if needed
+      print("[PresenceService] Error in onlinePlayersCountStream (int) processing: $error");
+      // Let StreamProvider handle this error by rethrowing.
+      // Alternatively, could return a stream with an error: return Stream.error(error);
+      // but throwing directly is often cleaner for StreamProvider.
+      throw error; // Rethrow to be caught by StreamProvider
+    });
   }
 
   void dispose() {
@@ -177,17 +212,15 @@ final presenceServiceProvider = Provider<PresenceService>((ref) {
   final auth = ref.watch(firebaseAuthProvider);
   // Ensure FirebaseDatabase.instance is used or a specific app instance if needed
   // Explicitly set the databaseURL to ensure correctness.
-  final database = FirebaseDatabase.instanceFor(
-    app: Firebase.app(), // Use the default Firebase app
-    databaseURL: 'https://yacht-f816d-default-rtdb.firebaseio.com', // CORRECT RTDB URL
-  );
-  print('[PresenceService] FirebaseDatabase instance created with URL: ${database.databaseURL}');
-  final service = PresenceService(auth, database);
+  final database = FirebaseDatabase.instance; // Use the default instance configured by initializeApp
+  print('[PresenceService] FirebaseDatabase instance using default URL: ${database.databaseURL}');
+  // Pass the database instance explicitly, though it would default to FirebaseDatabase.instance
+  final service = PresenceService(auth, database: database);
   ref.onDispose(() => service.dispose());
   return service;
 });
 
-final onlinePlayersCountProvider = StreamProvider<int>((ref) {
+final onlinePlayersCountProvider = StreamProvider.autoDispose<int>((ref) {
   final presenceService = ref.watch(presenceServiceProvider);
   return presenceService.getOnlinePlayersCountStream();
 });

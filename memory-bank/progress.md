@@ -296,3 +296,12 @@
 
 * [2025-05-29 05:33:00] - Debugging Task Status Update: Resolved issue where "Online Players Count" was stuck on "Loading". This involved correcting the Firebase Realtime Database URL across all configurations (code and native files) to use the project's default RTDB instance URL (including `-default-rtdb`) and adjusting security rules for `/online_users_count` to allow transactions (`.write: "auth != null"`). The feature is now working as expected.
 * [2025-05-29 05:35:00] - Debugging Task Status Update: Completed verification of Firebase Realtime Database URLs and provided instructions for security rule updates and cleanup commands.
+
+* [2025-05-29 1:13:33] - 应用名称回退修复任务全面完成。成功识别并修复了所有与旧应用名称 ("myapp", "com.example.myapp") 相关的配置和代码问题，统一为新名称 ("simple_yacht", "com.simpleyacht.app")。解决了包括磁盘空间、Gradle缓存、依赖版本、Firebase配置不一致以及Dart代码中的构建错误在内的多个障碍。Android debug APK 已成功构建。所有相关 Memory Bank 文件（activeContext, decisionLog）均已更新。
+
+* [2025-05-29 14:39:00] - Debugging Task Status Update: Applied fix to `lib/services/presence_service.dart` for Firebase multiple initialization error. New test errors "Undefined class 'FakeFirebaseDatabase'" in `test/services/presence_service_test.dart` are now being investigated. `flutter pub get` executed.
+* [2025-05-29 14:49:36] - Debugging Task Status Update: Applied fix to `lib/services/presence_service.dart` to address inaccurate online user count.
+* [2025-05-29 15:01:00] - Debugging Task Status Update: Completed fix for "Undefined class 'FakeFirebaseDatabase'" in [`test/services/presence_service_test.dart`](test/services/presence_service_test.dart:0). This involved modifying the `PresenceService` constructor for testability, updating test and provider instantiations, and running `flutter pub get`.
+
+* [2025-05-29 15:08:53] - Architecture Design: Completed detailed architecture design for fixing online presence count and UI real-time data display. Ready for implementation.
+* [2025-05-29 15:14:11] - Coding Task Status Update: Completed implementation of refined `PresenceService` logic and UI updates in `MultiplayerLobbyScreen` for real-time online player count. `getOnlinePlayersCountStream` now returns `Stream<int>`, and `onlinePlayersCountProvider` is `StreamProvider.autoDispose<int>`. UI uses `AsyncValue.when` correctly.

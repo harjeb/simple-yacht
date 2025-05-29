@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:myapp/services/matchmaking_service.dart';
-import 'package:myapp/models/game_room.dart';
-import 'package:myapp/models/game_enums.dart';
+import 'package:simple_yacht/services/matchmaking_service.dart';
+import 'package:simple_yacht/models/game_room.dart';
+import 'package:simple_yacht/models/game_enums.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart' as auth_mocks; // Alias to avoid conflict if User is also defined in firebase_auth_mocks
 import 'package:firebase_auth/firebase_auth.dart'; // Import for FirebaseAuth and User

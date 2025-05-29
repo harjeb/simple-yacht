@@ -1,4 +1,4 @@
-# myapp
+# simple_yacht
 
 A new Flutter project.
 

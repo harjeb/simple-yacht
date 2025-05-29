@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Added for Riverpod
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations from new path
-import 'package:myapp/state_management/providers/game_providers.dart'; // Added for game providers
-import 'package:myapp/state_management/providers/user_providers.dart'; // Added for user providers
-import 'package:myapp/state_management/providers/personal_best_score_provider.dart'; // Added for personal best score
-import 'package:myapp/core_logic/game_state.dart'; // Added for GameState class
+import 'package:simple_yacht/generated/app_localizations.dart'; // Import generated localizations from new path
+import 'package:simple_yacht/state_management/providers/game_providers.dart'; // Added for game providers
+import 'package:simple_yacht/state_management/providers/user_providers.dart'; // Added for user providers
+import 'package:simple_yacht/state_management/providers/personal_best_score_provider.dart'; // Added for personal best score
+import 'package:simple_yacht/core_logic/game_state.dart'; // Added for GameState class
 import 'package:intl/intl.dart'; // Added for date formatting
 
 class HomeScreen extends ConsumerStatefulWidget { // Changed to ConsumerStatefulWidget

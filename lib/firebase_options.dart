@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAy7Jjjd9IwmCLUkC-_Vc4mvtxQK5v7KFc',
-    appId: '1:60143534744:android:7944f8f59eb363877946ed',
+    appId: '1:60143534744:android:72b20a740b8a90bc7946ed',
     messagingSenderId: '60143534744',
     projectId: 'yacht-f816d',
     databaseURL: 'https://yacht-f816d-default-rtdb.firebaseio.com', // CORRECT RTDB URL

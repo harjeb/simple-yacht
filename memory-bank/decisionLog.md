@@ -250,3 +250,385 @@ The application was encountering a `FIREBASE FATAL ERROR: Cannot parse Firebase 
 **Impact:**
 - The "Online Players Count" feature now functions correctly, updating in real-time.
 - Firebase Realtime Database connections are stable, and security rules allow intended operations while preventing unauthorized access.
+
+---
+### Decision (App Name Regression Check)
+[2025-05-29 12:13:31] - Checked `pubspec.yaml`.
+
+**Action:** Verified `name` field is `simple_yacht`.
+**Result:** Matches `expected_flutter_name`. No change needed for this field.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:13:58] - Updated `android/app/build.gradle.kts`.
+
+**Action:**
+1. Changed `namespace` from `"com.example.myapp"` to `"com.simpleyacht.app"`.
+2. Changed `applicationId` from `"com.example.myapp"` to `"com.simpleyacht.app"`.
+**Reason:** Align with new project identifier `com.simpleyacht.app`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:14:24] - Updated `android/app/src/main/AndroidManifest.xml`.
+
+**Action:** Added `package="com.simpleyacht.app"` to the `<manifest>` tag.
+**Reason:** To explicitly define the package name in the manifest, aligning with the `applicationId` and `namespace` set in `build.gradle.kts`. The `android:name=".MainActivity"` for the activity is correct as it's relative to this package.
+---
+
+---
+### Decision (App Name Regression Check)
+[2025-05-29 12:14:49] - Checked `android/app/src/main/kotlin/com/simpleyacht/app/MainActivity.kt`.
+
+**Action:** Verified `package` declaration is `com.simpleyacht.app`.
+**Result:** Matches `expected_android_app_id`. No change needed. File path is also consistent with the current `applicationId`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:15:22] - Updated `android/app/google-services.json`.
+
+**Action:** Removed the client object associated with the old package name `"com.example.myapp"`.
+**Reason:** To ensure only the configuration for the current `applicationId` (`"com.simpleyacht.app"`) is present.
+---
+
+---
+### Decision (App Name Regression Check)
+[2025-05-29 12:15:42] - Skipped iOS specific file checks.
+
+**Action:** Attempted to read `ios/Runner.xcodeproj/project.pbxproj`.
+**Result:** File not found. Assuming iOS platform is not configured for this project or the directory does not exist. iOS specific checks (`project.pbxproj`, `Info.plist`, `GoogleService-Info.plist`) will be skipped.
+---
+
+---
+### Decision (App Name Regression Check)
+[2025-05-29 12:15:57] - Checked `l10n.yaml`.
+
+**Action:** Verified configuration values (`arb-dir`, `template-arb-file`, `output-localization-file`, `output-dir`).
+**Result:** The configurations are generic (e.g., `template-arb-file: app_en.arb`) and do not contain hardcoded old or current project names that require modification within this file. No change needed for `l10n.yaml` itself. Subsequent checks will focus on `.arb` file content and Dart import paths for generated localization files.
+---
+
+---
+### Decision (App Name Regression Check)
+[2025-05-29 12:16:23] - Checked `.arb` files in `lib/l10n/`.
+
+**Action:** Searched for the old identifier "myapp" within all `lib/l10n/app_*.arb` files.
+**Result:** No instances of "myapp" found. No changes needed for the content of these `.arb` files regarding this specific old identifier.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:17:09] - Updated import in `lib/ui_screens/multiplayer_game_screen.dart`.
+
+**Action:** Changed `import 'package:myapp/generated/app_localizations.dart';` to `import 'package:simple_yacht/generated/app_localizations.dart';`.
+**Reason:** To align with the current project name `simple_yacht`.
+**Note:** This change, as expected, triggered multiple Dart analysis errors across the project, which will be addressed by further import path corrections and code generation steps.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:17:36] - Updated imports in `lib/ui_screens/multiplayer_lobby_screen.dart`.
+
+**Action:**
+1. Changed `import 'package:myapp/generated/app_localizations.dart';` to `import 'package:simple_yacht/generated/app_localizations.dart';`.
+2. Changed `import 'package:myapp/state_management/providers/user_providers.dart';` to `import 'package:simple_yacht/state_management/providers/user_providers.dart';`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:18:13] - Updated `firebase.json`.
+
+**Action:**
+1. Changed `flutter.platforms.android.default.appId` from `"1:60143534744:android:7944f8f59eb363877946ed"` to `"1:60143534744:android:72b20a740b8a90bc7946ed"`.
+2. Changed `flutter.platforms.dart."lib/firebase_options.dart".configurations.android` from `"1:60143534744:android:7944f8f59eb363877946ed"` to `"1:60143534744:android:72b20a740b8a90bc7946ed"`.
+**Reason:** To align the Firebase Android App ID with the current `applicationId` (`com.simpleyacht.app`) and the corresponding `mobilesdk_app_id` found in `google-services.json`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:19:05] - Updated `README.md`.
+
+**Action:** Changed the main heading from `# myapp` to `# simple_yacht`.
+**Reason:** To reflect the current project name.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:19:19] - Updated imports in `test/services/matchmaking_service_test.dart`.
+
+**Action:** Changed three `package:myapp/...` import statements to `package:simple_yacht/...`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:19:34] - Updated import in `test/services/presence_service_test.dart`.
+
+**Action:** Changed `import 'package:myapp/services/presence_service.dart';` to `import 'package:simple_yacht/services/presence_service.dart';`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:19:48] - Updated import in `test/widget_test.dart`.
+
+**Action:** Changed `import 'package:myapp/main.dart';` to `import 'package:simple_yacht/main.dart';`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:20:04] - Updated import and comment in `test/widgets/game_over_dialog_test.mocks.dart`.
+
+**Action:**
+1. Changed comment `// in myapp/test/widgets/game_over_dialog_test.dart.` to `// in simple_yacht/test/widgets/game_over_dialog_test.dart.`.
+2. Changed `import 'package:myapp/core_logic/game_state.dart' as _i2;` to `import 'package:simple_yacht/core_logic/game_state.dart' as _i2;`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:20:26] - Updated import in `test/widgets/game_over_dialog_test.dart`.
+
+**Action:** Changed `import 'package:myapp/state_management/providers/game_providers.dart';` to `import 'package:simple_yacht/state_management/providers/game_providers.dart';`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:20:40] - Updated comment in `lib/main.dart`.
+
+**Action:** Changed comment `// Assuming myapp is the project name` to `// Assuming simple_yacht is the project name`.
+**Reason:** To reflect the current project name.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:20:55] - Updated import in `lib/ui_screens/multiplayer_lobby_screen.dart`.
+
+**Action:** Changed `import 'package:myapp/services/multiplayer_service.dart';` to `import 'package:simple_yacht/services/multiplayer_service.dart';`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:21:12] - Updated imports in `lib/ui_screens/home_screen.dart`.
+
+**Action:** Changed three `package:myapp/...` import statements to `package:simple_yacht/...`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:21:28] - Updated imports in `lib/widgets/scoreboard_widget.dart`.
+
+**Action:** Changed two `package:myapp/...` import statements to `package:simple_yacht/...`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:21:46] - Updated `web/index.html`.
+
+**Action:**
+1. Changed `<meta name="apple-mobile-web-app-title" content="myapp">` to `<meta name="apple-mobile-web-app-title" content="Simple Yacht">`.
+2. Changed `<title>myapp</title>` to `<title>Simple Yacht</title>`.
+**Reason:** To reflect the current project name in user-visible places.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:22:15] - Updated `web/manifest.json`.
+
+**Action:**
+1. Changed `name` from `"myapp"` to `"Simple Yacht"`.
+2. Changed `short_name` from `"myapp"` to `"SimpleYacht"`.
+3. Changed `description` from `"A new Flutter project."` to `"Simple Yacht - A Yahtzee-style dice game."`.
+**Reason:** To reflect the current project name and provide a more accurate description in user-visible places for the web application.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:33:39] - Updated import in `lib/ui_screens/home_screen.dart`.
+
+**Action:** Changed `import 'package:myapp/core_logic/game_state.dart';` to `import 'package:simple_yacht/core_logic/game_state.dart';`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:34:02] - Updated import in `lib/widgets/scoreboard_widget.dart`.
+
+**Action:** Changed `import 'package:flutter_gen/gen_l10n/app_localizations.dart';` to `import 'package:simple_yacht/generated/app_localizations.dart';`.
+**Reason:** To use the correct import path for generated localization files after project name change and `flutter gen-l10n` execution.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:34:28] - Updated import in `lib/ui_screens/home_screen.dart`.
+
+**Action:** Changed `import 'package:flutter_gen/gen_l10n/app_localizations.dart';` to `import 'package:simple_yacht/generated/app_localizations.dart';`.
+**Reason:** To use the correct import path for generated localization files after project name change and `flutter gen-l10n` execution.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:34:49] - Updated import in `test/widgets/game_over_dialog_test.dart`.
+
+**Action:** Changed `import 'package:myapp/widgets/game_over_dialog.dart';` to `import 'package:simple_yacht/widgets/game_over_dialog.dart';`.
+**Reason:** To align with the current project name `simple_yacht`.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:36:03] - Updated `lib/main.dart`.
+
+**Action:**
+1. Renamed class `MyApp` to `SimpleYachtApp`.
+2. Renamed class `_MyAppState` to `_SimpleYachtAppState`.
+3. Updated references to `MyApp` to `SimpleYachtApp` within the file.
+4. Removed `const` from `ProviderScope` child `SimpleYachtApp()` as `SimpleYachtApp` does not have a const constructor.
+**Reason:** To align class names with the project name and resolve constructor issues.
+---
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:36:46] - Updated `test/widget_test.dart`.
+
+**Action:**
+1. Changed `await tester.pumpWidget(const MyApp());` to `await tester.pumpWidget(const SimpleYachtApp());`.
+2. Subsequently changed `await tester.pumpWidget(const SimpleYachtApp());` to `await tester.pumpWidget(SimpleYachtApp());` to resolve const constructor error.
+**Reason:** To align class name with the main application class and resolve constructor issues.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:41:16] - Updated `lib/ui_screens/multiplayer_lobby_screen.dart`.
+
+**Action:**
+1. Changed `MultiplayerLobbyScreen` to extend `ConsumerStatefulWidget` and updated `createState`.
+2. Moved Scaffold UI logic from `_createRoom` method to the `build` method of `_MultiplayerLobbyScreenState`.
+3. Added `_joinRoom` method definition.
+4. Scoped `AppLocalizations.of(context)!` calls within methods where `l10n` was undefined or used placeholder strings for missing localization keys (`gameModes`, `pleaseEnterRoomCode`).
+**Reason:** To fix widget lifecycle and state management issues, resolve undefined `l10n` references, and address missing method errors. Placeholder strings for localization will need to be added to `.arb` files later.
+---
+
+---
+### Decision (App Name Regression Fix)
+[2025-05-29 12:45:21] - Updated `build` method signature in `_SimpleYachtAppState` in `lib/main.dart`.
+
+**Action:** Changed `Widget build(BuildContext context, WidgetRef ref)` to `Widget build(BuildContext context)`. Access to `ref` will be via `this.ref` as provided by `ConsumerState`.
+**Reason:** To resolve the persistent "Error: The method '_SimpleYachtAppState.build' has more required arguments than those of overridden method 'State.build'." error.
+---
+
+---
+### Decision (App Name Regression Fix / Build Issue)
+[2025-05-29 12:50:55] - Updated Android build directory in `android/build.gradle.kts`.
+
+**Action:** Modified `newBuildDir` to point to `/var/tmp/simple_yacht_build` and adjusted subproject build directories accordingly.
+**Reason:** To attempt to resolve "No space left on device" errors during Android build by using a different directory for build outputs.
+---
+
+---
+### Decision (App Name Regression Fix / Build Issue)
+[2025-05-29 1:07:54] - Reverted Android build directory changes in `android/build.gradle.kts`.
+
+**Action:** Restored the logic to set the build directory to `../../build` relative to the project root.
+**Reason:** To resolve "Gradle build failed to produce an .apk file. It's likely that this file was generated under /home/user/simple-yacht/build, but the tool couldn't find it." error, by ensuring Flutter tool and Gradle agree on the output path. Assumes disk space issues are now mitigated.
+---
+
+---
+### Decision (Runtime Firebase Error Fix)
+[2025-05-29 1:11:49] - Updated Android `appId` in `lib/firebase_options.dart`.
+
+**Action:** Changed `android.appId` from `'1:60143534744:android:7944f8f59eb363877946ed'` to `'1:60143534744:android:72b20a740b8a90bc7946ed'`.
+**Reason:** To ensure consistency with the `appId` used in `google-services.json` and `firebase.json` for the current package name `com.simpleyacht.app`. This might help resolve the "Database initialized multiple times" error.
+---
+
+---
+### Decision (Debug)
+[2025-05-29 14:39:00] - Bug Fix Strategy: Unified Firebase Realtime Database initialization in `lib/services/presence_service.dart`.
+
+**Rationale:**
+The error "@firebase/database: FIREBASE FATAL ERROR: Database initialized multiple times" suggested that `FirebaseDatabase` was being initialized or configured multiple times with potentially conflicting or redundant setups. `Firebase.initializeApp()` in `main.dart` already configures the default Firebase app instance using `firebase_options.dart`. The `PresenceService` was using `FirebaseDatabase.instanceFor()` with the same database URL, which could be interpreted by the SDK as a separate initialization attempt.
+
+**Details:**
+- Modified [`lib/services/presence_service.dart`](lib/services/presence_service.dart:180) to use `final database = FirebaseDatabase.instance;` instead of `FirebaseDatabase.instanceFor(...)`. This ensures that the service uses the already configured default database instance.
+- This change led to new errors in [`test/services/presence_service_test.dart`](test/services/presence_service_test.dart:0) ("Undefined class 'FakeFirebaseDatabase'").
+
+**Next Steps:**
+- Investigate and resolve the "Undefined class 'FakeFirebaseDatabase'" error in the test file.
+---
+
+---
+### Decision (Debug)
+[2025-05-29 14:48:04] - Bug Fix Strategy: Corrected online user count inflation in `PresenceService`.
+
+**Rationale:**
+The `online_users_count` in Firebase Realtime Database was being incremented each time the `_goOnline` method was called for an already logged-in user (e.g., on service restart or repeated login events for the same user), without verifying if the user was already marked as online and counted. This led to an inflated count in the database (e.g., 10) while only one user entry existed in `/online_users`.
+
+**Details:**
+- Modified the `_goOnline` method in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:70).
+- Before setting the user's status to true and incrementing the global online count, the method now first reads the user's current status from `/online_users/{userId}`.
+- If the user is already marked as online (status is true), the method skips incrementing the count and only ensures that the `onDisconnect` handlers are correctly set.
+- The count is incremented only if the user was not previously marked as online.
+---
+### Decision (Debug)
+[2025-05-29 15:01:00] - Bug Fix Strategy: Resolved "Undefined class 'FakeFirebaseDatabase'" in `test/services/presence_service_test.dart`.
+
+**Rationale:**
+The error "Undefined class 'FakeFirebaseDatabase'" occurred in [`test/services/presence_service_test.dart`](test/services/presence_service_test.dart:0) after [`lib/services/presence_service.dart`](lib/services/presence_service.dart:0) was modified to use `FirebaseDatabase.instance` internally, removing `FirebaseDatabase` from its constructor's required parameters. While the test file had the correct import for `firebase_database_mocks` and the dependency was in [`pubspec.yaml`](pubspec.yaml:0), the primary issue was that the `PresenceService` constructor was no longer set up to accept a `FirebaseDatabase` instance for testing.
+
+**Details:**
+1.  **Modified `PresenceService` Constructor**:
+    *   The constructor in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:21) was changed from `PresenceService(this._auth, this._database)` to `PresenceService(this._auth, {FirebaseDatabase? database}) : _database = database ?? FirebaseDatabase.instance;`. This allows an optional `FirebaseDatabase` instance to be injected for testing, while defaulting to `FirebaseDatabase.instance` for production.
+2.  **Updated Test File Instantiation**:
+    *   Calls to `PresenceService` in [`test/services/presence_service_test.dart`](test/services/presence_service_test.dart:41) (and other similar lines) were updated from `PresenceService(mockAuth, fakeDatabase)` to `PresenceService(mockAuth, database: fakeDatabase)`.
+3.  **Updated Riverpod Provider**:
+    *   The `presenceServiceProvider` in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:197) was updated to call the constructor with the named parameter: `PresenceService(auth, database: database)`.
+4.  **Dependency Verification**:
+    *   Confirmed `firebase_database_mocks: ^0.7.1` is in [`pubspec.yaml`](pubspec.yaml:56).
+    *   Confirmed `import 'package:firebase_database_mocks/firebase_database_mocks.dart';` is in [`test/services/presence_service_test.dart`](test/services/presence_service_test.dart:7).
+5.  **Executed `flutter pub get`**: To ensure all dependencies are correctly resolved and the analyzer is updated.
+
+**Impact:**
+The test file [`test/services/presence_service_test.dart`](test/services/presence_service_test.dart:0) should now correctly recognize `FakeFirebaseDatabase` and be able to instantiate `PresenceService` with the mock database, allowing tests to run.
+
+---
+### Decision (Architecture Refinement)
+[2025-05-29 15:07:48] - Refined and detailed the architecture for online presence and UI updates based on spec-pseudocode and existing Memory Bank context.
+
+**Rationale:**
+To address database online count inaccuracies and ensure real-time UI updates, by integrating fixes and patterns identified in previous debugging sessions and adhering to established system patterns. This refinement solidifies the implementation approach for `PresenceService` and related UI components.
+
+**Details:**
+- **PresenceService Enhancements:**
+    - Confirmed idempotent `_goOnline` and `_goOffline` logic, including pre-checking user's current online status before modifying count.
+    - Reinforced `onDisconnect` handler setup for both `/online_users/{userId}` and `/online_users_count`.
+    - Confirmed constructor with optional `FirebaseDatabase` for testability.
+    - Integration with `authStateChanges` and app lifecycle.
+- **UI Update Mechanism:**
+    - `PresenceService.getOnlinePlayersCountStream()` to return `Stream<AsyncValue<int>>`.
+    - Riverpod `StreamProvider` (`onlinePlayersCountProvider`) to expose this stream.
+    - UI widgets to use `ref.watch` and `AsyncValue.when` for loading/data/error handling.
+- **Firebase RTDB Rules:**
+    - Re-confirmed rules for `/online_users/{userId}` (user-specific write) and `/online_users_count` (authenticated transaction write).
+- **Alignment:** Ensured consistency with Riverpod patterns from `systemPatterns.md` and previous decisions in `decisionLog.md`.
+
+---
+### Decision (Code)
+[2025-05-29 15:14:11] - Refined `PresenceService` stream and provider for online player count.
+
+**Rationale:**
+To correctly implement the pattern where `StreamProvider` handles `AsyncValue` wrapping, the underlying service stream should emit raw data or throw errors. The previous implementation had the service stream (`getOnlinePlayersCountStream`) itself emitting `AsyncValue<int>`, leading to a nested `AsyncValue<AsyncValue<int>>` when consumed by the `StreamProvider<AsyncValue<int>>`.
+
+**Details:**
+- Modified `getOnlinePlayersCountStream` in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:154) to return `Stream<int>`.
+    - On successful data events, it emits the integer count.
+    - On error (e.g., null database reference or unexpected data type), it throws an error, which `StreamProvider` will convert to `AsyncValue.error`.
+- Changed `onlinePlayersCountProvider` in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:244) to `StreamProvider.autoDispose<int>`.
+- This ensures that `ref.watch(onlinePlayersCountProvider)` in the UI ([`lib/ui_screens/multiplayer_lobby_screen.dart`](lib/ui_screens/multiplayer_lobby_screen.dart:109)) correctly yields an `AsyncValue<int>`, and its `.when` data callback receives an `int`.
+
+**Impact:**
+Corrects the data flow for online player count, ensuring the UI receives and processes `AsyncValue<int>` as intended, resolving type errors in `MultiplayerLobbyScreen`.

@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 // Ensure this is the correct import path for the package
 import 'package:firebase_database_mocks/firebase_database_mocks.dart'; 
-import 'package:myapp/services/presence_service.dart';
+import 'package:simple_yacht/services/presence_service.dart';
 
 // --- Mocks for FirebaseAuth ---
 class MockFirebaseAuth extends Mock implements FirebaseAuth {}
@@ -38,7 +38,7 @@ void main() {
     when(mockAuth.currentUser).thenReturn(null);
     when(mockAuth.authStateChanges()).thenAnswer((_) => authStateController.stream);
 
-    presenceService = PresenceService(mockAuth, fakeDatabase);
+    presenceService = PresenceService(mockAuth, database: fakeDatabase);
   });
 
   tearDown(() async {
@@ -85,12 +85,12 @@ void main() {
       fakeDatabase.clear();              
 
       authStateController = StreamController<User?>.broadcast();
-      when(mockAuth.currentUser).thenReturn(mockUser); 
+      when(mockAuth.currentUser).thenReturn(mockUser);
       when(mockAuth.authStateChanges()).thenAnswer((_) => authStateController.stream);
-
-      presenceService = PresenceService(mockAuth, fakeDatabase);
-      await Future.delayed(Duration.zero); 
-
+  
+      presenceService = PresenceService(mockAuth, database: fakeDatabase);
+      await Future.delayed(Duration.zero);
+  
       final userStatusSnapshot = await fakeDatabase.ref('online_users/${mockUser.uid}').get();
       expect(userStatusSnapshot.value, true);
 

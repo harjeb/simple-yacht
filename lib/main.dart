@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import ProviderScope
-import 'package:simple_yacht/navigation/app_router.dart'; // Assuming myapp is the project name
+import 'package:simple_yacht/navigation/app_router.dart'; // Assuming simple_yacht is the project name
 import 'package:flutter_localizations/flutter_localizations.dart'; // Import for localizations delegates
 import 'package:simple_yacht/generated/app_localizations.dart'; // Import generated localizations from new path
 import 'package:simple_yacht/state_management/providers/locale_provider.dart'; // Import locale provider
@@ -22,18 +22,18 @@ void main() async { // Make main async
   // Anonymous sign-in will be handled by the SplashScreen
 
   runApp(
-    const ProviderScope( // Wrap MyApp with ProviderScope
-      child: MyApp(),
+    ProviderScope( // Wrap MyApp with ProviderScope
+      child: SimpleYachtApp(),
     ),
   );
 }
 
-class MyApp extends ConsumerStatefulWidget {
+class SimpleYachtApp extends ConsumerStatefulWidget {
   @override
-  ConsumerState<MyApp> createState() => _MyAppState();
+  ConsumerState<SimpleYachtApp> createState() => _SimpleYachtAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
+class _SimpleYachtAppState extends ConsumerState<SimpleYachtApp> with WidgetsBindingObserver {
   final OnlinePresenceService _presenceService = OnlinePresenceService();
 
   @override
@@ -78,7 +78,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) { // Added WidgetRef
+  Widget build(BuildContext context) { // Removed WidgetRef, will use this.ref
     final currentLocale = ref.watch(localeProvider);
     ref.watch(presenceServiceProvider); // Initialize PresenceService
     final router = AppRouter.createRouter(ref); // Create router instance here

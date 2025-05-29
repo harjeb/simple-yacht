@@ -23,7 +23,7 @@
       "android": {
         "default": {
           "projectId": "yacht-f816d",
-          "appId": "1:60143534744:android:7944f8f59eb363877946ed",
+          "appId": "1:60143534744:android:72b20a740b8a90bc7946ed",
           "fileOutput": "android/app/google-services.json"
         }
       },
@@ -31,7 +31,7 @@
         "lib/firebase_options.dart": {
           "projectId": "yacht-f816d",
           "configurations": {
-            "android": "1:60143534744:android:7944f8f59eb363877946ed",
+            "android": "1:60143534744:android:72b20a740b8a90bc7946ed",
             "web": "1:60143534744:web:a7f3575b7da7f3217946ed"
           }
         }

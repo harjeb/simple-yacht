@@ -108,7 +108,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Yahtzee Game'**
+  /// **'Simple Yacht'**
   String get appTitle;
 
   /// Start game button

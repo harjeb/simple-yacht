@@ -8,25 +8,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:60143534744:android:7944f8f59eb363877946ed",
-        "android_client_info": {
-          "package_name": "com.example.myapp"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAy7Jjjd9IwmCLUkC-_Vc4mvtxQK5v7KFc"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:60143534744:android:72b20a740b8a90bc7946ed",
         "android_client_info": {
           "package_name": "com.simpleyacht.app"

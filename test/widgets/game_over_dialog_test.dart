@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:myapp/state_management/providers/game_providers.dart';
-import 'package:myapp/widgets/game_over_dialog.dart';
+import 'package:simple_yacht/state_management/providers/game_providers.dart';
+import 'package:simple_yacht/widgets/game_over_dialog.dart';
 
 // Mock GameStateNotifier for testing
 class MockGameStateNotifier extends Mock implements GameStateNotifier {}
