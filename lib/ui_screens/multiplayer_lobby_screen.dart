@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:myapp/generated/app_localizations.dart';
 import 'package:myapp/state_management/providers/user_providers.dart';
 import 'package:myapp/services/multiplayer_service.dart';
+import '../services/online_presence_service.dart';
 
 class MultiplayerLobbyScreen extends ConsumerStatefulWidget {
   const MultiplayerLobbyScreen({super.key});
@@ -15,33 +16,17 @@ class MultiplayerLobbyScreen extends ConsumerStatefulWidget {
 class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen> {
   final TextEditingController _roomCodeController = TextEditingController();
   bool _isLoading = false;
-  int _onlinePlayersCount = 0;
+  final OnlinePresenceService _presenceService = OnlinePresenceService();
 
   @override
   void initState() {
     super.initState();
-    _loadOnlinePlayersCount();
   }
 
   @override
   void dispose() {
     _roomCodeController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadOnlinePlayersCount() async {
-    try {
-      // TODO: 实现获取在线玩家数量的逻辑
-      // final count = await ref.read(multiplayerServiceProvider).getOnlinePlayersCount();
-      setState(() {
-        _onlinePlayersCount = 42; // 临时数据
-      });
-    } catch (e) {
-      // 处理错误
-      setState(() {
-        _onlinePlayersCount = 0;
-      });
-    }
   }
 
   Future<void> _quickMatch() async {
@@ -218,19 +203,37 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
             
             const SizedBox(height: 16),
             
-            // 在线状态
+            // 实时在线状态卡片
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.people, color: Colors.green),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.onlinePlayers(_onlinePlayersCount),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
+                child: StreamBuilder<int>(
+                  stream: _presenceService.watchOnlineUsersCount(),
+                  builder: (context, snapshot) {
+                    final onlineCount = snapshot.data ?? 0;
+                    return Row(
+                      children: [
+                        Icon(
+                          Icons.people,
+                          color: onlineCount > 0 ? Colors.green : Colors.grey,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.onlinePlayers(onlineCount),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (snapshot.connectionState == ConnectionState.waiting)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
