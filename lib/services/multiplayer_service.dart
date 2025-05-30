@@ -211,9 +211,19 @@ class MultiplayerService {
     await joinRoom(roomId);
   }
 
-  // 生成房间ID
+  // 生成房间ID - 6位16进制字符
   String _generateRoomId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
+    const chars = '0123456789ABCDEF';
+    final random = DateTime.now().millisecondsSinceEpoch;
+    String roomId = '';
+    
+    // 生成6位16进制字符
+    for (int i = 0; i < 6; i++) {
+      final index = (random + i * 7) % chars.length;
+      roomId += chars[index];
+    }
+    
+    return roomId;
   }
 
   // 生成房间码
