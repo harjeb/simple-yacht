@@ -74,3 +74,11 @@
 
 * [2025-05-29 15:08:47] - Current Focus: Implementing the refined architecture for `PresenceService` and real-time UI display of online player count, based on detailed design. Addressing issues of count inaccuracy and UI data refresh.
 * [2025-05-29 15:14:11] - Code Change: Updated `PresenceService.getOnlinePlayersCountStream` to return `Stream<int>` and `onlinePlayersCountProvider` to be `StreamProvider.autoDispose<int>`. Updated `MultiplayerLobbyScreen` to correctly use the provider and `AsyncValue.when` for displaying online player count.
+
+* [2025-05-29 15:26:00] - Architect Review: Reviewing and refining the architecture for the online user counter based on new specifications and pseudocode. Key focus on `PresenceService` logic, re-entrancy protection, and addressing potential conflicts with `OnlinePresenceService`. Identified that `OnlinePresenceService` is in use and needs deprecation.
+
+* [2025-05-29 23:33:00] - Code Change: Implemented refined `PresenceService` logic in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:0) to address online user count inaccuracies. This included adding re-entrancy protection (`_isProcessingAuthStateChange`), a new `_handleAuthStateChanged` method, and parameterizing `_goOffline`. Deprecated and removed `OnlinePresenceService` from [`lib/main.dart`](lib/main.dart:0) and deleted the file [`lib/services/online_presence_service.dart`](lib/services/online_presence_service.dart:0). Test errors related to `FakeFirebaseDatabase` in [`test/services/presence_service_test.dart`](test/services/presence_service_test.dart:0) persist and may require further investigation.
+
+* [2025-05-30 01:06:13] - Architect Review: Reviewed and approved pseudocode for `PresenceService._goOnline` method fix. This addresses the issue of online player count being incorrectly inflated on repeated logins by the same user. The fix involves checking if the user is already marked as online before incrementing the global count.
+
+* [2025-05-30 01:09:00] - Code Change: Modified `_goOnline` in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:100) to fix online player count inflation, based on approved pseudocode.

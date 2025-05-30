@@ -1,114 +1,118 @@
 # 架构文档
 
-本文档概述了 Simple Yacht 应用的关键架构组件和设计决策。
+## 在线用户计数器解决方案
 
-## 核心技术栈
+### 1. 概述
 
--   **前端:** Flutter
--   **后端:** Firebase
-    -   Firebase Authentication: 用户认证 (匿名)
-    -   Cloud Firestore: 主要数据存储 (用户信息、游戏状态、排行榜)
-    -   Firebase Realtime Database: 实时数据同步 (在线状态)
-    -   Cloud Functions: 服务端逻辑 (例如，安全敏感操作、复杂查询)
+本文档定义了用于准确跟踪和显示在线用户数量的系统架构。该解决方案旨在解决先前计数器不准确的问题，确保每个唯一用户只被计数一次，无论其登录次数多少。
 
-## 主要模块
-
-### 1. 用户认证 ([`lib/services/auth_service.dart`](lib/services/auth_service.dart:1))
-    - 负责用户匿名登录和会话管理。
-    - 与 Firebase Authentication 集成。
-
-### 2. 数据服务
-    - **FirestoreService (隐式，通过各具体服务实现)**: 封装与 Cloud Firestore 的交互。
-    - **[`PresenceService`](lib/services/presence_service.dart:1):** 管理用户在线状态和全局在线计数。
-
-### 3. 游戏逻辑 ([`lib/core_logic/`](lib/core_logic/))
-    - 包含 Yahtzee 游戏的核心规则、计分、回合管理等。
-
-### 4. 状态管理 (Riverpod)
-    - 应用广泛使用 Riverpod 进行状态管理，提供响应式的数据流和依赖注入。
-    - Providers 定义在 [`lib/state_management/providers/`](lib/state_management/providers/) 目录下。
-
-### 5. UI 层 ([`lib/ui_screens/`](lib/ui_screens/) 和 [`lib/widgets/`](lib/widgets/))
-    - 使用 Flutter Material Design 组件构建。
-    - 遵循响应式设计原则。
-
-## 在线状态和实时 UI 更新架构 (2025-05-29)
-
-此架构旨在解决数据库在线人数异常计数和 UI 界面不显示数据库实时数据的问题。
-
-### 1. Firebase Realtime Database (RTDB) 结构
-
--   **/online_users/{userId}**: `(Boolean/Timestamp)`
-    -   **用途**: 标记单个用户的在线状态。
-    -   **规则**: 用户只能写入自己的状态 (`auth.uid == $userId`)。
--   **/online_users_count**: `(Integer)`
-    -   **用途**: 存储全局在线用户总数。
-    -   **规则**: 允许认证用户通过事务修改 (`auth != null`)。
-
-### 2. `PresenceService` ([`lib/services/presence_service.dart`](lib/services/presence_service.dart:1))
-
--   **核心职责**:
-    -   管理用户连接/断开连接时的 RTDB 更新。
-    -   确保在线计数的幂等性和准确性。
-    -   提供在线玩家数量的实时数据流。
--   **关键方法**:
-    -   `_goOnline(String userId)`:
-        1.  检查 RTDB 中用户是否已在线。
-        2.  若未在线，则更新 `/online_users/{userId}` 为 `true`，并通过事务原子性增加 `/online_users_count`。
-        3.  设置 `onDisconnect().remove()` on `/online_users/{userId}`。
-        4.  设置 `onDisconnect().set(ServerValue.increment(-1))` on `/online_users_count`。
-        5.  若已在线，则仅重新设置 `onDisconnect` 钩子。
-    -   `_goOffline(String userId)`:
-        1.  检查 RTDB 中用户是否在线。
-        2.  若在线，则移除 `/online_users/{userId}`，并通过事务原子性减少 `/online_users_count`。
-    -   `getOnlinePlayersCountStream() -> Stream<AsyncValue<int>>`:
-        -   监听 `/online_users_count` 的变化。
-        -   返回一个包含加载、数据、错误状态的流。
--   **集成**:
-    -   监听 `FirebaseAuth.instance.authStateChanges()` 以自动调用上线/下线逻辑。
-    -   可选地与 Flutter 应用生命周期 (`WidgetsBindingObserver`) 集成。
-    -   构造函数接受可选的 `FirebaseDatabase` 实例以支持测试。
-
-### 3. UI 更新机制
-
--   **Riverpod Provider**:
-    -   `onlinePlayersCountProvider = StreamProvider.autoDispose<AsyncValue<int>>`: 暴露来自 `PresenceService` 的在线数量流。
--   **UI Widgets**:
-    -   使用 `ConsumerWidget` 或 `ConsumerStatefulWidget`。
-    -   通过 `ref.watch(onlinePlayersCountProvider)` 订阅数据。
-    -   使用 `AsyncValue.when()` 处理加载、数据和错误状态，实时更新 UI。
-
-### 4. 架构图
+### 2. 架构图 (Mermaid)
 
 ```mermaid
 graph TD
     subgraph Firebase Realtime Database
-        RTDB_USER["/online_users/{userId} (Boolean/Timestamp)"]
-        RTDB_COUNT["/online_users_count (Integer)"]
+        F_OnlineUsers["/online_users/{userId} (boolean)"]
+        F_OnlineCount["/online_users_count (integer)"]
     end
 
     subgraph Flutter Application
-        Auth[AuthService] --> AuthState{User Auth State}
-        AuthState -- Authenticated --> PresenceSvc[PresenceService]
-        AuthState -- Unauthenticated --> PresenceSvc
-
-        PresenceSvc -- Manages --> RTDB_USER
-        PresenceSvc -- Manages (Transactions, onDisconnect) --> RTDB_COUNT
-        PresenceSvc -- Stream<AsyncValue<int>> --> RiverpodProvider[Riverpod: onlinePlayersCountProvider]
-        RiverpodProvider -- ref.watch() --> UI[UI Widgets (e.g., MultiplayerLobbyScreen)]
-        UI -- Displays --> OnlineCountDisplay[Online Player Count]
-
-        AppLifecycleObs[AppLifecycleObserver] --> PresenceSvc
-        DBConnState[DBConnectionStateMonitor] --> PresenceSvc
+        AuthService["AuthService ([`lib/services/auth_service.dart`](lib/services/auth_service.dart:0))"]
+        NewPresenceService["PresenceService ([`lib/services/presence_service.dart`](lib/services/presence_service.dart:0)) - Enhanced"]
+        RiverpodProvider["Riverpod Providers (presenceServiceProvider, onlinePlayersCountProvider)"]
+        UI_Lobby["MultiplayerLobbyScreen ([`lib/ui_screens/multiplayer_lobby_screen.dart`](lib/ui_screens/multiplayer_lobby_screen.dart:0))"]
+        OldOnlinePresenceService["~~OnlinePresenceService ([`lib/services/online_presence_service.dart`](lib/services/online_presence_service.dart:0))~~ - To be DEPRECATED"]
     end
 
-    RTDB_USER -. onDisconnect .-> RTDB_COUNT (decrement)
-    RTDB_USER -. onDisconnect .-> RTDB_USER (remove)
+    AuthService -- authStateChanges --> NewPresenceService
+    NewPresenceService -- Reads/Writes --> F_OnlineUsers
+    NewPresenceService -- Transactions/onDisconnect --> F_OnlineCount
+    
+    RiverpodProvider -- Provides --> NewPresenceService
+    RiverpodProvider -- Provides Stream --> UI_Lobby
+    UI_Lobby -- Displays Count from --> RiverpodProvider
 
-    classDef firebase fill:#FFCA28,stroke:#000,stroke-width:2px;
-    class RTDB_USER,RTDB_COUNT firebase;
-    classDef flutter fill:#40C4FF,stroke:#000,stroke-width:2px;
-    class Auth,AuthState,PresenceSvc,RiverpodProvider,UI,OnlineCountDisplay,AppLifecycleObs,DBConnState flutter;
+    NewPresenceService -.-> AuthService # Reads currentUser
+
+    OldOnlinePresenceService -.-> F_OnlineUsers # Potential Conflict
+    OldOnlinePresenceService -.-> F_OnlineCount # Potential Conflict
+
+    style F_OnlineUsers fill:#f9f,stroke:#333,stroke-width:2px
+    style F_OnlineCount fill:#f9f,stroke:#333,stroke-width:2px
+    style AuthService fill:#ccf,stroke:#333,stroke-width:2px
+    style NewPresenceService fill:#cfc,stroke:#333,stroke-width:2px
+    style OldOnlinePresenceService fill:#fcc,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style RiverpodProvider fill:#ffc,stroke:#333,stroke-width:2px
+    style UI_Lobby fill:#ddf,stroke:#333,stroke-width:2px
 ```
 
-此方案确保了在线状态管理的鲁棒性，并通过响应式数据流将实时信息准确地传递到用户界面。
+*Diagram Note: `OnlinePresenceService` is marked for deprecation due to identified conflicts.*
+
+### 3. 组件说明
+
+#### 3.1. `AuthService` ([`lib/services/auth_service.dart`](lib/services/auth_service.dart:0))
+*   **职责**: 处理用户认证（登录、登出、认证状态变更）。
+*   **交互**: 其 `authStateChanges` 流是 `PresenceService` 的主要触发器。
+
+#### 3.2. `PresenceService` ([`lib/services/presence_service.dart`](lib/services/presence_service.dart:0)) - 核心增强
+*   **职责**:
+    *   监听认证状态变化。
+    *   管理单个用户的在线状态 (`/online_users/{userId}`)。
+    *   通过原子事务和 `onDisconnect`处理程序更新全局在线用户计数 (`/online_users_count`)。
+    *   提供一个流 (`getOnlinePlayersCountStream`) 以便 UI 实时显示在线数量。
+*   **关键特性**:
+    *   **重入保护**: 使用 `_isProcessingAuthStateChange` 标志防止 `_onAuthStateChanged` 的并发执行。
+    *   **精细化状态处理**: `_handleAuthStateChanged` 方法将仔细处理用户登录、登出和切换的各种场景。
+    *   **参数化下线**: `_goOffline` 方法将接受 `userIdToMarkOffline` 和 `specificUserStatusRef`，以确保在用户切换或服务 `dispose` 时操作的准确性。
+    *   **`onDisconnect` 管理**: 正确设置 Firebase `onDisconnect` 事件，以便在客户端意外断开连接时自动清理用户状态和调整计数器。
+*   **生命周期**: 通过 Riverpod provider 管理。其生命周期应与用户会话对齐，可能使用 `autoDispose` 并在 `dispose` 方法中妥善处理下线逻辑。
+
+#### 3.3. `OnlinePresenceService` ([`lib/services/online_presence_service.dart`](lib/services/online_presence_service.dart:0))
+*   **状态**: **待弃用**。
+*   **原因**: 该服务在 [`lib/main.dart`](lib/main.dart:37) 中被实例化，并可能操作与新的 `PresenceService` 相同的 Firebase Realtime Database 路径，导致计数冲突和不准确。其功能将被整合或被新的 `PresenceService` 完全取代。
+
+#### 3.4. Firebase Realtime Database
+*   **`/online_users/{userId}` (Boolean/Timestamp)**: 存储各个用户的在线状态。
+    *   写入: 用户登录时设置为 `true`。
+    *   移除: 用户登出或通过 `onDisconnect` 自动移除。
+*   **`/online_users_count` (Integer)**: 存储当前在线的唯一用户总数。
+    *   更新: 通过 `PresenceService` 中的 Firebase 事务 (`ServerValue.increment(1)` 或 `ServerValue.increment(-1)`) 进行原子更新。
+    *   `onDisconnect`: 当用户连接意外断开时，通过 `onDisconnect().set(ServerValue.increment(-1))` 自动递减。
+
+#### 3.5. Riverpod Providers
+*   **`presenceServiceProvider`**: 提供 `PresenceService` 的实例。
+*   **`onlinePlayersCountProvider`**: 一个 `StreamProvider`，暴露从 `PresenceService.getOnlinePlayersCountStream()` 获取的在线用户数量流，供 UI 消费。
+
+#### 3.6. UI (`MultiplayerLobbyScreen` - [`lib/ui_screens/multiplayer_lobby_screen.dart`](lib/ui_screens/multiplayer_lobby_screen.dart:0))
+*   **职责**: 显示实时在线用户数量。
+*   **交互**: 消费 `onlinePlayersCountProvider` 并使用 `AsyncValue.when` 来处理加载、数据和错误状态。
+
+### 4. 解决的问题和策略
+
+*   **H1: `_onAuthStateChanged` 逻辑缺陷**: 通过引入 `_isProcessingAuthStateChange` 标志和细化 `_handleAuthStateChanged` 中的状态转换逻辑来解决。
+*   **H2: `PresenceService` 实例生命周期问题**: 通过 Riverpod provider 进行管理，确保其生命周期与用户会话一致，并在 `dispose` 时正确清理。
+*   **H3: `onDisconnect` 处理不及时或失败**: 依赖 Firebase `onDisconnect` 机制的稳健性，并在 `_goOnline` 中确保其正确配置。
+*   **H4: 另一个服务 (`OnlinePresenceService`) 的干扰**: 确认 [`lib/services/online_presence_service.dart`](lib/services/online_presence_service.dart:0) 的存在和使用。该服务将被弃用，其在 [`lib/main.dart`](lib/main.dart:37) 中的实例化将被移除，以避免与新的 `PresenceService` 冲突。
+
+### 5. 数据流
+
+1.  用户通过 `AuthService` 登录/登出。
+2.  `AuthService` 发出 `authStateChanges` 事件。
+3.  `PresenceService` 监听到事件，并通过 `_onAuthStateChanged_wrapper` -> `_handleAuthStateChanged` 处理。
+4.  **用户上线**:
+    *   `PresenceService` 检查用户是否已标记在线。
+    *   如果未在线，则在 `/online_users/{userId}` 设置为 `true`。
+    *   通过事务递增 `/online_users_count`。
+    *   设置 `onDisconnect` 处理器以在连接丢失时移除用户条目并递减计数。
+5.  **用户下线**:
+    *   `PresenceService` 移除 `/online_users/{userId}`。
+    *   通过事务递减 `/online_users_count`。
+    *   （如果适用）取消 `onDisconnect` 处理器。
+6.  `PresenceService` 通过 `getOnlinePlayersCountStream` 暴露 `/online_users_count` 的实时流。
+7.  `onlinePlayersCountProvider` 将此流提供给 UI。
+8.  `MultiplayerLobbyScreen` 订阅 provider 并显示计数。
+
+### 6. 关键决策点
+
+*   **原子性**: 认证状态变更处理的原子性由 `_isProcessingAuthStateChange` 保证。数据库计数的原子性由 Firebase 事务保证。
+*   **幂等性**: `_goOnline` 和 `_goOffline` 操作应设计为幂等的，即多次调用同一状态不会产生意外的副作用（例如，多次将同一用户标记为在线不会多次增加计数器）。
+*   **弃用冲突服务**: 必须移除或整合 [`lib/services/online_presence_service.dart`](lib/services/online_presence_service.dart:0) 以确保系统行为的一致性。

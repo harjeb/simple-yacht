@@ -305,3 +305,9 @@
 
 * [2025-05-29 15:08:53] - Architecture Design: Completed detailed architecture design for fixing online presence count and UI real-time data display. Ready for implementation.
 * [2025-05-29 15:14:11] - Coding Task Status Update: Completed implementation of refined `PresenceService` logic and UI updates in `MultiplayerLobbyScreen` for real-time online player count. `getOnlinePlayersCountStream` now returns `Stream<int>`, and `onlinePlayersCountProvider` is `StreamProvider.autoDispose<int>`. UI uses `AsyncValue.when` correctly.
+
+* [2025-05-29 23:33:00] - Coding Task Status Update: Completed implementation of `PresenceService` enhancements in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:0) and deprecated `OnlinePresenceService`. This addresses the inaccurate online user counter issue.
+
+* [2025-05-30 01:06:26] - Architect Review Task Status Update: Reviewed and approved pseudocode for `PresenceService._goOnline` method fix. This is a step towards resolving online player count inaccuracies.
+
+* [2025-05-30 01:09:08] - Coding Task Status Update: Completed modification of `PresenceService._goOnline` in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:100) to fix online player count inflation.

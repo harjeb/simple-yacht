@@ -632,3 +632,93 @@ To correctly implement the pattern where `StreamProvider` handles `AsyncValue` w
 
 **Impact:**
 Corrects the data flow for online player count, ensuring the UI receives and processes `AsyncValue<int>` as intended, resolving type errors in `MultiplayerLobbyScreen`.
+
+---
+### Decision (Architecture - Online User Counter Refinement)
+[2025-05-29 15:26:00] - Refined architecture for online user counting in `PresenceService` based on new specifications.
+
+**Rationale:**
+To address persistent inaccuracies in the online user counter by implementing robust state management, re-entrancy protection, and eliminating service conflicts. This ensures that each unique user is counted exactly once, regardless of login frequency or client state transitions.
+
+**Details & Key Architectural Decisions:**
+1.  **Re-entrancy Protection in `PresenceService`**:
+    *   **Decision**: Implement a boolean flag `_isProcessingAuthStateChange` within [`lib/services/presence_service.dart`](lib/services/presence_service.dart:0).
+    *   **Purpose**: To prevent concurrent execution of the `_onAuthStateChanged` logic, particularly during rapid login/logout sequences or account switching. This ensures atomic processing of authentication state changes.
+2.  **Dedicated State Handling Method**:
+    *   **Decision**: Move the core logic from `_onAuthStateChanged` into a new private asynchronous method `_handleAuthStateChanged(newUser)`.
+    *   **Purpose**: To provide a clear, focused method for managing the complexities of user state transitions (null -> user, user -> different user, user -> null), ensuring correct parameters and internal state (`_currentUser`, `_userStatusRef`) are used when calling `_goOnline` and `_goOffline`.
+3.  **Parameterized `_goOffline` Method**:
+    *   **Decision**: The `_goOffline` method in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:0) will accept `userIdToMarkOffline` and `specificUserStatusRef` as parameters.
+    *   **Purpose**: To ensure precise offline marking, especially critical during user account switches (where the `_currentUser` might have already changed) or when the service's `dispose` method needs to mark the last known user offline using a specific database reference.
+4.  **Deprecation of `OnlinePresenceService`**:
+    *   **Decision**: The existing [`lib/services/online_presence_service.dart`](lib/services/online_presence_service.dart:0) (found to be instantiated in [`lib/main.dart`](lib/main.dart:37)) will be deprecated and its usage removed.
+    *   **Purpose**: To eliminate potential conflicts and redundant operations on the same Firebase Realtime Database paths (`/online_users`, `/online_users_count`) that the enhanced `PresenceService` will manage. This resolves hypothesis H4.
+5.  **Coordination of Initial State**:
+    *   **Decision**: The `PresenceService` constructor will primarily set up subscriptions. The initial `_goOnline` call for the starting user (if any) will be handled by the first invocation of the `_onAuthStateChanged_wrapper` -> `_handleAuthStateChanged` flow.
+    *   **Purpose**: To avoid race conditions between constructor logic and the initial auth state event.
+
+**Impact:**
+-   Improved accuracy and reliability of the online user counter.
+-   Simplified state management logic within `PresenceService`.
+-   Elimination of potential conflicts from redundant presence services.
+-   Clearer and more robust handling of various authentication and connection scenarios.
+
+---
+### Decision (Code - Presence Service Refinement)
+[2025-05-29 23:33:00] - Implemented refined `PresenceService` logic and deprecated `OnlinePresenceService`.
+
+**Rationale:**
+To fix inaccuracies in the online user counter, as per the architectural decision logged on [2025-05-29 15:26:00]. This involved enhancing `PresenceService` with re-entrancy protection, a dedicated auth state handler, and a parameterized `_goOffline` method. The conflicting `OnlinePresenceService` was removed to prevent redundant operations.
+
+**Details:**
+- Modified [`lib/services/presence_service.dart`](lib/services/presence_service.dart:0):
+    - Added `_isProcessingAuthStateChange` boolean flag.
+    - Implemented `_onAuthStateChanged_wrapper(User? newUser)` to manage the flag and call `_handleAuthStateChanged`.
+    - Created `_handleAuthStateChanged(User? newUser)` with detailed logic for user login, logout, and switch scenarios.
+    - Modified `_goOffline(String userIdToMarkOffline, DatabaseReference specificUserStatusRef)` to accept specific user ID and database reference.
+    - Updated `dispose()` method to use the parameterized `_goOffline`.
+    - Ensured constructor and `authStateChanges` subscription use the new wrapper.
+- Removed `OnlinePresenceService`:
+    - Deleted file [`lib/services/online_presence_service.dart`](lib/services/online_presence_service.dart:0).
+    - Updated [`lib/main.dart`](lib/main.dart:0) to remove instantiation and usage of `OnlinePresenceService`, relying solely on the Riverpod-managed `PresenceService`.
+
+**Impact:**
+- Improved reliability of online user counting.
+- Reduced potential for race conditions during auth state changes.
+- Eliminated conflicting presence management logic.
+- Note: Test errors related to `FakeFirebaseDatabase` in [`test/services/presence_service_test.dart`](test/services/presence_service_test.dart:0) persist and will require separate investigation, potentially involving `flutter pub get` or deeper debugging of the `firebase_database_mocks` package integration.
+
+---
+### Decision (Presence Service - Online Count Fix Review)
+[2025-05-30 01:05:34] - Reviewed and approved pseudocode for `PresenceService._goOnline` method fix to prevent online player count inflation.
+
+**Rationale:**
+The previous implementation of `_goOnline` could increment the global online player count each time it was called for a user, even if that user was already marked as online in the database. This led to an inflated count, especially if the service restarted or the method was invoked multiple times for an active session. The fix ensures the count is incremented only if the user is not already online or their status node doesn't exist.
+
+**Implementation Details (based on reviewed pseudocode):**
+- Before incrementing the global count, `_goOnline` now checks the user's current status at `_userStatusRef`.
+- If `user_status_snapshot.exists` is true and `user_status_snapshot.value` is true, the global count is NOT incremented. `onDisconnect` handlers are re-applied to ensure robustness.
+- The global count is incremented (via transaction) only if:
+   - The user's status node (`_userStatusRef`) does not exist.
+- If the user's status node exists but its value is not true, the count is also NOT incremented to prevent inflation from inconsistent states, and `onDisconnect` handlers are re-applied.
+- `onDisconnect` handlers for both the user's status and the global count are set in all successful execution paths.
+
+**Impact:**
+- Corrects the online player count, ensuring it accurately reflects unique online users.
+- Improves the robustness of the presence system against repeated `_goOnline` calls for the same active user.
+
+---
+### Decision (Code)
+[2025-05-30 01:08:46] - Refined `PresenceService._goOnline` to fix online player count inflation.
+
+**Rationale:**
+The `_goOnline` method was incorrectly incrementing the global online player count if the user's status node existed but was not explicitly true, or if the method was called multiple times for an already online user. The fix ensures the count is incremented only when a user truly transitions to an online state for the first time in a session or if their status node didn't exist.
+
+**Details:**
+- Modified `_goOnline` in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:100) to align with the provided pseudocode.
+- The method now checks if the user's status node (`_userStatusRef`) exists and its value.
+- Global count increment (`_onlineCountRef`) is conditional:
+    - Incremented if `userStatusSnapshot.exists` is false.
+    - Not incremented if `userStatusSnapshot.exists` is true but `userStatusSnapshot.value` is not true (to prevent inflation from inconsistent states).
+    - Not incremented if `userStatusSnapshot.exists` is true and `userStatusSnapshot.value` is true (user already online).
+- `onDisconnect` handlers are consistently applied in all relevant paths.

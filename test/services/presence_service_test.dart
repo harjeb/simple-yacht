@@ -98,6 +98,30 @@ void main() {
       expect(onlineCountSnapshot.value, 1);
     });
   });
+test('WHEN user logs in multiple times THEN online count does not inflate', () async {
+      // Initial login
+      authStateController.add(mockUser);
+      await Future.delayed(Duration.zero);
+
+      var onlineCountSnapshot = await fakeDatabase.ref('online_users_count').get();
+      expect(onlineCountSnapshot.value, 1, reason: "Online count should be 1 after first login");
+
+      // Simulate re-login or redundant auth state change for the same user
+      // This will call _goOnline again internally via _handleAuthStateChanged
+      authStateController.add(mockUser); 
+      await Future.delayed(Duration.zero);
+
+      onlineCountSnapshot = await fakeDatabase.ref('online_users_count').get();
+      expect(onlineCountSnapshot.value, 1, reason: "Online count should remain 1 after redundant login");
+
+      // Simulate another user logging in to ensure count can still increment
+      final mockUser2 = MockUser('test_user_id_456');
+      authStateController.add(mockUser2);
+      await Future.delayed(Duration.zero);
+
+      onlineCountSnapshot = await fakeDatabase.ref('online_users_count').get();
+      expect(onlineCountSnapshot.value, 2, reason: "Online count should be 2 after a different user logs in");
+    });
 
   // TODO: Add tests for _goOffline()
   // TODO: Add tests for getOnlinePlayersCountStream()
