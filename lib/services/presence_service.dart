@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:math';
 
-import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,14 +14,11 @@ class PresenceService {
   User? _currentUser;
   StreamSubscription? _authSubscription;
   DatabaseReference? _userStatusRef;
-  DatabaseReference? _onlineCountRef;
   bool _isProcessingAuthStateChange = false; // 新增
 
   PresenceService(this._auth, {FirebaseDatabase? database}) : _database = database ?? FirebaseDatabase.instance {
     print('[PresenceService] Constructor called.');
-    _onlineCountRef = _database.ref('online_users_count');
-    print('[PresenceService] online_users_count ref: ${_onlineCountRef?.path}');
-    _authSubscription = _auth.authStateChanges().listen(_onAuthStateChanged_wrapper); // 使用包装器
+    _authSubscription = _auth.authStateChanges().listen(_onAuthStateChanged_wrapper);
     // 构造函数中对初始用户的 _goOnline 调用已移至 _onAuthStateChanged_wrapper 的首次调用处理
     // _currentUser = _auth.currentUser; // 这行可以移除，因为 _onAuthStateChanged_wrapper 会处理初始状态
     // print('[PresenceService] Initial currentUser (in constructor): ${_currentUser?.uid}');
@@ -100,7 +95,7 @@ class PresenceService {
   Future<void> _goOnline() async {
     print('[PresenceService] _goOnline called. CurrentUser: ${_currentUser?.uid}, UserStatusRef: ${_userStatusRef?.path}');
 
-    if (_userStatusRef == null || _onlineCountRef == null || _currentUser == null) {
+    if (_userStatusRef == null || _currentUser == null) {
       print('[PresenceService] _goOnline: Preconditions not met.');
       return;
     }
@@ -112,71 +107,37 @@ class PresenceService {
       if (userStatusSnapshot.exists && userStatusSnapshot.value == true) {
         print('[PresenceService] User ${_currentUser!.uid} is already online. Ensuring onDisconnect handlers.');
         await _userStatusRef!.onDisconnect().remove();
-        await _onlineCountRef!.onDisconnect().set(ServerValue.increment(-1));
         print('[PresenceService] onDisconnect handlers re-set for already online user ${_currentUser!.uid}.');
         return;
       }
 
-      bool shouldIncrementGlobalCount = false;
-      if (!userStatusSnapshot.exists) {
-        print('[PresenceService] User node ${_userStatusRef!.path} does not exist. Will increment global count.');
-        shouldIncrementGlobalCount = true;
-      } else {
-        print('[PresenceService] User node ${_userStatusRef!.path} exists but value is not true (value: ${userStatusSnapshot.value}). NOT incrementing global count to prevent inflation.');
-      }
-
-      await _userStatusRef!.set(true); // Mark user as online
+      // 直接设置用户在线状态，不需要维护全局计数器
+      await _userStatusRef!.set(true);
       print('[PresenceService] Set ${_userStatusRef!.path} to true.');
-
-      if (shouldIncrementGlobalCount) {
-        print('[PresenceService] Attempting to increment global online count.');
-        await _onlineCountRef!.runTransaction((currentData) {
-          final currentCount = currentData as num? ?? 0;
-          final newCount = currentCount + 1;
-          print('[PresenceService] Transaction (increment): currentCount = $currentCount, newCount = $newCount');
-          return Transaction.success(newCount);
-        });
-        print('[PresenceService] Global online count incremented.');
-      } else {
-        print('[PresenceService] Skipped incrementing global online count for user ${_currentUser!.uid}.');
-      }
       
+      // 设置断开连接时自动移除
       await _userStatusRef!.onDisconnect().remove();
-      await _onlineCountRef!.onDisconnect().set(ServerValue.increment(-1));
       print('[PresenceService] _goOnline completed for ${_currentUser!.uid}.');
     } catch (e) {
       print('[PresenceService] Error going online for ${_currentUser?.uid}: $e');
     }
   }
 
-  Future<void> _goOffline(String userIdToMarkOffline, DatabaseReference specificUserStatusRef) async { // 接受特定 ref
+  Future<void> _goOffline(String userIdToMarkOffline, DatabaseReference specificUserStatusRef) async {
     print('[PresenceService] _goOffline called for user $userIdToMarkOffline with ref ${specificUserStatusRef.path}.');
-    if (_onlineCountRef == null) {
-      print('[PresenceService] _goOffline: _onlineCountRef is null. Returning.');
-      return;
-    }
 
     try {
       print('[PresenceService] Getting snapshot for ${specificUserStatusRef.path}');
       final snapshot = await specificUserStatusRef.get();
       print('[PresenceService] Snapshot for ${specificUserStatusRef.path} exists: ${snapshot.exists}, value: ${snapshot.value}');
       
-      // Only proceed if the user was actually marked as online (true)
+      // 只有当用户确实在线时才移除
       if (snapshot.exists && snapshot.value == true) {
-        print('[PresenceService] Attempting to remove ${specificUserStatusRef.path}');
-        await specificUserStatusRef.remove(); // Remove the user's online status node
+        print('[PresenceService] Removing ${specificUserStatusRef.path}');
+        await specificUserStatusRef.remove();
         print('[PresenceService] Successfully removed ${specificUserStatusRef.path}');
-        
-        print('[PresenceService] Attempting to run transaction on ${_onlineCountRef!.path} for decrement');
-        await _onlineCountRef!.runTransaction((currentData) {
-          final currentCount = currentData as num? ?? 0;
-          final newCount = max(0, currentCount - 1); // Ensure count doesn't go below 0
-          print('[PresenceService] Transaction (decrement): currentCount = $currentCount, newCount = $newCount');
-          return Transaction.success(newCount);
-        });
-        print('[PresenceService] Transaction (decrement) completed on ${_onlineCountRef!.path}');
       } else {
-        print('[PresenceService] User ${specificUserStatusRef.path} was not online (or node did not exist/value was not true). No action taken to decrement count.');
+        print('[PresenceService] User ${specificUserStatusRef.path} was not online. No action taken.');
       }
       print('[PresenceService] _goOffline completed for user $userIdToMarkOffline.');
     } catch (e) {
@@ -185,40 +146,27 @@ class PresenceService {
   }
 
   Stream<int> getOnlinePlayersCountStream() {
-    print('[PresenceService] getOnlinePlayersCountStream (int) called. Ref: ${_onlineCountRef?.path}');
+    print('[PresenceService] getOnlinePlayersCountStream (using online_users count) called.');
 
-    if (_onlineCountRef == null) {
-      print('[PresenceService] _onlineCountRef is null, returning error stream.');
-      // Throw an error that StreamProvider can catch and convert to AsyncValue.error
-      return Stream.error(StateError('Online count reference is null'));
-    }
-
-    return _onlineCountRef!.onValue.map((event) {
-      final value = event.snapshot.value;
-      print('[PresenceService] onlinePlayersCountStream (int) event: ${event.snapshot.key}, value: $value, exists: ${event.snapshot.exists}');
-      if (value is int) {
-        return value;
-      } else if (value is num) {
-        return value.toInt();
-      } else if (value == null && event.snapshot.exists) {
-        // Node exists but value is null
+    // 直接监听 online_users 节点并计算子节点数量
+    final onlineUsersRef = _database.ref('online_users');
+    
+    return onlineUsersRef.onValue.map((event) {
+      final snapshot = event.snapshot;
+      print('[PresenceService] online_users snapshot - exists: ${snapshot.exists}, children count: ${snapshot.children.length}');
+      
+      if (!snapshot.exists || snapshot.value == null) {
+        print('[PresenceService] online_users node does not exist or is null, returning 0');
         return 0;
-      } else if (!event.snapshot.exists) {
-        // Node doesn't exist
-        return 0;
-      } else {
-        // Unexpected value type, throw an error
-        final errorMessage = "Unexpected data type for online count: ${value?.runtimeType}, value: $value";
-        print("[PresenceService] $errorMessage");
-        throw StateError(errorMessage);
       }
+      
+      // 计算在线用户数量（子节点数量）
+      final count = snapshot.children.length;
+      print('[PresenceService] online_users children count: $count');
+      return count;
     }).handleError((error, stackTrace) {
-      // Log and rethrow, or transform into a specific error type if needed
-      print("[PresenceService] Error in onlinePlayersCountStream (int) processing: $error");
-      // Let StreamProvider handle this error by rethrowing.
-      // Alternatively, could return a stream with an error: return Stream.error(error);
-      // but throwing directly is often cleaner for StreamProvider.
-      throw error; // Rethrow to be caught by StreamProvider
+      print("[PresenceService] Error in getOnlinePlayersCountStream: $error");
+      throw error;
     });
   }
 
