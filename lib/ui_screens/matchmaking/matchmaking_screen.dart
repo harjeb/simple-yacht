@@ -23,7 +23,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
   int _currentEloRange = 100;
   int _queuePosition = 0;
   int _onlinePlayersCount = 0;
-  int _currentEloRating = 1200;
+  int _currentEloRating = 1000;
 
   @override
   void initState() {

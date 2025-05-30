@@ -23,7 +23,7 @@ class MatchmakingService {
   Future<void> joinQueue({
     required String playerName,
     required GameMode gameMode,
-    int eloRating = 1200,
+    int eloRating = 1000,
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not logged in');
@@ -95,7 +95,7 @@ class MatchmakingService {
 
   Future<int> getCurrentEloRating() async {
     final user = _auth.currentUser;
-    if (user == null) return 1200;
+    if (user == null) return 1000;
 
     final doc = await _firestore
         .collection('eloRatings')
@@ -103,9 +103,9 @@ class MatchmakingService {
         .get();
 
     if (doc.exists) {
-      return doc.data()?['rating'] ?? 1200;
+      return doc.data()?['rating'] ?? 1000;
     }
-    return 1200;
+    return 1000;
   }
 
   Future<void> updateEloRating(int newRating) async {
@@ -148,7 +148,7 @@ class MatchmakingService {
         'rank': i + 1,
         'userId': doc.id,
         'userName': userName,
-        'rating': data['rating'] ?? 1200,
+        'rating': data['rating'] ?? 1000,
         'gamesPlayed': data['gamesPlayed'] ?? 0,
         'lastUpdated': data['lastUpdated'],
       });

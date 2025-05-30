@@ -173,7 +173,7 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
                               const SizedBox(height: 4),
                               Text(
                                 // TODO: 添加ELO评级和胜率
-                                'ELO: 1200 | Win Rate: 65%', // Placeholder
+                                'ELO: 1000 | Win Rate: 50%', // Placeholder
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ],

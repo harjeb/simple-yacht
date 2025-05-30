@@ -750,3 +750,17 @@ The 'InvalidType' error during Dart Web compilation, particularly with stack tra
   - Changed `gameState: map['gameState'] as Map<String, dynamic>?` to `gameState: map['gameState'] == null ? null : Map<String, dynamic>.from(map['gameState'] as Map)`.
   - Changed `scores: map['scores'] != null ? Map<String, int>.from(map['scores'] as Map) : null` to `scores: map['scores'] == null ? null : Map<String, int>.from(map['scores'] as Map)`.
 This provides more explicit type handling, potentially resolving the compiler's inability to determine a valid type.
+
+---
+### Decision (Code)
+[2025-05-30 08:56:00] - Updated default ELO and win rate settings.
+
+**Rationale:**
+To align with user requirements for default ELO (1000) and win rate (50%).
+
+**Details:**
+- Modified default ELO in [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart:26), [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart:98), [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart:106), [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart:108), [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart:151).
+- Modified default ELO in [`lib/models/matchmaking_queue.dart`](lib/models/matchmaking_queue.dart:37).
+- Modified placeholder ELO and win rate in [`lib/ui_screens/multiplayer_lobby_screen.dart`](lib/ui_screens/multiplayer_lobby_screen.dart:176).
+- Modified default ELO in [`lib/ui_screens/matchmaking/matchmaking_screen.dart`](lib/ui_screens/matchmaking/matchmaking_screen.dart:26).
+- Attempted to modify default ELO in [`lib/services/user_service.dart`](lib/services/user_service.dart) but tool execution failed.

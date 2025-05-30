@@ -34,7 +34,7 @@ class MatchmakingQueue {
         (mode) => mode.name == data['gameMode'],
         orElse: () => GameMode.multiplayer,
       ),
-      eloRating: data['eloRating'] ?? 1200,
+      eloRating: data['eloRating'] ?? 1000,
       status: MatchmakingStatus.values.firstWhere(
         (status) => status.name == data['status'],
         orElse: () => MatchmakingStatus.searching,
