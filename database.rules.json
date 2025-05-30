@@ -1,0 +1,41 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    
+    "online_users": {
+      ".read": "auth != null",
+      ".write": false,
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    
+    "online_users_count": {
+      ".read": "auth != null",
+      ".write": false
+    },
+    
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    
+    "gameRooms": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    
+    "matchmakingQueue": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    
+    "multiplayerGames": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+} 
