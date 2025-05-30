@@ -82,3 +82,7 @@
 * [2025-05-30 01:06:13] - Architect Review: Reviewed and approved pseudocode for `PresenceService._goOnline` method fix. This addresses the issue of online player count being incorrectly inflated on repeated logins by the same user. The fix involves checking if the user is already marked as online before incrementing the global count.
 
 * [2025-05-30 01:09:00] - Code Change: Modified `_goOnline` in [`lib/services/presence_service.dart`](lib/services/presence_service.dart:100) to fix online player count inflation, based on approved pseudocode.
+
+* [2025-05-30 08:27:39] - Debug Status Update: Successfully resolved Flutter compilation error in `lib/ui_screens/multiplayer_lobby_screen.dart`. The issue was caused by non-ASCII characters and subsequent syntax errors introduced during their removal. The build now completes successfully.
+
+* [2025-05-30 08:44:29] - Debug Status Update: Investigating Dart Web compilation error 'InvalidType'. Applied safer type casting in GameRoom.fromMap in [`lib/models/game_room.dart`](lib/models/game_room.dart:43).

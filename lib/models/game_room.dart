@@ -60,10 +60,10 @@ class GameRoom {
       finishedAt: map['finishedAt'] != null 
           ? (map['finishedAt'] as Timestamp).toDate() 
           : null,
-      gameState: map['gameState'] as Map<String, dynamic>?,
-      scores: map['scores'] != null 
-          ? Map<String, int>.from(map['scores'] as Map) 
-          : null,
+      gameState: map['gameState'] == null ? null : Map<String, dynamic>.from(map['gameState'] as Map),
+      scores: map['scores'] == null
+          ? null
+          : Map<String, int>.from(map['scores'] as Map),
       maxPlayers: map['maxPlayers'] as int? ?? 2,
       isPrivate: map['isPrivate'] as bool? ?? false,
       password: map['password'] as String?,

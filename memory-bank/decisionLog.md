@@ -722,3 +722,31 @@ The `_goOnline` method was incorrectly incrementing the global online player cou
     - Not incremented if `userStatusSnapshot.exists` is true but `userStatusSnapshot.value` is not true (to prevent inflation from inconsistent states).
     - Not incremented if `userStatusSnapshot.exists` is true and `userStatusSnapshot.value` is true (user already online).
 - `onDisconnect` handlers are consistently applied in all relevant paths.
+
+---
+### Decision (Debug)
+[2025-05-30 08:27:59] - Bug Fix Strategy: Resolved Flutter compilation error in `lib/ui_screens/multiplayer_lobby_screen.dart`.
+
+**Rationale:**
+The compilation initially failed due to non-ASCII characters being used as identifiers in `lib/ui_screens/multiplayer_lobby_screen.dart`. Subsequent attempts to remove these characters introduced syntax errors, primarily related to malformed `try-catch-finally` blocks and incorrect `ScaffoldMessenger.of(context).showSnackBar` calls within the `_createRoom` and `_joinRoom` methods.
+
+**Details:**
+1. Identified non-ASCII characters at the beginning of `lib/ui_screens/multiplayer_lobby_screen.dart` using the `flutter build apk --debug` output.
+2. Removed the offending lines (1-54) using `apply_diff`.
+3. Analyzed new Dart errors reported after the initial fix.
+4. Corrected syntax errors in the `_createRoom` method, specifically ensuring the `finally` block was correctly structured and the `showSnackBar` call was properly terminated.
+5. Corrected syntax errors in the `_joinRoom` method, ensuring the `finally` block was correctly structured, the `showSnackBar` call was properly terminated, and the `catch (e)` clause was correctly defined to make the exception variable `e` available.
+6. Confirmed the fix by successfully running `flutter build apk --debug`.
+
+---
+### Decision (Debug)
+[2025-05-30 08:44:29] - Bug Fix Strategy: Modified `GameRoom.fromMap` for safer type casting to address Dart Web compilation error 'InvalidType'.
+
+**Rationale:**
+The 'InvalidType' error during Dart Web compilation, particularly with stack traces involving `FutureOrNormalizer` and `ProgramCompiler._emitType`, suggested issues with type inference or handling of `dynamic`, `FutureOr`, or nullable types, especially during Firestore data deserialization. Direct `as` casts for `Map` types (`gameState`, `scores`) in `GameRoom.fromMap` were identified as potential points of failure if the actual data structure from Firestore didn't perfectly match or was null, leading to compiler confusion.
+
+**Details:**
+- Modified `GameRoom.fromMap` in [`lib/models/game_room.dart`](lib/models/game_room.dart:43) to use explicit null checks and `Map.from()` for `gameState` and `scores` fields.
+  - Changed `gameState: map['gameState'] as Map<String, dynamic>?` to `gameState: map['gameState'] == null ? null : Map<String, dynamic>.from(map['gameState'] as Map)`.
+  - Changed `scores: map['scores'] != null ? Map<String, int>.from(map['scores'] as Map) : null` to `scores: map['scores'] == null ? null : Map<String, int>.from(map['scores'] as Map)`.
+This provides more explicit type handling, potentially resolving the compiler's inability to determine a valid type.
