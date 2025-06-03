@@ -65,7 +65,8 @@
 - ✅ 账号恢复功能正常
 - ✅ Firebase 集成稳定
 - ✅ 安全规则完善
-- 🔧 代码细节优化进行中 (84个问题)
+- ✅ 联机对战核心 Bug 已修复
+- 🔧 代码细节优化进行中 (具体数量待定)
 
 ---
 ### Decision (Debug)
@@ -764,3 +765,48 @@ To align with user requirements for default ELO (1000) and win rate (50%).
 - Modified placeholder ELO and win rate in [`lib/ui_screens/multiplayer_lobby_screen.dart`](lib/ui_screens/multiplayer_lobby_screen.dart:176).
 - Modified default ELO in [`lib/ui_screens/matchmaking/matchmaking_screen.dart`](lib/ui_screens/matchmaking/matchmaking_screen.dart:26).
 - Attempted to modify default ELO in [`lib/services/user_service.dart`](lib/services/user_service.dart) but tool execution failed.
+
+---
+### Decision (Debug)
+[2025-06-01 03:13:00] - Identified root causes for matchmaking and room joining failures.
+
+**Rationale & Findings:**
+
+**1. Matchmaking Failure ("两个玩家同时匹配无法找到对方"):**
+   - **Root Cause:** The `MatchmakingService` ([`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart:1)) lacks the core logic to actually match players from the `matchmakingQueue`. Players are added to the queue, but no process exists to find suitable opponents and create game rooms for them.
+   - **Evidence:** Review of `MatchmakingService` code shows `joinQueue` and `watchMatchmakingStatus` but no active matching algorithm.
+
+**2. Room Joining Failure ("创建房间后，玩家无法进入房间进行对战"):**
+   - **Root Cause 1 (Firestore Rules):** The Firestore security rule for updating `/gameRooms/{roomId}` ([`firestore.rules:34`](firestore.rules:34)) `request.resource.data.guestId == resource.data.guestId` prevents the `guestId` field from being changed from `null` to a player's UID. This effectively blocks any player from joining an empty room.
+   - **Evidence:** Analysis of `firestore.rules` line 34.
+   - **Root Cause 2 (Non-Transactional Join - Secondary):** The `MultiplayerService.joinRoom()` method ([`lib/services/multiplayer_service.dart`](lib/services/multiplayer_service.dart:41)) does not use a Firestore transaction for reading and updating the room document. This could lead to race conditions if multiple users attempt to join simultaneously (though the Firestore rule is the primary blocker).
+   - **Evidence:** `MultiplayerService.joinRoom()` implementation.
+   - **Associated Issue (Broken Room Code Join):** The "join by room code" feature is non-functional because the `GameRoom` model ([`lib/models/game_room.dart`](lib/models/game_room.dart:1)) does not have a `roomCode` field, and `MultiplayerService.createRoom()` ([`lib/services/multiplayer_service.dart`](lib/services/multiplayer_service.dart:12)) does not store one. `MultiplayerService.joinRoomByCode()` ([`lib/services/multiplayer_service.dart`](lib/services/multiplayer_service.dart:198)) queries a non-existent field.
+   - **Evidence:** `GameRoom` model, `createRoom` and `joinRoomByCode` implementations.
+   - **Associated Issue (Inconsistent Enum Serialization):** `MultiplayerService` uses `GameRoomStatus.waiting.toString().split('.').last` for status updates/queries, while the `GameRoom` model uses `status.name` for serialization. This inconsistency could lead to failed status checks or updates.
+   - **Evidence:** Comparison of enum handling in `MultiplayerService` and `GameRoom` model.
+
+**Details:**
+- Analyzed `MatchmakingService`, `MultiplayerService`, `GameRoom` model, and `firestore.rules`.
+- The matchmaking
+
+---
+### Decision (Debug)
+[2025-06-03 01:16:01] - Bug Fix Strategy: Resolved Flutter build errors in `lib/services/matchmaking_service.dart`.
+
+**Rationale:**
+The build failed due to several syntax errors in `lib/services/matchmaking_service.dart`:
+1. Missing closing brace `}` for the `getMatchStats` method.
+2. Missing closing brace `}` for the `MatchmakingService` class.
+3. Incomplete logic and missing semicolon in the `getMatchStats` method at line 374 (`final currentElo = eloDoc.exists && eloD`).
+4. The `getMatchStats` method was not guaranteed to return a non-null `Map<String, dynamic>`.
+
+**Details:**
+- Added the missing closing brace for the `getMatchStats` method.
+- Added the missing closing brace for the `MatchmakingService` class.
+- Corrected the logic in `getMatchStats` to properly access ELO data from `eloDoc.data()`, provide default values if data is missing, and ensure it returns a `Map<String, dynamic>`.
+- Specifically, `eloD` was corrected to `eloDoc.data()`, and the method now initializes `currentElo`, `gamesPlayed`, and `wins` with default values, then updates them if `eloDoc` exists and contains data.
+- The method now consistently returns a map containing `currentElo`, `gamesPlayed`, and `wins`.
+
+**Affected components/files:**
+- [`lib/services/matchmaking_service.dart`](lib/services/matchmaking_service.dart)

@@ -7,6 +7,7 @@ import 'package:simple_yacht/state_management/providers/user_providers.dart';
 import 'package:simple_yacht/services/presence_service.dart'; // Import PresenceService provider
 import 'package:simple_yacht/state_management/providers/multiplayer_providers.dart';
 import 'package:simple_yacht/models/game_enums.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // 新增导入
 
 class MultiplayerLobbyScreen extends ConsumerStatefulWidget {
   const MultiplayerLobbyScreen({super.key});
@@ -18,12 +19,10 @@ class MultiplayerLobbyScreen extends ConsumerStatefulWidget {
 class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen> {
   final TextEditingController _roomCodeController = TextEditingController();
   bool _isLoading = false;
-  // int _onlinePlayersCount = 0; // Removed, will use provider
 
   @override
   void initState() {
     super.initState();
-    // _loadOnlinePlayersCount(); // Removed
   }
 
   @override
@@ -32,28 +31,12 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
     super.dispose();
   }
 
-  // Future<void> _loadOnlinePlayersCount() async { // Removed
-  //   try {
-  //     // TODO: 实现获取在线玩家数量的逻辑
-  //     // final count = await ref.read(multiplayerServiceProvider).getOnlinePlayersCount();
-  //     setState(() {
-  //       _onlinePlayersCount = 42; // 临时数据
-  //     });
-  //   } catch (e) {
-  //     // 处理错误
-  //     setState(() {
-  //       _onlinePlayersCount = 0;
-  //     });
-  //   }
-  // }
-
   Future<void> _quickMatch() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // 导航到匹配界面
       if (mounted) {
         context.go('/matchmaking');
       }
@@ -80,10 +63,8 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
       _isLoading = true;
     });
     try {
-      // 使用实际的MultiplayerService创建房间
       final roomId = await ref.read(multiplayerServiceProvider).createRoom(
-        roomName: "Game Room",
-        gameMode: GameMode.multiplayer, // 需要导入GameMode
+        gameMode: GameMode.multiplayer, 
       );
       
       if (mounted) {
@@ -91,10 +72,10 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
       }
     } catch (e) {
       if (mounted) {
-        final l10nScoped = AppLocalizations.of(context)!; // Scoped l10n
+        final l10nScoped = AppLocalizations.of(context)!; 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10nScoped.invalidRoomCode),
+            content: Text(l10nScoped.invalidRoomCode), 
             backgroundColor: Colors.red,
           )
         );
@@ -106,7 +87,7 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
         });
       }
     }
-  } // End of _createRoom method
+  } 
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +108,6 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 用户信息卡片
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -144,18 +124,6 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // usernameAsync.when( // Placeholder, replace with actual provider later
-                              //   data: (username) => Text(
-                              //     username ?? 'Unknown',
-                              //     style: Theme.of(context).textTheme.headlineSmall,
-                              //   ),
-                              //   loading: () => Text(
-                              //     "Loading...", // Placeholder
-                              //     style: Theme.of(context).textTheme.headlineSmall,
-                              //   ),
-                              //   error: (_, __) => Text(
-                              //     "Error", // Placeholder
-                              //     style: Theme.of(context).textTheme.headlineSmall,
                               usernameAsync.when(
                                 data: (username) => Text(
                                   username ?? 'Unknown',
@@ -172,8 +140,7 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                // TODO: 添加ELO评级和胜率
-                                'ELO: 1000 | Win Rate: 50%', // Placeholder
+                                'ELO: 1000 | Win Rate: 50%', 
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ],
@@ -188,7 +155,6 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
             
             const SizedBox(height: 16),
             
-            // 实时在线状态卡片
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -197,18 +163,18 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
                     const Icon(Icons.people, color: Colors.green),
                     const SizedBox(width: 8),
                     onlinePlayersAsync.when(
-                      data: (dataValue) { // dataValue here is the actual int value from the stream if successful
+                      data: (dataValue) { 
                         return Text(
-                          l10n.onlinePlayers(dataValue), // dataValue should be int
+                          l10n.onlinePlayers(dataValue), 
                           style: Theme.of(context).textTheme.titleMedium,
                         );
                       },
                       loading: () => Text(
-                        "Online Players: Loading...", // Placeholder for l10n.onlinePlayersLoading
+                        "Online Players: Loading...", 
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       error: (err, stack) => Text(
-                        "Online Players: Error", // Placeholder for l10n.onlinePlayersError
+                        "Online Players: Error", 
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.red),
                       ),
                     ),
@@ -220,7 +186,7 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
             const SizedBox(height: 24),
             
             Text(
-              "Game Modes", // Placeholder for l10n.gameModes
+              "Game Modes", 
               style: Theme.of(context).textTheme.titleLarge,
             ),
             
@@ -296,13 +262,13 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
     );
   }
 
-  Future<void> _joinRoom(String roomId) async {
-    final l10nScoped = AppLocalizations.of(context)!; // Scoped l10n
-    if (roomId.isEmpty) {
+  Future<void> _joinRoom(String roomCodeInput) async { 
+    final l10nScoped = AppLocalizations.of(context)!; 
+    if (roomCodeInput.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Please enter a room code."), // Placeholder for l10n.pleaseEnterRoomCode
+            content: Text("请输入房间代码."), // Replaced l10nScoped.pleaseEnterRoomCode
             backgroundColor: Colors.red,
           ),
         );
@@ -313,27 +279,28 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
       _isLoading = true;
     });
     try {
-      // TODO: Implement actual join room logic
-      // final gameRoom = await ref.read(multiplayerServiceProvider).joinRoom(roomId);
-      // if (mounted && gameRoom != null) {
-      //   context.go('/multiplayer_room/$roomId');
-      // } else if (mounted) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     SnackBar(content: Text(AppLocalizations.of(context)!.roomNotFound)),
-      //   );
-      // }
-      // Temporary:
-      // 使用实际的MultiplayerService加入房间
-      // await ref.read(multiplayerServiceProvider).joinRoom(roomId); // This was causing an error
+      await ref.read(multiplayerServiceProvider).joinRoomByCode(roomCodeInput);
       
-      // if (mounted) { // This was causing an error
-      //   context.go('/multiplayer_room/$roomId'); // This was causing an error
-      // } // This was causing an error
-    } catch (e) { // Added catch (e) here
+      if (mounted) {
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('gameRooms')
+            .where('roomCode', isEqualTo: roomCodeInput)
+            .limit(1)
+            .get();
+        if (querySnapshot.docs.isNotEmpty) {
+          final roomId = querySnapshot.docs.first.id;
+          context.go('/multiplayer_room/$roomId');
+        } else {
+           ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10nScoped.roomNotFound)),
+          );
+        }
+      }
+    } catch (e) { 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)!.genericError}: $e'), // Now correctly inside SnackBar
+            content: Text('${l10nScoped.genericError}: $e'), 
             backgroundColor: Colors.red,
           )
         );
@@ -347,7 +314,3 @@ class _MultiplayerLobbyScreenState extends ConsumerState<MultiplayerLobbyScreen>
     }
   }
 }
-
-// It's recommended to add these to your ARB files:
-// "onlinePlayersLoading": "在线玩家: 加载中...",
-// "onlinePlayersError": "在线玩家: 错误",

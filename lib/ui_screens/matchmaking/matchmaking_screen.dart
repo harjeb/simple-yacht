@@ -72,14 +72,14 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
 
   void _startUpdateTimer() {
     _updateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_currentStatus?.status == MatchmakingStatus.searching) {
+      if (_currentStatus?.status == MatchmakingStatus.searching && _currentStatus != null) {
         setState(() {
           _currentEloRange = _matchmakingService.calculateCurrentEloRange(
             _currentStatus!.joinedAt,
+            _currentStatus!.eloRating, 
           );
         });
         
-        // 检查超时
         if (_matchmakingService.isMatchmakingTimeout(_currentStatus!.joinedAt)) {
           _handleMatchTimeout();
         }
@@ -90,8 +90,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
   Future<void> _startMatching() async {
     try {
       await _matchmakingService.joinQueue(
-        playerName: '玩家', // 这里应该从用户配置获取
-        gameMode: GameMode.multiplayer,
+        playerName: '玩家', 
+        gameMode: GameMode.multiplayer, 
         eloRating: _currentEloRating,
       );
       
@@ -111,20 +111,24 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
   }
 
   void _handleMatchFound() {
+    if (ModalRoute.of(context)?.isCurrent ?? false) {
+       if (Navigator.of(context).canPop()) { 
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('找到对手！'),
-        content: const Text('准备开始游戏...'),
+        content: Text('已为你匹配到对手: ${_currentStatus?.roomId ?? "未知房间"}'), 
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // 这里应该导航到游戏界面
-              _showSuccessSnackBar('游戏即将开始');
+              _showSuccessSnackBar('游戏即将开始! 房间号: ${_currentStatus?.roomId}');
             },
-            child: const Text('开始游戏'),
+            child: const Text('进入房间'),
           ),
         ],
       ),
@@ -132,6 +136,12 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
   }
 
   void _handleMatchTimeout() {
+    if (ModalRoute.of(context)?.isCurrent ?? false) {
+      if (Navigator.of(context).canPop()) {
+      }
+    }
+    _matchmakingService.leaveQueue(); 
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -141,7 +151,6 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _matchmakingService.leaveQueue();
             },
             child: const Text('确定'),
           ),
@@ -151,16 +160,15 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
   }
 
   void _showMatchHistory() {
-    // 这里应该导航到历史记录页面
     _showInfoSnackBar('历史记录功能开发中');
   }
 
   void _showMatchStats() {
-    // 这里应该导航到统计页面
     _showInfoSnackBar('统计功能开发中');
   }
 
   void _showErrorSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -170,6 +178,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
   }
 
   void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -179,6 +188,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
   }
 
   void _showInfoSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -195,26 +205,26 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
       appBar: AppBar(
         title: const Text('双人匹配'),
         backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: Colors.white, 
       ),
       body: RefreshIndicator(
-        onRefresh: _loadInitialData,
+        onRefresh: _loadInitialData, 
         child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(), 
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               MatchStatusCard(
                 matchmakingStatus: _currentStatus,
-                onCancel: _cancelMatching,
+                onCancel: _cancelMatching, 
               ),
               const SizedBox(height: 16),
               MatchInfoPanel(
                 matchmakingStatus: _currentStatus,
                 currentEloRange: _currentEloRange,
-                queuePosition: _queuePosition,
-                onlinePlayersCount: _onlinePlayersCount,
+                queuePosition: _queuePosition, 
+                onlinePlayersCount: _onlinePlayersCount, 
               ),
               const SizedBox(height: 16),
               MatchControlPanel(
@@ -226,6 +236,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
               ),
               const SizedBox(height: 16),
               Card(
+                elevation: 2,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -239,9 +250,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
                       Text(
                         '$_currentEloRating',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ],
                   ),
@@ -253,4 +264,4 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
       ),
     );
   }
-} 
+}

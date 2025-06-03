@@ -116,3 +116,14 @@ graph TD
 *   **原子性**: 认证状态变更处理的原子性由 `_isProcessingAuthStateChange` 保证。数据库计数的原子性由 Firebase 事务保证。
 *   **幂等性**: `_goOnline` 和 `_goOffline` 操作应设计为幂等的，即多次调用同一状态不会产生意外的副作用（例如，多次将同一用户标记为在线不会多次增加计数器）。
 *   **弃用冲突服务**: 必须移除或整合 [`lib/services/online_presence_service.dart`](lib/services/online_presence_service.dart:0) 以确保系统行为的一致性。
+
+## 联机对战：匹配与房间管理
+
+本节详细介绍联机对战中玩家匹配和游戏房间管理的系统架构，旨在解决用户报告的匹配失败和无法加入房间的问题。
+
+### 1. 架构图 (Mermaid)
+
+```mermaid
+graph TD
+    subgraph Firebase Firestore
+    

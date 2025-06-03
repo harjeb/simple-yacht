@@ -10,15 +10,14 @@ class MatchmakingService {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  // Constructor for dependency injection
   MatchmakingService({FirebaseAuth? auth, FirebaseFirestore? firestore})
       : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
   static const int _maxWaitTimeMinutes = 2;
-  static const int _rangeExpansionInterval = 30;
-  static const int _rangeExpansionAmount = 100;
-  static const int _maxRangeDifference = 500;
+  static const int _rangeExpansionInterval = 30; 
+  static const int _rangeExpansionAmount = 100; 
+  static const int _maxRangeDifference = 500; 
 
   Future<void> joinQueue({
     required String playerName,
@@ -28,7 +27,7 @@ class MatchmakingService {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not logged in');
 
-    final queue = MatchmakingQueue(
+    final queueEntry = MatchmakingQueue(
       playerId: user.uid,
       playerName: playerName,
       gameMode: gameMode,
@@ -40,13 +39,114 @@ class MatchmakingService {
     await _firestore
         .collection('matchmakingQueue')
         .doc(user.uid)
-        .set(queue.toFirestore());
+        .set(queueEntry.toFirestore());
+
+    await _findMatchAndCreateRoom(queueEntry);
   }
 
-  int calculateCurrentEloRange(DateTime joinedAt) {
+  Future<void> _findMatchAndCreateRoom(MatchmakingQueue currentUserQueueEntry) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
+    await _firestore.runTransaction((transaction) async {
+      final currentUserDocRef = _firestore.collection('matchmakingQueue').doc(currentUser.uid);
+      final currentUserSnapshot = await transaction.get(currentUserDocRef);
+
+      if (!currentUserSnapshot.exists) {
+        return;
+      }
+      final freshCurrentUserQueueEntry = MatchmakingQueue.fromFirestore(currentUserSnapshot);
+      if (freshCurrentUserQueueEntry.status != MatchmakingStatus.searching) {
+        return;
+      }
+
+      final querySnapshot = await _firestore
+          .collection('matchmakingQueue')
+          .where('status', isEqualTo: MatchmakingStatus.searching.name) 
+          .where('gameMode', isEqualTo: currentUserQueueEntry.gameMode.name) 
+          .orderBy('joinedAt')
+          .get();
+
+      MatchmakingQueue? opponentQueueEntry;
+      DocumentReference? opponentDocRef;
+
+      for (final doc in querySnapshot.docs) {
+        if (doc.id == currentUser.uid) continue; 
+
+        final potentialOpponent = MatchmakingQueue.fromFirestore(doc);
+        final eloDiff = (currentUserQueueEntry.eloRating - potentialOpponent.eloRating).abs();
+        final currentUserEloRange = calculateCurrentEloRange(freshCurrentUserQueueEntry.joinedAt, freshCurrentUserQueueEntry.eloRating);
+        final opponentEloRange = calculateCurrentEloRange(potentialOpponent.joinedAt, potentialOpponent.eloRating);
+        
+        if (eloDiff <= currentUserEloRange && eloDiff <= opponentEloRange) {
+          opponentQueueEntry = potentialOpponent;
+          opponentDocRef = doc.reference;
+          break;
+        }
+      }
+
+      if (opponentQueueEntry != null && opponentDocRef != null) {
+        final roomId = await _createRoomForMatch(
+          transaction,
+          freshCurrentUserQueueEntry, 
+          opponentQueueEntry,
+        );
+
+        if (roomId != null) {
+          transaction.update(currentUserDocRef, {
+            'status': MatchmakingStatus.matched.name,
+            'roomId': roomId, 
+            'matchedAt': FieldValue.serverTimestamp(),
+          });
+          transaction.update(opponentDocRef, {
+            'status': MatchmakingStatus.matched.name,
+            'roomId': roomId, 
+            'matchedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    });
+  }
+
+  Future<String?> _createRoomForMatch(
+    Transaction transaction,
+    MatchmakingQueue player1Queue,
+    MatchmakingQueue player2Queue,
+  ) async {
+    final roomCode = _generateRoomCode(); 
+    final roomId = _firestore.collection('gameRooms').doc().id; 
+
+    final gameRoom = GameRoom(
+      id: roomId,
+      roomCode: roomCode, 
+      hostId: player1Queue.playerId,
+      guestId: player2Queue.playerId, 
+      gameMode: player1Queue.gameMode,
+      status: GameRoomStatus.waiting, 
+      createdAt: DateTime.now(),
+      playerNames: { 
+        player1Queue.playerId: player1Queue.playerName,
+        player2Queue.playerId: player2Queue.playerName,
+      },
+      playerElos: {  
+        player1Queue.playerId: player1Queue.eloRating,
+        player2Queue.playerId: player2Queue.eloRating,
+      },
+      gameState: {}, 
+      scores: {}, 
+    );
+
+    final roomDocRef = _firestore.collection('gameRooms').doc(roomId);
+    transaction.set(roomDocRef, gameRoom.toMap());
+    return roomId;
+  }
+
+
+  int calculateCurrentEloRange(DateTime joinedAt, int baseElo) {
     final waitTimeSeconds = DateTime.now().difference(joinedAt).inSeconds;
-    final intervals = waitTimeSeconds ~/ _rangeExpansionInterval;
-    const baseRange = 100;
+    final nonNegativeWaitTime = max(0, waitTimeSeconds);
+    final intervals = nonNegativeWaitTime ~/ _rangeExpansionInterval;
+    const baseRange = 100; 
     final expansion = intervals * _rangeExpansionAmount;
     return min(baseRange + expansion, _maxRangeDifference);
   }
@@ -75,7 +175,7 @@ class MatchmakingService {
         .doc(user.uid)
         .snapshots()
         .map((doc) {
-          if (!doc.exists) return null;
+          if (!doc.exists || doc.data() == null) return null;
           return MatchmakingQueue.fromFirestore(doc);
         });
   }
@@ -88,36 +188,34 @@ class MatchmakingService {
         .collection('matchmakingQueue')
         .doc(user.uid)
         .update({
-          'status': 'cancelled',
+          'status': MatchmakingStatus.cancelled.name, 
           'cancelledAt': FieldValue.serverTimestamp(),
         });
   }
 
   Future<int> getCurrentEloRating() async {
     final user = _auth.currentUser;
-    if (user == null) return 1000;
+    if (user == null) return 1000; 
 
     final doc = await _firestore
-        .collection('eloRatings')
+        .collection('eloRatings') 
         .doc(user.uid)
         .get();
 
-    if (doc.exists) {
-      return doc.data()?['rating'] ?? 1000;
+    if (doc.exists && doc.data() != null) {
+      return doc.data()!['rating'] as int? ?? 1000;
     }
     return 1000;
   }
 
-  Future<void> updateEloRating(int newRating) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-
+  Future<void> updateEloRating(String userId, int newRating, bool wonGame) async {
     await _firestore
-        .collection('eloRatings')
-        .doc(user.uid)
+        .collection('eloRatings') 
+        .doc(userId)
         .set({
           'rating': newRating,
           'gamesPlayed': FieldValue.increment(1),
+          'wins': wonGame ? FieldValue.increment(1) : FieldValue.increment(0),
           'lastUpdated': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
   }
@@ -135,53 +233,48 @@ class MatchmakingService {
       final doc = snapshot.docs[i];
       final data = doc.data();
       
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(doc.id)
-          .get();
-      
-      final userName = userDoc.exists 
-          ? (userDoc.data()?['displayName'] ?? 'Unknown User')
+      final userDoc = await _firestore.collection('users').doc(doc.id).get();
+      final userName = userDoc.exists && userDoc.data() != null
+          ? (userDoc.data()!['displayName'] as String? ?? 'Unknown User')
           : 'Unknown User';
 
       leaderboard.add({
         'rank': i + 1,
         'userId': doc.id,
         'userName': userName,
-        'rating': data['rating'] ?? 1000,
-        'gamesPlayed': data['gamesPlayed'] ?? 0,
-        'lastUpdated': data['lastUpdated'],
+        'rating': data['rating'] as int? ?? 1000,
+        'gamesPlayed': data['gamesPlayed'] as int? ?? 0,
+        'wins': data['wins'] as int? ?? 0, 
+        'lastUpdated': data['lastUpdated'] as Timestamp?,
       });
     }
-
     return leaderboard;
   }
+
 
   Map<String, int> calculateEloChange({
     required int player1Rating,
     required int player2Rating,
-    required int player1Score,
-    required int player2Score,
+    required bool player1Won, 
   }) {
-    const int K = 32;
+    const int K = 32; 
 
-    final expected1 = 1 / (1 + pow(10, (player2Rating - player1Rating) / 400));
-    final expected2 = 1 / (1 + pow(10, (player1Rating - player2Rating) / 400));
+    final expectedScore1 = 1 / (1 + pow(10, (player2Rating - player1Rating) / 400));
+    final expectedScore2 = 1 / (1 + pow(10, (player1Rating - player2Rating) / 400));
 
-    double actual1, actual2;
-    if (player1Score > player2Score) {
-      actual1 = 1.0;
-      actual2 = 0.0;
-    } else if (player1Score < player2Score) {
-      actual1 = 0.0;
-      actual2 = 1.0;
+    double actualScore1;
+    double actualScore2;
+
+    if (player1Won) {
+      actualScore1 = 1.0; 
+      actualScore2 = 0.0; 
     } else {
-      actual1 = 0.5;
-      actual2 = 0.5;
+      actualScore1 = 0.0; 
+      actualScore2 = 1.0; 
     }
 
-    final newRating1 = (player1Rating + K * (actual1 - expected1)).round();
-    final newRating2 = (player2Rating + K * (actual2 - expected2)).round();
+    final newRating1 = (player1Rating + K * (actualScore1 - expectedScore1)).round();
+    final newRating2 = (player2Rating + K * (actualScore2 - expectedScore2)).round();
 
     return {
       'player1NewRating': newRating1,
@@ -193,14 +286,13 @@ class MatchmakingService {
 
   String _generateRoomCode() {
     const hexChars = "0123456789ABCDEF";
-    final random = Random.secure(); // 使用加密安全的随机数生成器
+    final random = Random.secure();
     final roomCodeBuilder = StringBuffer();
 
     for (int i = 0; i < 6; i++) {
       final randomIndex = random.nextInt(hexChars.length);
       roomCodeBuilder.write(hexChars[randomIndex]);
     }
-
     return roomCodeBuilder.toString();
   }
 
@@ -208,27 +300,29 @@ class MatchmakingService {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not logged in');
 
-    final roomId = _generateRoomCode();
-    
+    final roomCode = _generateRoomCode(); 
+    final roomId = _firestore.collection('gameRooms').doc().id;
+
     final userDoc = await _firestore.collection('users').doc(user.uid).get();
     final opponentDoc = await _firestore.collection('users').doc(opponentId).get();
     
-    final userName = userDoc.exists ? (userDoc.data()?['displayName'] ?? 'Player 1') : 'Player 1';
-    final opponentName = opponentDoc.exists ? (opponentDoc.data()?['displayName'] ?? 'Player 2') : 'Player 2';
+    final userName = userDoc.exists && userDoc.data() != null ? (userDoc.data()!['displayName'] as String? ?? 'Player 1') : 'Player 1';
+    final opponentName = opponentDoc.exists && opponentDoc.data() != null ? (opponentDoc.data()!['displayName'] as String? ?? 'Player 2') : 'Player 2';
 
     final gameRoom = GameRoom(
       id: roomId,
+      roomCode: roomCode,  
       hostId: user.uid,
-      guestId: opponentId,
-      gameMode: GameMode.multiplayer,
+      guestId: opponentId, 
+      gameMode: GameMode.multiplayer, 
       status: GameRoomStatus.waiting,
       createdAt: DateTime.now(),
-      gameState: {
-        'timeLimit': 15 * 60 * 1000,
-        'rounds': 13,
-        'hostName': userName,
-        'guestName': opponentName,
+      playerNames: { 
+        user.uid: userName,
+        opponentId: opponentName,
       },
+      gameState: {}, 
+      scores: {}, 
     );
 
     await _firestore
@@ -244,9 +338,9 @@ class MatchmakingService {
     if (user == null) return [];
 
     final snapshot = await _firestore
-        .collection('multiplayerGames')
+        .collection('multiplayerGames') 
         .where('playerIds', arrayContains: user.uid)
-        .orderBy('startTime', descending: true)
+        .orderBy('endTime', descending: true) 
         .limit(limit)
         .get();
 
@@ -256,17 +350,19 @@ class MatchmakingService {
       final data = doc.data();
       history.add({
         'gameId': doc.id,
-        'gameMode': data['gameMode'],
-        'status': data['status'],
-        'startTime': data['startTime'],
-        'endTime': data['endTime'],
-        'playerNames': data['playerNames'],
-        'finalScores': data['finalScores'],
-        'winnerId': data['winnerId'],
+        'gameMode': data['gameMode'] != null ? GameMode.values.byName(data['gameMode'] as String) : GameMode.single, 
+        'status': data['status'] != null ? GameRoomStatus.values.byName(data['status'] as String) : GameRoomStatus.cancelled, 
+        'startTime': data['startTime'] as Timestamp?,
+        'endTime': data['endTime'] as Timestamp?,
+        'playerNames': Map<String, String>.from(data['playerNames'] as Map? ?? {}),
+        'finalScores': Map<String, int>.from(data['finalScores'] as Map? ?? {}),
+        'winnerId': data['winnerId'] as String?,
         'isWinner': data['winnerId'] == user.uid,
+        'eloChange': data['eloChanges'] != null && (data['eloChanges'] as Map).containsKey(user.uid)
+            ? (data['eloChanges'] as Map)[user.uid] as int?
+            : null, 
       });
     }
-
     return history;
   }
 
@@ -274,42 +370,26 @@ class MatchmakingService {
     final user = _auth.currentUser;
     if (user == null) return {};
 
-    final snapshot = await _firestore
-        .collection('multiplayerGames')
-        .where('playerIds', arrayContains: user.uid)
-        .where('status', isEqualTo: 'completed')
-        .get();
-
-    int totalGames = snapshot.docs.length;
+    final eloDoc = await _firestore.collection('eloRatings').doc(user.uid).get();
+    int currentElo = 1000;
+    int gamesPlayed = 0;
     int wins = 0;
-    int totalScore = 0;
-    int highestScore = 0;
 
-    for (final doc in snapshot.docs) {
-      final data = doc.data();
-      final finalScores = Map<String, dynamic>.from(data['finalScores'] ?? {});
-      final userScore = finalScores[user.uid] ?? 0;
-      
-      totalScore += userScore as int;
-      if (userScore > highestScore) {
-        highestScore = userScore as int;
-      }
-      
-      if (data['winnerId'] == user.uid) {
-        wins++;
-      }
+    if (eloDoc.exists && eloDoc.data() != null) {
+      final data = eloDoc.data()!;
+      currentElo = data['rating'] as int? ?? 1000;
+      gamesPlayed = data['gamesPlayed'] as int? ?? 0;
+      wins = data['wins'] as int? ?? 0;
     }
 
-    final winRate = totalGames > 0 ? (wins / totalGames * 100).round() : 0;
-    final avgScore = totalGames > 0 ? (totalScore / totalGames).round() : 0;
+    // Placeholder for win rate calculation if needed
+    // double winRate = gamesPlayed > 0 ? (wins / gamesPlayed) * 100 : 0;
 
     return {
-      'totalGames': totalGames,
+      'currentElo': currentElo,
+      'gamesPlayed': gamesPlayed,
       'wins': wins,
-      'losses': totalGames - wins,
-      'winRate': winRate,
-      'averageScore': avgScore,
-      'highestScore': highestScore,
+      // 'winRate': winRate, // Uncomment if you want to include win rate
     };
   }
-} 
+}

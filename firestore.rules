@@ -25,13 +25,17 @@ service cloud.firestore {
                      (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid);
                      
       // 允许更新：用户必须是房主或访客
-      // 进一步限制：关键字段（如 hostId, guestId, createdAt）不应被客户端直接修改
-      // 考虑使用云函数进行受控更新，或添加更细致的字段级验证
+      // 进一步限制：关键字段（如 hostId, createdAt）不应被客户端直接修改
+      // guestId 可以从 null 更新为加入者的 UID
       allow update: if request.auth != null &&
-                      (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid) &&
+                      (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid || resource.data.guestId == null) && // Allow update if user is host, current guest, OR if guestId is null (joining)
                       // 防止修改不可变字段
                       request.resource.data.hostId == resource.data.hostId &&
-                      request.resource.data.guestId == resource.data.guestId &&
+                      // 允许 guestId 从 null 更新为 request.auth.uid，或者如果 guestId 已存在，则不允许更改 (除非是房主操作，可能需要云函数来处理踢人等复杂逻辑)
+                      ( (resource.data.guestId == null && request.resource.data.guestId == request.auth.uid) || 
+                        (resource.data.guestId != null && request.resource.data.guestId == resource.data.guestId) ||
+                        (resource.data.guestId != null && request.auth.uid == resource.data.hostId) // Host can change guestId (e.g. kick)
+                      ) &&
                       request.resource.data.createdAt == resource.data.createdAt;
                       
       // 允许删除：只允许房主删除

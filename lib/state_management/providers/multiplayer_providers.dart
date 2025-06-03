@@ -73,7 +73,7 @@ class MultiplayerController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final roomId = await _multiplayerService.createRoom(
-        roomName: 'Game Room',
+        // roomName: 'Game Room', // Removed
         gameMode: gameMode,
       );
       state = const AsyncValue.data(null);
@@ -167,4 +167,4 @@ final multiplayerControllerProvider = StateNotifierProvider<MultiplayerControlle
   final multiplayerService = ref.read(multiplayerServiceProvider);
   final matchmakingService = ref.read(matchmakingServiceProvider);
   return MultiplayerController(multiplayerService, matchmakingService);
-}); 
+});
